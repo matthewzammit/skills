@@ -3,8 +3,6 @@
 **Agent skills for product teams who build with Claude Code: the work between design and code that nobody has time
 for.**
 
-[![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
-
 Each skill is a folder: a `SKILL.md` the agent follows step by step, and a `README.md` for you. They ask before they
 act, check their own work, and come from real projects, with the mistakes already made for you. Works with Claude Code,
 Cursor, Codex and [other agents](https://skills.sh).
