@@ -1,6 +1,6 @@
 ---
 name: figma-from-code
-description: Rebuild an app in Figma from its code - every screen in light and dark with its states, a design system of components and variables, an optional brand deck - in reviewed batches. Use when someone wants their app, product or design system mirrored, rebuilt or documented in Figma from the codebase (mobile or web). For updating an existing mirror after code changes, use figma-sync instead.
+description: Rebuild a mobile app or a web app in Figma from its code - every screen in light and dark with its states, responsive desktop, tablet and mobile views for the web, a design system of components and variables, an optional brand deck - in reviewed batches. Use when someone wants their app, product or design system mirrored, rebuilt or documented in Figma from the codebase. For updating an existing mirror after code changes, use figma-sync instead.
 ---
 
 # Figma from code
@@ -30,8 +30,10 @@ your recommendation first:
 3. **Themes**: light, dark or both, and which is the brand default (the page's default mode).
 4. **Which version**: if the code has feature flags or an old and a new design, which one Figma shows.
 5. **Existing designs**: an older Figma file or library. Mirror the code, keep the old pages, say where they differ.
-6. **Web only**: which widths (recommend every state at 1440, key screens only at 768 and 390), and a test account on
-   a local or staging server. Never a real customer account.
+6. **Web only**: the responsive views. Read the breakpoints from the code first (Tailwind screens, CSS media
+   queries, the component library's theme). Recommend every screen and state at desktop (1440) and mobile (390), and
+   tablet (768) for each screen whose layout changes there. Also a test account on a local or staging server, never a
+   real customer account.
 7. **Who reviews**, and whether work is tracked in a ticket tool.
 8. **Fonts**: run the font check from step 2 now. For any font the Figma tool cannot load, tell the person what they
    must set up, so a long run does not stop halfway.

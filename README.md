@@ -26,10 +26,10 @@ It asks which skills and agents to install. Add `-g` to install for every projec
 
 **Design**
 
-- **[figma-from-code](skills/figma-from-code/)**: rebuild your app in Figma from its code, every screen and state in
-  light and dark, on a real design system.
-- **[figma-sync](skills/figma-sync/)**: keep that Figma file in step with the code, with a weekly drift check that asks
-  before it changes anything.
+- **[figma-from-code](skills/figma-from-code/)**: rebuild your mobile app or web app in Figma from its code: every
+  screen and state in light and dark, responsive desktop, tablet and mobile views for the web, on a real design system.
+- **[figma-sync](skills/figma-sync/)**: keep that Figma file in step with the code, for mobile and web, with a weekly
+  drift check that asks before it changes anything.
 
 More skills are coming. Watch the repo to hear about them.
 
@@ -56,6 +56,8 @@ builds the Figma file the way a careful designer would, then checks it against t
 
 - **Every screen a person can reach**, with its loading, empty and error states, sheets and dialogs, laid out by area
   and flow, with notes on motion and what is not drawn.
+- **Mobile apps and web apps.** For the web, responsive views too: desktop and mobile for every screen, and tablet
+  where the layout changes, taken from your code's own breakpoints.
 - **Light and dark as one frame**, switched by variable modes. Flip the whole page with one click.
 - **A real design system**: your colours, sizes and type as Figma variables and styles, your icons, and every shared
   component with its variants. Change a component, and every screen updates.

@@ -1,6 +1,6 @@
 ---
 name: figma-sync
-description: Keep a Figma copy of an app (screens, design system, brand deck) in step with its code - set up a sync record and diff, redraw what changed after a release or a merged change, and run a weekly drift check that asks before it changes anything. Works with any Figma file that mirrors the app, built by figma-from-code or by hand. Use when someone asks whether Figma is up to date, wants Figma updated after interface changes, or wants a drift check scheduled.
+description: Keep a Figma copy of a mobile or web app (screens, responsive views, design system, brand deck) in step with its code - set up a sync record and diff, redraw what changed after a release or a merged change, and run a weekly drift check that asks before it changes anything. Works with any Figma file that mirrors the app, built by figma-from-code or by hand. Use when someone asks whether Figma is up to date, wants Figma updated after interface changes, or wants a drift check scheduled.
 argument-hint: "[setup | check | a PR number | a branch]"
 ---
 

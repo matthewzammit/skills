@@ -1,7 +1,11 @@
+<p align="center">
+  <img src="../../assets/figma-from-code.png" alt="Figma from code: your app's code on the left, Claude Code in the middle, and on the right a Figma file with screens in light and dark, an empty state, and a design system of colours, buttons and components." width="100%">
+</p>
+
 # Figma from code
 
-Rebuild your app in Figma **from its code**, with Claude Code: every screen in light and dark with its loading, empty
-and error states, a design system of real components and variables, and (if you want) a brand deck. Then keep it in
+Rebuild your **mobile app or web app** in Figma **from its code**, with Claude Code: every screen in light and dark
+with its loading, empty and error states, responsive desktop, tablet and mobile views for the web, a design system of real components and variables, and (if you want) a brand deck. Then keep it in
 step as the code changes, with a sync you run by hand and a weekly drift check.
 
 This is not a screenshot import. Every screen is made of editable components, colour variables with Light and Dark
@@ -28,7 +32,9 @@ Up to four Figma pages, built from your code:
 Start with the design system and a few screens. Add the rest after you have reviewed them.
 
 Works for **mobile apps** (React Native, Swift, Kotlin, Flutter) and **web apps** (React, Next.js, Vue and so on).
-The skill asks which one you have and changes the steps.
+The skill sees which one you have and changes the steps. For the web it reads your breakpoints and draws responsive
+views: desktop and mobile for every screen, and tablet where the layout changes. We proved it on a React Native app;
+the web steps have not been run end to end yet, so tell me what you find.
 
 ## Two skills
 

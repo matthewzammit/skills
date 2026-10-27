@@ -16,7 +16,7 @@ component on the design system page, in the right group.
 
 - Files to read (follow their imports): <route files>
 - Sections to make: <names>. Place them <where>, 200 apart.
-- Widths (web only): <1440 for every state; 768 and 390 for: list>.
+- Widths (web only): <1440 and 390 for every screen and state; 768 for: list of screens whose layout changes there>.
 - Not drawn: <system controls, unreachable screens>. Say so in the notes.
 - Text to leave alone and list instead: <card titles, notes, anything in the brand font outside the text styles>.
 
