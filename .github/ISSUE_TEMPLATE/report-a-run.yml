@@ -1,0 +1,31 @@
+name: Report a run
+description: Tell us how figma-from-code or figma-sync went on your project.
+labels: [run-report]
+body:
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Skill
+      options: [figma-from-code, figma-sync, both]
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Your app
+      description: Mobile or web, the framework, and roughly how many screens.
+      placeholder: Next.js web app, about 40 screens
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Which step went wrong or worked well, and what Claude did. Screenshots help; remove anything private.
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and model
+      placeholder: Claude Code, Opus

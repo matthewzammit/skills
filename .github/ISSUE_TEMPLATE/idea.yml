@@ -1,0 +1,17 @@
+name: Idea or new skill
+description: Suggest a change to a skill, or a new skill.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What goes wrong today, or what you wish the skill did.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+    validations:
+      required: true

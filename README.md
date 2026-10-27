@@ -137,6 +137,10 @@ for the lessons that cost us hours, and the limits.
 
 ---
 
+## Contributing
+
+Run reports and pull requests are welcome, above all from web apps. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [MIT](LICENSE). Made by [Matthew Zammit](https://github.com/matthewzammit). If a skill helps, tell me what worked.

@@ -1,0 +1,19 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests (diff script, shared copies)
+        run: node --test test/*.test.js skills/figma-sync/scripts/*.test.js
+      - name: Plugin and marketplace files
+        run: node scripts/check-repo.js
