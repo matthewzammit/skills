@@ -61,7 +61,9 @@ Done when: the person has picked, or the run was clean.
 
 ## 4. Build what was picked
 
-1. If the brand font is local, switch the text styles to the Inter stand-in from the browser
+1. If any font failed the Figma tool's check (the first build notes which; if unsure, test each family with
+   `figma.loadFontAsync` in `use_figma`), ask the person for their Chrome with Figma open, then switch the text styles
+   to the Inter stand-in from the browser
    ([../figma-from-code/references/font-problem.md](../figma-from-code/references/font-problem.md)).
 2. Brief one build agent per item, **one at a time** (two writers on one file corrupt work), from
    [../figma-from-code/templates/batch-brief.md](../figma-from-code/templates/batch-brief.md): the commits to read for exact

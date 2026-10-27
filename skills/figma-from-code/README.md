@@ -65,8 +65,9 @@ Then, in your app's repo, say "rebuild our app in Figma from the code", or type 
 - **Figma edit access** to the file. A view-only seat cannot write.
 - **The Figma plugin for Claude Code** (or the Figma connector), signed in. It gives Claude the `use_figma` tool and
   Figma's own skills (`figma-use`, `figma-generate-design`, `figma-generate-library`).
-- **If your brand font is not a Google font: Claude in Chrome** and the font installed on your computer. See "The font
-  problem" below.
+- **If any font in your app is not a Google font** (a licensed brand font, say): the font installed on your computer,
+  the **Claude in Chrome** extension, and Figma open and signed in in that Chrome. The skill checks every font your code
+  uses first and tells you exactly what to set up before it builds. See "The font problem" below.
 
 ## Lessons that cost us hours
 

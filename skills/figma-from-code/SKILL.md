@@ -31,6 +31,8 @@ two rounds:
 6. **Web only**: which widths (recommend every state at 1440, key screens only at 768 and 390), and a test account on
    a local or staging server. Never a real customer account.
 7. **Who reviews**, and whether work is tracked in a ticket tool.
+8. **Fonts**: run the font check from step 2 now. For any font the Figma tool cannot load, tell the person what they
+   must set up, so a long run does not stop halfway.
 
 Add no rule the person did not give. An agent once wrote "draw extra states in light only" into a brief; nobody asked
 for it. If a rule is not here or from the person, ask.
@@ -46,13 +48,34 @@ Report one line per check: ok, or what the person must do.
 | Figma tool | Load the Figma tools; call `whoami`. | Install or sign in to the Figma plugin or connector. |
 | Read | A read-only `use_figma` that lists the pages. | Wrong URL, or no access. |
 | Write | Ask first. Make one rectangle off to the side, read it back, delete it. | View-only seat. |
-| Brand font | Find it in the code. In `use_figma`, try `figma.loadFontAsync` for it. | Expected for a local font: follow [references/font-problem.md](references/font-problem.md) and run its Chrome check. |
+| Fonts | Every font family the code uses, each tested in `use_figma` (see "Fonts" below). | Follow [references/font-problem.md](references/font-problem.md): the person sets up Chrome access before the build. |
 | Running product | Start the simulator, emulator or dev server; take one screenshot. | Build from code anyway, and say nothing was compared. |
 | Sample data | Find the demo account or seed data the product ships. | Use only invented data. Never a real person's details or photo. |
 | Images | Find where logos and pictures come from. | Ask before downloading or uploading any image. |
 | Long runs | For overnight work: laptop plugged in, the session allowed to run without asking each step. | Run during the day. |
 
 Done when: every row is ok, or the person has agreed to the fallback.
+
+### Fonts
+
+Claude's Figma tool runs on Figma's servers and loads only the fonts they have (Inter, Google Fonts). A brand font
+installed only on the person's computer fails, and so does any text written in it. This cost us hours, so check it
+before anything else is drawn.
+
+1. **Find every font family** the product uses: the theme and token files, CSS `@font-face` and `font-family`, a
+   Tailwind config, `next/font`, native font files (`.ttf`, `.otf`) and the app config that loads them. Note each family
+   and its weights or styles. Icon fonts count too.
+2. **Test each one** in `use_figma`: `await figma.loadFontAsync({ family, style })` for every style the code uses.
+3. **For each font that fails**, tell the person plainly, in one message, what they need and why:
+   - the font installed on their computer;
+   - the **Claude in Chrome** extension installed, and their OK for you to open and use a Figma tab in their Chrome;
+   - **signed in to Figma in that Chrome**, with Figma's font installer so the browser can see local fonts;
+   - or, without Chrome: the small Figma desktop plugin in [font-swap-plugin/](font-swap-plugin/), which they run.
+   Then build every text style in Inter as a stand-in, and swap at the end
+   ([references/font-problem.md](references/font-problem.md)).
+4. **Run the browser check** once the person has set it up, and before the build starts.
+
+If every font loads in `use_figma`, none of this applies: build in the real fonts.
 
 ## 3. Map the product
 
@@ -81,12 +104,12 @@ Done when: the person has approved the map and the batch order.
         |          you review each batch before the next starts
   4. Tidy pass     layout, names, notes, contents, coverage      (you)
   5. Brand deck    if asked: references/brand-deck.md             (you)
-  6. Font swap     if the brand font is local                     (you)
+  6. Font swap     if a font failed the check in step 2           (you)
 ```
 
 - **Foundations come from this product's code**: one colour collection with a mode per theme, variables named after
   the code tokens (the token in each description), text styles named `Type/<name>`, shadows as effect styles. Text
-  styles use Inter as a stand-in when the brand font is local.
+  styles use Inter as a stand-in for any font that failed the check in step 2.
 - **One batch at a time, one writer per file.** Never run two agents against one Figma file.
 - **Each batch gets a brief** ([templates/batch-brief.md](templates/batch-brief.md)) and **a progress file**
   ([templates/progress-file.md](templates/progress-file.md)). The build agent gets the brief, not the chat history.
