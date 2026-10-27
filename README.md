@@ -39,8 +39,9 @@ More skills are coming. Watch the repo to hear about them.
   <img src="assets/figma-from-code.png" alt="Figma from code: your app's code on the left, Claude Code in the middle, and on the right a Figma file with screens in light and dark, an empty state, and a design system of colours, buttons and components." width="100%">
 </p>
 
-**Your whole app, rebuilt in Figma from its real code by Claude Code. Every screen, every state, light and dark, on a
-real design system. Then kept in step, every week, without anyone redrawing a thing.**
+**Your whole mobile or web app, rebuilt in Figma from its real code by Claude Code. Every screen, every state, light
+and dark, responsive on the web, on a real design system. Then kept in step, every week, without anyone redrawing a
+thing.**
 
 Most teams' Figma files stopped matching the product months ago. Designers review screenshots, developers guess which
 frame is current, and nobody has a week to redraw 700 screens. These two skills fix that: Claude reads your code and
