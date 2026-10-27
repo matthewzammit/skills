@@ -1,6 +1,6 @@
 ---
 name: figma-from-code
-description: Rebuild a mobile app or a web app in Figma from its code - every screen in light and dark with its states, responsive desktop, tablet and mobile views for the web, a design system of components and variables, an optional brand deck - in reviewed batches. Use when someone wants their app, product or design system mirrored, rebuilt or documented in Figma from the codebase. For updating an existing mirror after code changes, use figma-sync instead.
+description: Rebuild a mobile app or a web app in Figma from its code - every screen in light and dark with its states, responsive desktop, tablet and mobile views for the web, a design system of components and variables, an optional brand deck - in reviewed batches. Use when someone wants their app, product or design system mirrored, rebuilt or documented in Figma from the codebase, for design review, a reference of every screen, or marketing assets. For updating an existing mirror after code changes, use figma-sync instead.
 ---
 
 # Figma from code

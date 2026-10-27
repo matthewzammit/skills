@@ -43,13 +43,33 @@ More skills are coming. Watch the repo to hear about them.
 and dark, responsive on the web, on a real design system. Then kept in step, every week, without anyone redrawing a
 thing.**
 
-Most teams' Figma files stopped matching the product months ago. Designers review screenshots, developers guess which
-frame is current, and nobody has a week to redraw 700 screens. These two skills fix that: Claude reads your code and
-builds the Figma file the way a careful designer would, then checks it against the code every week.
+**Build in code. Review in Figma.** Claude reads your code and builds the Figma file the way a careful designer
+would: components, design system, brand guidelines, every screen variant. Then it checks the file against the code
+every week, so Figma stays a true picture of what you shipped.
 
 > We built this for the [Binderr](https://binderr.com) Wallet app. In two days Claude rebuilt it in Figma: **about 716
 > screens** in light and dark, **144 components** (391 variants), **81 icons** and a **28-slide brand deck**. Much of it
 > ran overnight. Every lesson from that build is in these skills.
+
+### Why you need it
+
+In 2026, with AI building the product, there is no point drawing every screen in Figma first. You sketch, then grow
+the product in code with Claude, screen by screen. But Figma is still the best place to:
+
+- **Review**: designers, product people and clients comment on the real product, side by side, in light and dark.
+- **Keep a reference**: every screen, state and component in one place, for onboarding, audits and the next feature.
+- **Make marketing assets**: store screenshots, decks, launch posts and the website, from real screens, not mockups.
+
+So run the loop the other way. Figma is where you start and where you review; code is where you build.
+
+```
+   Figma                     Code, with Claude              Figma
+   a basic design system  -> grow the product,           -> every screen, state and component,
+   and a few pages           screen by screen               rebuilt from the code, kept in step
+```
+
+This is how we work on the Binderr Wallet: we started in Figma with a basic design system and a few pages, grew the
+app with Claude, then rebuilt Figma from the code with every new page and component.
 
 ### What you get
 
