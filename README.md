@@ -27,7 +27,9 @@ builds the Figma file the way a careful designer would, then checks it against t
 - **A weekly drift check** that tells you what changed in the code since the last sync, plans the redraw, and asks
   before it touches anything.
 
-Works for mobile apps (React Native, Swift, Kotlin, Flutter) and web apps (React, Next.js, Vue and more).
+Works for mobile apps (React Native, Swift, Kotlin, Flutter) and web apps (React, Next.js, Vue and more). We proved
+it on a React Native app. The web steps (widths, hover and focus states, a pixel capture as a reference) come from the
+same build but have not been run end to end yet, so expect some rough edges, and tell me what you find.
 
 ## How it works
 
