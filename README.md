@@ -53,7 +53,7 @@ every week, so Figma stays a true picture of what you shipped.
 
 ### Why you need it
 
-In 2026, with AI building the product, there is no point drawing every screen in Figma first. You sketch, then grow
+When AI builds the product with you, there is no point drawing every screen in Figma first. You sketch, then grow
 the product in code with Claude, screen by screen. But Figma is still the best place to:
 
 - **Review**: designers, product people and clients comment on the real product, side by side, in light and dark.
