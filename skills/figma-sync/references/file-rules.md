@@ -10,11 +10,12 @@ Take the expected sections and overlays from `figma-diff.js --json` (`expectedSe
    missing ones.
 2. **Every overlay has a frame**: each `overlays` regex (with its flags) matches at least one frame name on the
    Screens page. List the missing ones.
-3. **Theme modes:** the page has the default mode set. Only frames named "/ Light", "/ Dark" or "(always <theme>)" set
+3. **Theme modes** (if the file draws each theme as one frame with a variable mode): the page has the default mode set. Only frames named "/ Light", "/ Dark" or "(always <theme>)" set
    their own mode. No section and no inner layer sets one, except an instance of a component variant that fixes its
    theme by design. List violations.
 4. **No helper layers:** no layer whose name starts with `__` on any mirror page.
-5. **No font stand-in left:** if the brand font is local, no text on the mirror pages uses Inter. Count and name up to
+5. **No font stand-in left:** if a brand font failed the Figma tool's font check, no text on the mirror pages uses
+   Inter. Count and name up to
    10.
 6. **No overlaps:** no two top-level rows, and no two sections inside a row, overlap on the Screens page.
 7. **Nothing at the origin:** no top-level node at (0, 0) except the page's first row, if that is the layout.

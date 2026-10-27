@@ -39,7 +39,7 @@ The skill asks which one you have and changes the steps.
 
 ## Install
 
-Install both skills (they share some files). With the `skills` CLI, for Claude Code, Cursor, Codex and other agents:
+Install both skills: figma-from-code builds the file, figma-sync keeps it in step. With the `skills` CLI, for Claude Code, Cursor, Codex and other agents:
 
 ```
 npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
@@ -55,7 +55,9 @@ Or as a Claude Code plugin (terminal or the Claude desktop app's Code tab):
 Or copy the two folders into `~/.claude/skills/` (for you) or `<your repo>/.claude/skills/` (for your team).
 
 Then, in your app's repo, say "rebuild our app in Figma from the code", or type `/figma-from-code`
-(`/matthewzammit-skills:figma-from-code` when installed as a plugin).
+(`/matthewzammit-skills:figma-from-code` when installed as a plugin). Claude reads your code first, then asks only what
+it cannot find out: your Figma file, what to build first, the default theme, which version of the app, your old
+designs, web widths, who reviews. It tests every font your code uses before it draws anything.
 
 ## What you need first
 
@@ -118,10 +120,10 @@ skills/
     templates/            batch brief, progress file
     scripts/prelude.js    helpers to paste into each Figma script
     font-swap-plugin/     a Figma desktop plugin, and a console version for Chrome
-  figma-sync/             keeping it in step
+  figma-sync/             keeping it in step (works on its own too)
     SKILL.md
-    references/           setting up the diff, the file rules to check
-    templates/            the weekly drift check routine
+    references/           setup questions and the diff, the file rules, build rules, the font problem
+    templates/            the weekly drift check routine, the batch brief
     scripts/              figma-diff.js, an example config, tests
 ```
 

@@ -1,7 +1,7 @@
 # Figma sync
 
-Keep a Figma copy of your app in step with the code. Use it after
-[figma-from-code](../figma-from-code/) has built the file (install both: this skill uses some of its files).
+Keep a Figma copy of your app in step with the code. It works with any Figma file that mirrors your app: one built
+with [figma-from-code](../figma-from-code/), or one your team drew by hand.
 
 A Figma copy of an app goes stale in a week. This skill finds where Figma is behind the code, asks what to update,
 redraws it, and records the sync.
@@ -10,7 +10,7 @@ redraws it, and records the sync.
 
 | You type | When | What happens |
 |---|---|---|
-| `/figma-sync setup` | Once per repo | Adds a sync record (`figma-sync.json`), a diff script (`figma-diff.js`) and its config to your repo, written from your product's screens. |
+| `/figma-sync setup` | Once per repo | Asks for your Figma link and a few choices, checks your fonts, then adds a sync record (`figma-sync.json`), a diff script (`figma-diff.js`) and its config to your repo, matched to your Figma sections. |
 | `/figma-sync` (or a PR number, or a branch) | After a change, or at each release | Lists what changed since the last sync, redraws it in every theme, reviews it, and records the new sync on a branch with a pull request. |
 | `/figma-sync check` | Weekly, on a schedule | Finds the gaps, plans each one with a size, asks which to update, and waits. It changes nothing until you pick. |
 

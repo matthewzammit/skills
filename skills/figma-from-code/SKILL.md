@@ -18,8 +18,10 @@ always, `figma-generate-design` for screens, `figma-generate-library` for the de
 
 ## 1. Ask what you cannot find out
 
-Look first: the product type, tokens, routes, fonts and themes are in the code. Then ask only what is left, in at most
-two rounds:
+Start here, before reading any Figma file. Look first: the product type, tokens, routes, fonts and themes are in the
+code. Say in two lines what you found (for example "An Expo app, 84 screens, light and dark, one local font"). Then ask
+only what is left, with the question tool if you have one (at most 4 questions a round, two rounds at most), each with
+your recommendation first:
 
 1. **The Figma file**: its URL, and whether to make new pages or use existing ones. Recommend a file of its own per
    product. Never write over a page with content.
@@ -126,8 +128,9 @@ Done when: every screen and state on the approved map is drawn in every theme an
 
 ## 5. Set up keeping it in step
 
-Follow the `figma-sync` skill's setup ([../figma-sync/references/setup.md](../figma-sync/references/setup.md)): the sync
-record, the diff script with a config written from the map, and the weekly drift check. The repo parts go on a branch
+Run the `figma-sync` skill with `setup` (if it is not installed, tell the person:
+`npx skills add matthewzammit/skills --skill figma-sync`). It adds the sync record, the diff script with a config
+written from the map, and offers the weekly drift check. The repo parts go on a branch
 and a pull request like any other change. Record the build commit as the first sync.
 
 Done when: `figma-diff` runs in the repo and reports Figma in step at the build commit.

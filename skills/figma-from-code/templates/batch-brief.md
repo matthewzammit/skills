@@ -25,7 +25,8 @@ component on the design system page, in the right group.
 - Load the skills `figma-use`, `figma-generate-design` and `figma-generate-library`; pass `skillNames` on every call.
 - First call, read-only: list every component and component set on the design system page (name, id, variants,
   properties), every icon, and the variables and text styles. Reuse what exists.
-- Paste the helpers from `<path>/prelude.js` at the top of each write script, with `ID` filled from that listing.
+- Paste the shared helpers (`scripts/prelude.js` in the figma-from-code skill, or your own) at the top of each write
+  script, with `ID` filled from that listing.
 
 ## The file
 
