@@ -1,10 +1,18 @@
 {
   "name": "matthewzammit-skills",
-  "version": "1.0.0",
   "description": "Matthew Zammit's agent skills: figma-from-code (rebuild an app in Figma from its code) and figma-sync (keep it in step).",
-  "author": { "name": "Matthew Zammit", "url": "https://github.com/matthewzammit" },
+  "author": {
+    "name": "Matthew Zammit",
+    "url": "https://github.com/matthewzammit"
+  },
   "homepage": "https://github.com/matthewzammit/skills",
   "repository": "https://github.com/matthewzammit/skills",
   "license": "MIT",
-  "keywords": ["figma", "design-system", "design-to-code", "code-to-design", "skills"]
+  "keywords": [
+    "figma",
+    "design-system",
+    "design-to-code",
+    "code-to-design",
+    "skills"
+  ]
 }
