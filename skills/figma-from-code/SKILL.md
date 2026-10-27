@@ -144,7 +144,7 @@ Fix what is off, then tell the person what was built, what was compared, and wha
 Done when: every screen and state on the approved map is drawn in every theme and reviewed, and the checklist in
 [references/checklist.md](references/checklist.md) passes.
 
-## 5. Set up keeping it in step
+## 5. Set up keeping it updated
 
 A Figma copy goes stale in a week, so this step is part of the build, not an extra. Tell the person why in one line,
 then:
@@ -158,11 +158,11 @@ then:
    (figma-sync's `templates/drift-check-routine.md`: the steps, and the prompt filled in for this repo).
 4. **Add a release step** to the team's release checklist: run figma-sync, redraw what changed, mark the sync.
 
-Done when: the diff reports Figma in step at the build commit, and the person has said yes or no to the weekly check
+Done when: the diff reports Figma up to date at the build commit, and the person has said yes or no to the weekly check
 (and it is scheduled if yes).
 
 ## 6. Hand over
 
 In a few lines: the page links, the counts, what was compared with the product, what was not drawn and why, how to
-switch the theme, and how it stays in step. Tell designers the rule: the mirror pages show the product as shipped;
+switch the theme, and how it stays updated. Tell designers the rule: the mirror pages show the product as shipped;
 comment freely; try ideas on the Proposals page.

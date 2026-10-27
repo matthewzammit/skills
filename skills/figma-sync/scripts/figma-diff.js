@@ -183,7 +183,7 @@ function main() {
   }
 
   console.log(`Figma sync check: ${commits} commits since ${record.lastSyncedCommit.slice(0, 8)} (synced ${record.syncedAt}), up to ${toSha.slice(0, 8)}.\n`);
-  if (!sections.size && !unmapped.length) console.log('No screen, component or token changed. Figma is in step.');
+  if (!sections.size && !unmapped.length) console.log('No screen, component or token changed. Figma is up to date.');
   for (const [section, files] of [...sections].sort((a, b) => a[0].localeCompare(b[0]))) {
     console.log(`${section} (${files.length})`);
     for (const f of files) console.log(`  ${f}`);

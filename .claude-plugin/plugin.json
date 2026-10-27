@@ -1,6 +1,6 @@
 {
   "name": "matthewzammit-skills",
-  "description": "Matthew Zammit's agent skills: figma-from-code (rebuild an app in Figma from its code) and figma-sync (keep it in step).",
+  "description": "Matthew Zammit's agent skills: figma-from-code (rebuild an app in Figma from its code) and figma-sync (keep it updated).",
   "author": {
     "name": "Matthew Zammit",
     "url": "https://github.com/matthewzammit"

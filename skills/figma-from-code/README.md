@@ -6,7 +6,7 @@
 
 Rebuild your **mobile app or web app** in Figma **from its code**, with Claude Code: every screen in light and dark
 with its loading, empty and error states, responsive desktop, tablet and mobile views for the web, a design system of
-real components and variables, and (if you want) a brand deck. Then keep it in step as the code changes, with a sync
+real components and variables, and (if you want) a brand deck. Then keep it updated as the code changes, with a sync
 you run by hand and a weekly drift check.
 
 **Build in code, review in Figma.** With AI building the product, nobody needs to draw every screen in Figma first.
@@ -51,7 +51,7 @@ find.
 
 ## Install
 
-Install both skills: figma-from-code builds the file, figma-sync keeps it in step. With the `skills` CLI (built and tested with Claude Code; it also installs into Cursor, Codex and other agents):
+Install both skills: figma-from-code builds the file, figma-sync keeps it updated. With the `skills` CLI (built and tested with Claude Code; it also installs into Cursor, Codex and other agents):
 
 ```
 npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
@@ -107,7 +107,7 @@ mistakes included.
 **Write a brief and a progress file per batch.** The build agent gets the brief, not the chat. If the laptop sleeps,
 the next run reads the progress file and carries on.
 
-## Keeping it in step
+## Keeping it updated
 
 A Figma copy of an app goes stale in a week. The `figma-sync` skill sets up three things in your repo:
 
@@ -132,7 +132,7 @@ skills/
     templates/            batch brief, progress file
     scripts/prelude.js    helpers to paste into each Figma script
     font-swap-plugin/     a Figma desktop plugin, and a console version for Chrome
-  figma-sync/             keeping it in step (works on its own too)
+  figma-sync/             keeping it updated (works on its own too)
     SKILL.md
     references/           setup questions and the diff, the file rules, build rules, the font problem
     templates/            the weekly drift check routine, the batch brief

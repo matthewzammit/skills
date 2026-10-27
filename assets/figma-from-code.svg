@@ -19,7 +19,7 @@
 
   <!-- Title -->
   <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Figma from code</text>
-  <text x="64" y="140" fill="#a3a3a3" font-size="21">Your whole app, rebuilt in Figma from its code by Claude Code. And kept in step.</text>
+  <text x="64" y="140" fill="#a3a3a3" font-size="21">Your whole app, rebuilt in Figma from its code by Claude Code. And kept updated.</text>
 
   <!-- Code card -->
   <g filter="url(#shadow)">
@@ -108,6 +108,6 @@
     <circle cx="456" cy="596" r="5" fill="#737373"/>
     <text x="470" y="602">A real design system</text>
     <circle cx="700" cy="596" r="5" fill="#737373"/>
-    <text x="714" y="602">Weekly drift check keeps it in step</text>
+    <text x="714" y="602">Weekly drift check keeps it updated</text>
   </g>
 </svg>

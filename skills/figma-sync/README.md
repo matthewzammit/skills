@@ -1,6 +1,6 @@
 # Figma sync
 
-Keep a Figma copy of your app in step with the code. It works with any Figma file that mirrors your app: one built
+Keep a Figma copy of your app updated with the code. It works with any Figma file that mirrors your app: one built
 with [figma-from-code](../figma-from-code/), or one your team drew by hand.
 
 A Figma copy of an app goes stale in a week. This skill finds where Figma is behind the code, asks what to update,

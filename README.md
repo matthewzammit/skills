@@ -28,7 +28,7 @@ It asks which skills and agents to install. Add `-g` to install for every projec
 
 - **[figma-from-code](skills/figma-from-code/)**: rebuild your mobile app or web app in Figma from its code: every
   screen and state in light and dark, responsive desktop, tablet and mobile views for the web, on a real design system.
-- **[figma-sync](skills/figma-sync/)**: keep that Figma file in step with the code, for mobile and web, with a weekly
+- **[figma-sync](skills/figma-sync/)**: keep that Figma file updated with the code, for mobile and web, with a weekly
   drift check that asks before it changes anything.
 
 More skills are coming. Watch the repo to hear about them.
@@ -42,7 +42,7 @@ More skills are coming. Watch the repo to hear about them.
 </p>
 
 **Your whole mobile or web app, rebuilt in Figma from its real code by Claude Code. Every screen, every state, light
-and dark, responsive on the web, on a real design system. Then kept in step, every week, without anyone redrawing a
+and dark, responsive on the web, on a real design system. Then kept updated, every week, without anyone redrawing a
 thing.**
 
 **Build in code. Review in Figma.** Claude reads your code and builds the Figma file the way a careful designer
@@ -67,7 +67,7 @@ So run the loop the other way. Figma is where you start and where you review; co
 ```
    Figma                     Code, with Claude              Figma
    a basic design system  -> grow the product,           -> every screen, state and component,
-   and a few pages           screen by screen               rebuilt from the code, kept in step
+   and a few pages           screen by screen               rebuilt from the code, kept updated
 ```
 
 This is how we work on the Binderr Wallet: we started in Figma with a basic design system and a few pages, grew the
@@ -125,7 +125,7 @@ what to set up: the font installed, the Claude in Chrome extension, and Figma op
 | [**figma-from-code**](skills/figma-from-code/) | Once | The first build: questions, checks, a map, a pilot, then batches you review. |
 | [**figma-sync**](skills/figma-sync/) | After a change, each release, and weekly | Finds what changed since the last sync, checks the file's own rules, asks what to update, redraws it, records the sync. Works on any Figma file that mirrors your app, even one drawn by hand. |
 
-Two, because they run at different times: you build once, but you keep it in step forever. You only start the first
+Two, because they run at different times: you build once, but you keep it updated forever. You only start the first
 one: at the end of the build it installs figma-sync, sets it up, and offers to schedule the weekly drift check.
 
 ### What you need

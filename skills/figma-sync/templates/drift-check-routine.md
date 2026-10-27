@@ -32,7 +32,7 @@ Run the weekly Figma drift check for <product>: use the figma-sync skill with th
   item under it. Never reuse a previous week's parent.>
 - Reply with one numbered line per item (what drifted, the Figma section, size S/M/L, its ticket), then ask:
   "Which should I update? Numbers, 'all' or 'none'." Then stop and wait.
-- A clean week files nothing and replies "Figma drift check <date>: in step".
+- A clean week files nothing and replies "Figma drift check <date>: up to date".
 - When I pick: build only those, then mark the sync on a branch with a pull request only if every item was fixed.
   Never merge.
 ```

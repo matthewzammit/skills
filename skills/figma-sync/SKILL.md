@@ -1,6 +1,6 @@
 ---
 name: figma-sync
-description: Keep a Figma copy of a mobile or web app (screens, responsive views, design system, brand deck) in step with its code - set up a sync record and diff, redraw what changed after a release or a merged change, and run a weekly drift check that asks before it changes anything. Works with any Figma file that mirrors the app, built by figma-from-code or by hand. Use when someone asks whether Figma is up to date, wants Figma updated after interface changes, or wants a drift check scheduled.
+description: Keep a Figma copy of a mobile or web app (screens, responsive views, design system, brand deck) updated with its code - set up a sync record and diff, redraw what changed after a release or a merged change, and run a weekly drift check that asks before it changes anything. Works with any Figma file that mirrors the app, built by figma-from-code or by hand. Use when someone asks whether Figma is up to date, wants Figma updated after interface changes, or wants a drift check scheduled.
 argument-hint: "[setup | check | a PR number | a branch]"
 ---
 
@@ -33,9 +33,9 @@ Read once: [references/build-rules.md](references/build-rules.md). Load Figma's 
 3. Each **unmapped file** or **screen with no section** is a gap too: a new screen Figma may lack, or a rule missing
    from `figma-sync.config.js`.
 4. Read the Figma frames for each gap (a read-only `use_figma` call, or `get_screenshot`). A frame already drawn from the
-   current code is **in step**.
+   current code is **up to date**.
 
-Done when: every listed section and file is one of gap (with its frames and states), in step, or not a gap (with why).
+Done when: every listed section and file is one of gap (with its frames and states), up to date, or not a gap (with why).
 
 ## 2. Check the file's own rules
 
@@ -55,7 +55,7 @@ If the team tracks work in a ticket tool (setup recorded which), file one ticket
 run. Reply with the numbered list and ask: "Which should I update? Numbers, 'all' or 'none'." When the person ran this
 by hand to sync, ask only about a gap that needs a design decision and build the rest.
 
-**In check mode, stop here and wait.** A clean run files nothing and says "Figma is in step".
+**In check mode, stop here and wait.** A clean run files nothing and says "Figma is up to date".
 
 Done when: the person has picked, or the run was clean.
 
@@ -79,4 +79,4 @@ Done when: every picked gap is drawn and reviewed, and no text is left in the st
   open a pull request.
 - **A gap left open:** leave the record alone. A mark would hide the gap from the next check. List what is left.
 
-Report: what changed in Figma, what was in step or not a gap, and whether the sync is marked.
+Report: what changed in Figma, what was up to date or not a gap, and whether the sync is marked.
