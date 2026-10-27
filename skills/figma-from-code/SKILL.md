@@ -128,12 +128,20 @@ Done when: every screen and state on the approved map is drawn in every theme an
 
 ## 5. Set up keeping it in step
 
-Run the `figma-sync` skill with `setup` (if it is not installed, tell the person:
-`npx skills add matthewzammit/skills --skill figma-sync`). It adds the sync record, the diff script with a config
-written from the map, and offers the weekly drift check. The repo parts go on a branch
-and a pull request like any other change. Record the build commit as the first sync.
+A Figma copy goes stale in a week, so this step is part of the build, not an extra. Tell the person why in one line,
+then:
 
-Done when: `figma-diff` runs in the repo and reports Figma in step at the build commit.
+1. **Install figma-sync** if it is missing. Tell the person the command:
+   `npx skills add matthewzammit/skills --skill figma-sync` (or the Claude Code plugin). Wait until it is installed.
+2. **Run figma-sync with `setup`.** It adds the sync record and the diff script with a config written from the map,
+   and records the build commit as the first sync. The repo parts go on a branch and a pull request.
+3. **Offer the weekly drift check** and recommend it: it finds what changed each week, asks which to update, and
+   changes nothing until the person picks. If they agree, walk them through scheduling it
+   (figma-sync's `templates/drift-check-routine.md`: the steps, and the prompt filled in for this repo).
+4. **Add a release step** to the team's release checklist: run figma-sync, redraw what changed, mark the sync.
+
+Done when: the diff reports Figma in step at the build commit, and the person has said yes or no to the weekly check
+(and it is scheduled if yes).
 
 ## 6. Hand over
 
