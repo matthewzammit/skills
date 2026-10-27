@@ -1,0 +1,12 @@
+{
+  "name": "matthewzammit",
+  "owner": { "name": "Matthew Zammit", "url": "https://github.com/matthewzammit" },
+  "description": "Matthew Zammit's agent skills.",
+  "plugins": [
+    {
+      "name": "matthewzammit-skills",
+      "source": "./",
+      "description": "figma-from-code (rebuild an app in Figma from its code) and figma-sync (keep it in step)."
+    }
+  ]
+}

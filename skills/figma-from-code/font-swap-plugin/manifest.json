@@ -1,0 +1,12 @@
+{
+  "name": "Figma from code: font swap",
+  "id": "figma-from-code-font-swap-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "menu": [
+    { "name": "Switch to brand font", "command": "toBrand" },
+    { "name": "Switch back to Inter (for the Figma tool)", "command": "toInter" }
+  ]
+}

@@ -1,0 +1,136 @@
+# Figma from code
+
+Rebuild your app in Figma **from its code**, with Claude Code: every screen in light and dark with its loading, empty
+and error states, a design system of real components and variables, and (if you want) a brand deck. Then keep it in
+step as the code changes, with a sync you run by hand and a weekly drift check.
+
+This is not a screenshot import. Every screen is made of editable components, colour variables with Light and Dark
+modes, and text styles, so designers can comment, change a component and see every screen update.
+
+> Made by [Matthew Zammit](https://github.com/matthewzammit) while building the [Binderr](https://binderr.com) Wallet
+> app. We rebuilt the app this way in two days: about 716 screens in light and dark, 144 components (391 variants),
+> 81 icons and a 28-slide brand deck. These skills hold what worked and what went wrong, so you do not repeat our
+> mistakes.
+
+---
+
+## What you get
+
+Up to four Figma pages, built from your code:
+
+| Page | What it holds |
+|---|---|
+| **Screens** | Every screen a person can reach, in light and dark, with its states, sheets and dialogs. One row per area of the product, one section per flow, notes beside each flow. |
+| **Design System** | Your colours, sizes and type as Figma variables and styles, your icons, and every shared component with its variants. |
+| **Brand Guideline** | A short deck (20 to 30 slides) to present the product's design. Optional. |
+| **Proposals** | An empty page where designers try ideas. The other pages mirror the shipped product. |
+
+Start with the design system and a few screens. Add the rest after you have reviewed them.
+
+Works for **mobile apps** (React Native, Swift, Kotlin, Flutter) and **web apps** (React, Next.js, Vue and so on).
+The skill asks which one you have and changes the steps.
+
+## Two skills
+
+| Skill | When | What it does |
+|---|---|---|
+| `figma-from-code` | Once, for the first build | Asks a few questions, checks your setup, maps the product, then builds it in Figma in batches while you review. |
+| `figma-sync` | After a change, at each release, and weekly | Finds what changed in the code since the last sync, checks the Figma file's own rules, asks what to update, redraws it, and records the sync. |
+
+## Install
+
+Install both skills (they share some files). With the `skills` CLI, for Claude Code, Cursor, Codex and other agents:
+
+```
+npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
+```
+
+Or as a Claude Code plugin (terminal or the Claude desktop app's Code tab):
+
+```
+/plugin marketplace add matthewzammit/skills
+/plugin install matthewzammit-skills@matthewzammit
+```
+
+Or copy the two folders into `~/.claude/skills/` (for you) or `<your repo>/.claude/skills/` (for your team).
+
+Then, in your app's repo, say "rebuild our app in Figma from the code", or type `/figma-from-code`
+(`/matthewzammit-skills:figma-from-code` when installed as a plugin).
+
+## What you need first
+
+- **Claude Code** with a strong model (we used Opus to plan and review, and Sonnet to build batches).
+- **Your repo** on your computer, and the app running locally (simulator, emulator or browser), so Claude can compare
+  its Figma screens with the real product.
+- **Figma edit access** to the file. A view-only seat cannot write.
+- **The Figma plugin for Claude Code** (or the Figma connector), signed in. It gives Claude the `use_figma` tool and
+  Figma's own skills (`figma-use`, `figma-generate-design`, `figma-generate-library`).
+- **If your brand font is not a Google font: Claude in Chrome** and the font installed on your computer. See "The font
+  problem" below.
+
+## Lessons that cost us hours
+
+**The font problem.** Claude's Figma tool runs on Figma's servers. It can only load fonts those servers have (Inter,
+Google Fonts). A font installed only on your computer fails, and so does any text the tool writes in it. What works:
+build every text style in Inter as a stand-in, then switch the styles to your brand font from Figma in your own
+browser (Claude in Chrome) or with the small desktop plugin in this repo. When the tool must write text again later,
+switch back to Inter first. If your Figma plan has shared organisation fonts, check whether the tool can load yours.
+
+**Build from the code, never from screenshots.** Every word comes from the code. Screenshots of the running app are
+only for checking layout.
+
+**Light and dark are one frame**, with a different variable mode, never two drawings. Set the theme once, on the page.
+
+**Map before you draw.** Every route, every full screen with no route (offline, update required, a lock screen, a
+splash), every state. Agree the map and the batch order with a person before building.
+
+**Pilot first.** Build two or three screens, review them hard, fix the patterns. Every later batch copies the pilot,
+mistakes included.
+
+**One writer at a time.** Two agents writing to one Figma file at once corrupt each other's work.
+
+**Write a brief and a progress file per batch.** The build agent gets the brief, not the chat. If the laptop sleeps,
+the next run reads the progress file and carries on.
+
+## Keeping it in step
+
+A Figma copy of an app goes stale in a week. The `figma-sync` skill sets up three things in your repo:
+
+1. **A sync record** (`figma-sync.json`): the last commit Figma matches.
+2. **A diff script** (`figma-diff.js` with a small config): lists every screen, component and token changed since that
+   commit, grouped by the Figma section that draws it, and any new screen no section covers.
+3. **A routine**: sync once per release, plus a **weekly drift check**. The drift check runs on a schedule, finds the
+   gaps (code changes and broken file rules), plans each one with a size, asks you which to update, and waits. It
+   changes nothing until you pick. See
+   [figma-sync/templates/drift-check-routine.md](../figma-sync/templates/drift-check-routine.md).
+
+The rule for designers: the mirror pages show the product **as shipped**. Comment freely. Try ideas on the Proposals
+page. An idea reaches the mirror only after it ships in code.
+
+## What is in these folders
+
+```
+skills/
+  figma-from-code/        the first build
+    SKILL.md
+    references/           build rules, web apps, the font problem, brand deck, checklist
+    templates/            batch brief, progress file
+    scripts/prelude.js    helpers to paste into each Figma script
+    font-swap-plugin/     a Figma desktop plugin, and a console version for Chrome
+  figma-sync/             keeping it in step
+    SKILL.md
+    references/           setting up the diff, the file rules to check
+    templates/            the weekly drift check routine
+    scripts/              figma-diff.js, an example config, tests
+```
+
+## Limits
+
+- Figma does not show motion or haptics. The notes beside each flow describe them.
+- Native blur and glass show as flat fills.
+- System controls (pickers, camera, share sheet, browser chrome, payment iframes) are listed as not drawn.
+- It costs agent time: a product of about 80 screens took us eight batches of one to three hours each.
+
+## License
+
+MIT. Use it, change it, share it. If it helps, tell me what worked and what did not.
