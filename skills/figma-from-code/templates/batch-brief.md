@@ -49,9 +49,12 @@ then go back: never submit, save, send, pay or delete.>
 Keep section ids, frame ids and what is left in `<path>/batch<N>-state.md`. Update it after each section, so the work
 can resume if it stops.
 
-## Report (short)
+## Report
 
-Per section: frame ids per screen and state. New component ids and their group. Which frames you compared with the
-running product. Every string you could not source. Every deviation from the code. What you did not draw and why. The
-text you left alone. Finish with `get_screenshot` of each section: nothing clipped, overlapping, at the origin or
-showing placeholder text.
+Before you finish: run the rebind sweep (build rules) on every frame you made, then `get_screenshot` each section:
+nothing clipped, overlapping, at the origin or showing placeholder text.
+
+Write the report to `<path>/batch<N>-report.md` and reply with only its path. The report, per section: frame ids per
+screen and state; new component ids and their group; the frames you compared with the running product; the colours
+the sweep could not bind; every string you could not source; every deviation from the code; what you did not draw and
+why; the text you left alone.

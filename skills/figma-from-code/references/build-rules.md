@@ -23,6 +23,11 @@ Every rule here came from a mistake in a real build. Paste this file into each b
 - **Trap:** a frame's own fill follows its parent's mode, not its own. A "/ Light" frame on a Dark page shows a dark
   background with light content. Fix: a locked rectangle named "Theme background", bound to the background colour, as
   the frame's first child.
+- **Rebind sweep after every batch:** walk the batch's frames for solid fills and strokes with no variable bound. Look
+  each colour up in the variables (a reverse index from value to variable for the frame's mode), bind the match, and
+  list the colours with no match in the report.
+- **Colours are sRGB.** Code colours are sRGB; check the file's colour profile before building, and write values as
+  0 to 1 sRGB channels.
 - **Trap:** a layer cloned from a frame of the other theme can keep a stale colour. Scan bound paints: compare the
   stored colour with the variable's value for the node's mode, and re-bind the ones that differ.
 
@@ -51,7 +56,8 @@ Every rule here came from a mistake in a real build. Paste this file into each b
 
 ## Figma tool habits
 
-- Return every new node id from every call, and record ids in the progress file.
+- Return every new node id from every call, and record ids in the progress file's Registry.
+- Write a value you could not measure (a spacing, a size) as a visible marker in the notes, never a guess.
 - A failed `use_figma` call rolls back completely. Fix it and run it again.
 - `node.screenshot()` inside a script can show stale colours. Check with the `get_screenshot` tool.
 - `upload_assets` cannot target a layer inside an instance. Upload to a temporary rectangle, copy its `imageHash` into

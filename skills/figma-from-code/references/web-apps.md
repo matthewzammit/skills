@@ -20,6 +20,8 @@ Everything in SKILL.md still applies. These parts differ for a web app.
   agrees the widths in step 1.
 - **Frame sizes:** desktop 1440 wide, tablet 768, mobile 390 (or the code's own breakpoints), each the full page
   height. Name them "Invoices / Empty / Desktop". One row per screen: desktop states first, then tablet, then mobile.
+- **Find layout switches in the code:** pairs like `lg:hidden` beside `hidden lg:flex`, or one component swapped for
+  another at a breakpoint. Each one becomes a layout variant (Desktop, Tablet, Mobile) of that component.
 - **Build responsive frames from the same components.** Use auto layout and the component's own responsive variants,
   so the mobile frame is the same parts rearranged, not a second drawing. A component that changes shape at a
   breakpoint (navigation, a data table) gets a variant per breakpoint on the design system page.
@@ -28,5 +30,9 @@ Everything in SKILL.md still applies. These parts differ for a web app.
   results), form validation, toasts, the side navigation open and collapsed, a session timeout or permission error.
 - **Not drawn:** browser chrome, the system file picker and print dialog, third-party iframes (payment forms, identity
   checks). List them in the notes.
+- **Pre-capture the references once.** Before the batches, capture every screen and state at each width (headless
+  browser, at scale 1, saved as files with a name per screen, state and width, and the clicks that reach each state).
+  Build agents then compare against the files and never open a browser. Opening a dialog to capture it is fine;
+  confirming it is not.
 - **Checking with the product:** a browser at each width. Never submit a form, send an email, pay or delete anything.
 - **Accessibility:** note where the layout changes at 200% browser zoom.

@@ -56,6 +56,8 @@ Report one line per check: ok, or what the person must do.
 | Running product | Start the simulator, emulator or dev server; take one screenshot. | Build from code anyway, and say nothing was compared. |
 | Sample data | Find the demo account or seed data the product ships. | Use only invented data. Never a real person's details or photo. |
 | Images | Find where logos and pictures come from. | Ask before downloading or uploading any image. |
+| Colour profile | Read the file's colour profile (File > Color profile). Code colours are sRGB. | A Display P3 file shifts sRGB values (we saw 20/255 off). Ask to switch the file to sRGB before building. |
+| Variable modes | Make a test collection with two modes, then delete it. | The plan allows one mode only: light and dark need a paid plan, or a second collection. Tell the person. |
 | Long runs | For overnight work: laptop plugged in, the session allowed to run without asking each step. | Run during the day. |
 
 Done when: every row is ok, or the person has agreed to the fallback.
@@ -113,17 +115,31 @@ Done when: the person has approved the map and the batch order.
 
 - **Foundations come from this product's code**: one colour collection with a mode per theme, variables named after
   the code tokens (the token in each description), text styles named `Type/<name>`, shadows as effect styles. Text
-  styles use Inter as a stand-in for any font that failed the check in step 2.
+  styles use Inter as a stand-in for any font that failed the check in step 2. **Foundations are done when the values
+  read back right:** a read-only `use_figma` dump of every variable in every mode, compared value by value (alpha
+  included) with the code tokens. A matching count proves nothing; a wrong value hides behind the right name.
+- **One registry for the file**: every page, section, component and frame id you create, in the progress file's
+  Registry, written after each create. **On resume**, re-read it and confirm the ids still exist (`get_metadata`)
+  before writing. A missing id means stop and ask, never recreate it silently.
 - **One batch at a time, one writer per file.** Never run two agents against one Figma file.
 - **Each batch gets a brief** ([templates/batch-brief.md](templates/batch-brief.md)) and **a progress file**
   ([templates/progress-file.md](templates/progress-file.md)). The build agent gets the brief, not the chat history.
   Paste [scripts/prelude.js](scripts/prelude.js) into its scripts.
 - **Batch size**: 80 to 150 frames. Bigger batches time out or lose track.
 
-**Review each batch** before the next one starts: `get_screenshot` of every section touched; compare each reachable
-screen with the running product in light and dark; check one or two note claims per section against the code;
-switch the page theme and back. Fix what is off, then tell the person what was built, what was compared, and what was
-not drawn and why.
+**Review each batch** before the next one starts, in this order:
+
+1. `get_screenshot` of every section touched (at scale 1 when comparing with a capture).
+2. **Same state first:** for each reachable screen, check the Figma frame and the running product show the same state
+   (same data, same open sheet, same theme). A different state fails, whatever it looks like.
+3. **Size:** the frame is the device or breakpoint size, not collapsed to hug its content.
+4. **Edges:** a button, card or field out of place fails at any size; a small overall difference can hide one. Decide
+   at the pilot which differences do not count (text rendering, line breaks) and write them in the brief.
+5. **Components, not drawings:** count the instances in each screen against the components the code uses there. A
+   piece drawn as plain shapes or text where the code uses a component fails.
+6. **Notes and themes:** check one or two note claims per section against the code; switch the page theme and back.
+
+Fix what is off, then tell the person what was built, what was compared, and what was not drawn and why.
 
 Done when: every screen and state on the approved map is drawn in every theme and reviewed, and the checklist in
 [references/checklist.md](references/checklist.md) passes.

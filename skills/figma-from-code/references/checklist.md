@@ -15,6 +15,9 @@ Run these before you call the build done.
 - [ ] **Motion and haptics** are described in the notes.
 - [ ] **Nothing at the origin**, no `__` helper nodes, no overlaps, no layers named "Frame 123".
 - [ ] **No text left in the Inter stand-in** once the brand font swap is done.
+- [ ] **Every variable's value read back** and matched with the code tokens, in every mode.
+- [ ] **No unbound colour** that matches a token (the rebind sweep found nothing left).
+- [ ] **Every screen uses component instances** where the code uses components.
 - [ ] **Old Figma pages** are left alone or moved under a divider with the person's OK, never deleted.
 - [ ] Each page has a **Contents** frame, and the design system page has "How to use this page" and real counts.
 - [ ] Later, maybe: Code Connect links from each Figma component to its code component.

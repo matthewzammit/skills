@@ -140,6 +140,22 @@ skills/
 - System controls (pickers, camera, share sheet, browser chrome, payment iframes) are listed as not drawn.
 - It costs agent time: a product of about 80 screens took us eight batches of one to three hours each.
 
+## Related projects
+
+Other people working on code to Figma. Some of the checks here (reading token values back, the file registry, the
+rebind sweep, pre-captured web references) were learned from them.
+
+- [bitovi/ai-enablement-prompts: figma-from-code](https://github.com/bitovi/ai-enablement-prompts/tree/main/plugins/figma-from-code):
+  a web app rebuilt by phase subagents, with pre-captured references and pixel diffs.
+- [charun-meedate/code-to-figma](https://github.com/charun-meedate/code-to-figma): a codebase mirrored as documentation,
+  with token values checked one by one.
+- [redongreen/uSpec](https://github.com/redongreen/uSpec): design system specs rendered into Figma.
+- [alima-max/prototype-to-figma-skill](https://github.com/alima-max/prototype-to-figma-skill): a prototype turned into
+  annotated frames per state.
+- [awdr74100/figwright](https://github.com/awdr74100/figwright): an MCP server and skill for writing to Figma.
+- [Figma's own MCP skills](https://github.com/figma/mcp-server-guide): `figma-use`, `figma-generate-design` and
+  `figma-generate-library`, which these skills build on.
+
 ## License
 
 MIT. Use it, change it, share it. If it helps, tell me what worked and what did not.
