@@ -38,8 +38,9 @@ Start with the design system and a few screens. Add the rest after you have revi
 
 Works for **mobile apps** (React Native, Swift, Kotlin, Flutter) and **web apps** (React, Next.js, Vue and so on).
 The skill sees which one you have and changes the steps. For the web it reads your breakpoints and draws responsive
-views: desktop and mobile for every screen, and tablet where the layout changes. We proved it on a React Native app;
-the web steps have not been run end to end yet, so tell me what you find.
+views: desktop and mobile for every screen, and tablet where the layout changes. We used it on a React Native app,
+and a second team used an earlier version on a web platform; the web steps in this form are newer, so tell me what you
+find.
 
 ## Two skills
 

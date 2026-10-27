@@ -87,9 +87,10 @@ app with Claude, then rebuilt Figma from the code with every new page and compon
 - **A weekly drift check** that tells you what changed in the code since the last sync, plans the redraw, and asks
   before it touches anything.
 
-Works for mobile apps (React Native, Swift, Kotlin, Flutter) and web apps (React, Next.js, Vue and more). We proved
-it on a React Native app. The web steps (widths, hover and focus states, a pixel capture as a reference) come from the
-same build but have not been run end to end yet, so expect some rough edges, and tell me what you find.
+Works for mobile apps (React Native, Swift, Kotlin, Flutter) and web apps (React, Next.js, Vue and more). We used it on
+two Binderr products: the Wallet mobile app, and a web platform whose team started its Figma build from an earlier
+version of the same process. The web steps in this exact form (responsive widths, hover and focus states, pre-captured
+references) are newer, so expect some rough edges, and tell me what you find.
 
 ### How it works
 
