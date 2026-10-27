@@ -26,7 +26,8 @@ Do this for **every** font family the product uses, and every style of it the co
 3. Whenever the tool must write text again (a sync, a fix), switch the styles back to Inter first (`toInter()`), do the
    work, then switch them to the brand font again.
 
-Edit `BRAND_FAMILY`, `TO_BRAND` and `TO_INTER` at the top of the script first, with the real style names. With more
+The plugin and the console script are new, general versions of the ones we used; if one fails, fall back to
+switching each text style by hand, and report it. Edit `BRAND_FAMILY`, `TO_BRAND` and `TO_INTER` at the top of the script first, with the real style names. With more
 than one local font, run the swap once per family, each with its own tables.
 
 Text in the brand font outside the text styles (component card titles, notes) cannot be written by the tool at all.

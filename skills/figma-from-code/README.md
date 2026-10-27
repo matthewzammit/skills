@@ -50,7 +50,7 @@ the web steps have not been run end to end yet, so tell me what you find.
 
 ## Install
 
-Install both skills: figma-from-code builds the file, figma-sync keeps it in step. With the `skills` CLI, for Claude Code, Cursor, Codex and other agents:
+Install both skills: figma-from-code builds the file, figma-sync keeps it in step. With the `skills` CLI (built and tested with Claude Code; it also installs into Cursor, Codex and other agents):
 
 ```
 npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync

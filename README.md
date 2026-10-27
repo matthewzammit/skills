@@ -3,9 +3,11 @@
 **Agent skills for product teams who build with Claude Code: the work between design and code that nobody has time
 for.**
 
+[![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
+
 Each skill is a folder: a `SKILL.md` the agent follows step by step, and a `README.md` for you. They ask before they
-act, check their own work, and come from real projects, with the mistakes already made for you. Works with Claude Code,
-Cursor, Codex and [other agents](https://skills.sh).
+act, check their own work, and come from real projects, with the mistakes already made for you. Built and tested with
+Claude Code; they install into Cursor, Codex and [other agents](https://skills.sh) too.
 
 ## Install
 
@@ -58,7 +60,7 @@ the product in code with Claude, screen by screen. But Figma is still the best p
 
 - **Review**: designers, product people and clients comment on the real product, side by side, in light and dark.
 - **Keep a reference**: every screen, state and component in one place, for onboarding, audits and the next feature.
-- **Make marketing assets**: store screenshots, decks, launch posts and the website, from real screens, not mockups.
+- **Make marketing assets**: app store screenshots, decks, launch posts and the website, from real screens, not mockups.
 
 So run the loop the other way. Figma is where you start and where you review; code is where you build.
 
