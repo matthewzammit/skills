@@ -78,7 +78,8 @@ Write the record to `<records>/<YYYY-MM-DD>.md` from [templates/record.md](templ
 [references/record.md](references/record.md), with an `End commit:` line. A clean week still gets a one-line
 record with its end commit, so the next scope starts in the right place.
 
-If the config files tickets:
+If the config files tickets, follow its `tickets.how` exactly (its naming, its commands, its carry-over). Where it
+is silent:
 
 1. **Carry over first.** Move the last run's open tickets into this run's group, close the old group, and name
    what moved in the record.
