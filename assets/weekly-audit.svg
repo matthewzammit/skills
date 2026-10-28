@@ -15,7 +15,7 @@
 
   <!-- Title -->
   <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Weekly audit</text>
-  <text x="64" y="140" fill="#a3a3a3" font-size="21">Reviews last week's changes with the review skills you install, and gives you one checked list.</text>
+  <text x="64" y="140" fill="#a3a3a3" font-size="21">Reviews every change for security, accessibility, design and code quality.</text>
 
   <!-- Inputs card -->
   <g filter="url(#shadow)">

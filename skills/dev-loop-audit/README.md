@@ -4,22 +4,18 @@
 
 # Dev loop audit
 
-**Your whole development loop, in one audit you run any time or every Monday.** Your agent measures where last
-week's time went, ranks every problem by minutes lost, double-checks the biggest ones, keeps a trend, and asks
-which fixes to build.
+**Find what slows down your CI, git hooks and agents.** Run it any time, or every Monday. It ranks every problem by
+minutes lost, double-checks the biggest ones, keeps a trend, and builds the fixes you pick.
 
 It checks three areas:
 
-1. **CI (GitHub Actions).** Failed and flaky runs, slow jobs, billed minutes, and code that landed on main with no
-   passing run, and for how long.
-2. **Local checks (git hooks and the tests before a push).** Are the hooks installed? Do they run the same checks
-   as CI? How long does a push take, and how many pushes failed for no good reason?
-3. **Agent time.** Where your agent waited, retried or got blocked, commands it typed by hand fifty times, and how
-   long each check in a simulator or browser took. This part reads Claude Code transcripts on your machine, so it is
-   Claude Code only for now. In other agents the audit covers areas 1 and 2, and says it skipped agent time.
+1. **CI (GitHub Actions).** Failed and flaky runs, slow jobs, billed minutes, and code on main with no passing run.
+2. **Git hooks.** Missing hooks, checks that differ from CI, slow pushes, and pushes that failed for no good reason.
+3. **Agents.** Waits, retries, blocked commands, commands typed by hand again and again, and slow simulator or
+   browser checks. This part reads Claude Code's transcripts, so it is Claude Code only for now. Other agents get
+   areas 1 and 2.
 
-Most audits look at one of these. Time lost in one area often shows up in another, so this one ranks them all on
-one list.
+Most audits look only at CI. Time lost in one area often shows up in another, so this ranks them all on one list.
 
 ## Install
 

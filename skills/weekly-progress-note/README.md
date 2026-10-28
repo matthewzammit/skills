@@ -4,11 +4,11 @@
 
 # Weekly progress note
 
-**Drafts a short weekly note in plain words: what shipped last week, and what is next.**
+**Prepare a summary of what was built, ready for your PM update.** It reads what was merged and released, and
+writes a short note in plain words: what shipped, and what is next. You edit it and send it yourself.
 
-A founder, a PM or a client wants to know what happened this week. The changelog has every change, but nobody
-reads it, and nobody has time to write the short version. This skill reads what was merged and released, and
-drafts a note anyone on the team understands. You read it, change what you like, and send it yourself.
+The changelog lists every change, but nobody reads it, and nobody has time to write the short version. This takes a
+minute.
 
 ## Install
 

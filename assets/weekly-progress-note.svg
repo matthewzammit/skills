@@ -15,7 +15,7 @@
 
   <!-- Title -->
   <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Weekly progress note</text>
-  <text x="64" y="140" fill="#a3a3a3" font-size="21">Drafts a short weekly note in plain words: what shipped last week, and what is next.</text>
+  <text x="64" y="140" fill="#a3a3a3" font-size="21">Prepares a summary of what was built, ready for your PM update.</text>
 
   <!-- Sources card -->
   <g filter="url(#shadow)">

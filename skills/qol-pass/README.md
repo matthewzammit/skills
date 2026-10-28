@@ -4,21 +4,21 @@
 
 # Quality of Life (QoL) pass
 
-Quality of Life means the small things that make an app easier and nicer to use.
+Quality of Life (QoL) means the small things that make an app easy and pleasant to use.
 
-**Checks one section of your app for the small problems users notice, and fixes the ones you pick.**
+**Keep your product to a quality standard, one section at a time.** It checks your running app for dead ends, wrong
+data, unclear wording, missing empty and error states, layout at the largest text size, motion and accessibility.
+You get one list of fixes, and it builds the ones you pick.
 
-Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you delete
-the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest text size.
-This skill walks your running app one section at a time, checks eight areas against your written standards, and
-hands you one numbered list. Nothing changes until you pick.
+Code review catches bugs, not a blank screen after you delete the last item, a button that says "OK", or a label cut
+off at the largest text size. This does.
 
-## No standards yet? It writes them
+## No standard yet? It writes one
 
-Most repos have no written quality bar, so a review is one person's taste. On the first run the skill looks for
-yours (design system docs, an accessibility guide, a copy guide). If there are none, it drafts a `QUALITY.md` from
-what your code already does: your real tokens, components and wording, plus sensible defaults for the gaps, each
-marked so you can see which is which. You approve it before any pass, and every pass after that judges against it.
+Most teams have no written quality standard, so every review is one person's taste. On the first run it looks for
+yours: design docs, an accessibility guide, a copy guide. If there is none, it writes a `QUALITY.md` from what your
+code already does, plus defaults for the gaps, marked so you can tell them apart. You approve it, and every pass
+checks against it.
 
 ## Install
 

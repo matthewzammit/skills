@@ -15,7 +15,7 @@
 
   <!-- Title -->
   <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Dev loop audit</text>
-  <text x="64" y="140" fill="#a3a3a3" font-size="21">Where last week went: CI, git hooks and Claude Code's own time, ranked by minutes.</text>
+  <text x="64" y="140" fill="#a3a3a3" font-size="21">Finds what slows down your CI, git hooks and agents, ranked by minutes lost.</text>
 
   <!-- Inputs card -->
   <g filter="url(#shadow)">
