@@ -96,7 +96,7 @@ reviews, finds a screen, and makes marketing assets.
 #### #2: Keep your product to a quality standard
 
 <p align="center">
-  <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
+  <img src="assets/qol-pass-banner.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
 </p>
 
 [**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, checks one section of your running app against your

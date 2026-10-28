@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../assets/qol-pass.png" alt="Quality of Life (QoL) pass: one section of an app on the left, checked against a QUALITY.md, and on the right a numbered list of findings with a recommended fix each and the question which to build." width="100%">
+  <img src="../../assets/qol-pass-banner.png" alt="Quality of Life (QoL) pass: one section of an app on the left, checked against a QUALITY.md, and on the right a numbered list of findings with a recommended fix each and the question which to build." width="100%">
 </p>
 
 # Quality of Life (QoL) pass
