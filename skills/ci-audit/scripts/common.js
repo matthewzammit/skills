@@ -14,6 +14,8 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { out._.push(a); continue; }
     const key = a.slice(2);
+    // zsh does not split an unquoted $VAR, so `node x.js $ARGS` arrives as one argument and the options vanish.
+    if (/\s/.test(key)) throw new Error(`one option per argument, got "${a.slice(0, 60)}" (in zsh, put the options in an array)`);
     const next = argv[i + 1];
     const value = next === undefined || next.startsWith('--') ? true : (i++, next);
     if (key in out) out[key] = [].concat(out[key], value);

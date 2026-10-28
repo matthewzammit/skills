@@ -10,10 +10,15 @@
  * `needs.*.result`), and path filters.
  * Hooks (references/checks-local.md): where git looks for hooks, which hooks exist and can run, which hook manager
  * the repo uses and whether it is installed, and which tools the hooks run that CI does not, and the other way.
+ * Worktrees: each one runs its own branch's copy of a tracked hook folder and of `.claude/settings.json`, so an old
+ * branch runs old hooks; the ones that differ from the main branch's worktree are listed.
+ * The files are read as they are now. With a window (--to), the commits since its end that changed workflows or
+ * hooks are listed, so a finding the repo has already fixed is reported as "fixed since".
  */
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseArgs, run, repoRoot, parseYaml, loadConfig } = require('./common.js');
+const { parseArgs, run, repoRoot, parseYaml, loadConfig, windowFrom } = require('./common.js');
 
 const HOOK_NAMES = ['pre-commit', 'commit-msg', 'pre-push', 'prepare-commit-msg', 'post-checkout', 'post-merge', 'pre-rebase'];
 
@@ -144,6 +149,25 @@ function managerIn(body) {
   return null;
 }
 
+/** A short hash of a hook folder's files and the agent hooks in `.claude/settings.json`, for one worktree. */
+function hookPrint(dir, hooksDir) {
+  const h = (parts) => (parts.length ? crypto.createHash('sha1').update(parts.join('\0')).digest('hex').slice(0, 8) : null);
+  const d = hooksDir && path.join(dir, hooksDir);
+  const git = d && fs.existsSync(d) ? fs.readdirSync(d).sort().map((n) => { try { return `${n}\n${fs.readFileSync(path.join(d, n), 'utf8')}`; } catch { return n; } }) : [];
+  let agent = [];
+  try { agent = [JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8')).hooks || {})]; } catch { /* no settings */ }
+  return { git_hooks: h(git), agent_hooks: h(agent) };
+}
+
+/** Worktrees whose hooks differ from the reference worktree's. entries: [{ path, branch, git_hooks, agent_hooks }]. */
+function hookDrift(entries, refPath) {
+  const ref = entries.find((e) => e.path === refPath);
+  if (!ref) return [];
+  return entries.filter((e) => e !== ref).map((e) => ({
+    ...e, git_differs: e.git_hooks !== ref.git_hooks, agent_differs: e.agent_hooks !== ref.agent_hooks,
+  })).filter((e) => e.git_differs || e.agent_differs);
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const root = repoRoot();
@@ -169,8 +193,29 @@ function main() {
     if (m.name === 'core.hooksPath') for (const n of m.hooks || []) hookBodies.push(...commandsIn(fs.readFileSync(path.join(root, m.config, n), 'utf8')));
   }
   const hookTools = expand([...new Set(hookBodies)], hooks.scripts);
+
+  const head = git(['log', '-1', '--format=%h %cs']).trim();
+  let since = [];
+  if (args.to || args.days || args.from) {
+    const win = windowFrom(args);
+    const paths = ['.github/workflows', '.husky', 'lefthook.yml', '.claude/settings.json', ...(hooks.core_hooks_path && !path.isAbsolute(hooks.core_hooks_path) ? [hooks.core_hooks_path] : [])];
+    try { since = git(['log', '--format=%h %cs %s', `--since=${win.endIso}`, `origin/${branch}`, '--', ...paths]).split('\n').filter(Boolean); } catch { /* no remote */ }
+  }
+  let worktrees = [];
+  try {
+    worktrees = git(['worktree', 'list', '--porcelain']).split('\n\n').map((b) => ({
+      path: (/^worktree (.+)$/m.exec(b) || [])[1], branch: ((/^branch refs\/heads\/(.+)$/m.exec(b) || [])[1]) || 'detached',
+    })).filter((w) => w.path && fs.existsSync(w.path));
+  } catch { /* no worktrees */ }
+  const tracked = hooks.core_hooks_path && !path.isAbsolute(hooks.core_hooks_path) ? hooks.core_hooks_path : null;
+  const refPath = (worktrees.find((w) => w.branch === branch) || { path: root }).path;
+  const drift = worktrees.length > 1 ? hookDrift(worktrees.map((w) => ({ ...w, ...hookPrint(w.path, tracked) })), refPath) : [];
+
   const out = {
     branch,
+    read_at: head,
+    changed_since_window_end: since,
+    hook_drift: drift,
     not_on_remote: notPushed,
     removed_locally: removedLocally,
     workflows,
@@ -183,7 +228,9 @@ function main() {
     },
   };
   if (args.out) fs.writeFileSync(String(args.out), JSON.stringify(out, null, 1));
-  const lines = ['# Workflows'];
+  const lines = [`Files read as they are now (HEAD ${head}).`];
+  if (since.length) lines.push(`Changed on origin/${branch} since the window end (a finding these fix is "fixed since"):`, ...since.map((l) => `  ${l}`));
+  lines.push('', '# Workflows');
   if (remote === null) lines.push(`origin/${branch} not found: cannot tell which workflow files GitHub has`);
   if (notPushed.length) lines.push(`NOT ON origin/${branch} (GitHub does not run them yet): ${notPushed.join(', ')}`);
   if (removedLocally.length) lines.push(`on origin/${branch} but not in this checkout: ${removedLocally.join(', ')}`);
@@ -197,6 +244,10 @@ function main() {
   if (!hooks.hooks.length) lines.push('  no active hooks');
   for (const m of hooks.managers) lines.push(`  manager ${m.name} (${m.config}): ${m.installed ? 'installed' : 'NOT installed in this clone'}`);
   if (hooks.tracked_but_not_used.length) lines.push(`  hook folders git does not use: ${hooks.tracked_but_not_used.join(', ')}`);
+  if (worktrees.length > 1) {
+    lines.push(`worktrees: ${worktrees.length}; with hooks that differ from ${branch}'s (each runs its own branch's copy): ${drift.length}`);
+    for (const d of drift) lines.push(`  ${d.path} (${d.branch}):${d.git_differs ? ' git hooks' : ''}${d.agent_differs ? ' agent hooks' : ''}`);
+  }
   lines.push('', '# CI against hooks', `CI runs: ${out.compare.ci.join(' ') || 'nothing known'}`, `hooks run: ${out.compare.hooks.join(' ') || 'nothing known'}`,
     `in CI only: ${out.compare.in_ci_not_hooks.join(' ') || 'none'}`, `in hooks only: ${out.compare.in_hooks_not_ci.join(' ') || 'none'}`);
   console.log(lines.join('\n'));
@@ -206,4 +257,4 @@ if (require.main === module) {
   try { main(); } catch (e) { console.error(e.message); process.exit(1); }
 }
 
-module.exports = { checkWorkflow, commandsIn, expand, managerIn };
+module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn };

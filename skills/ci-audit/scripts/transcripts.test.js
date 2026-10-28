@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { encodeProjectPath, projectFolders, newState, addRecord, buildCalls, compileConfig, tagCall } = require('./transcripts.js');
+const { rawCount, encodeProjectPath, projectFolders, newState, addRecord, buildCalls, compileConfig, tagCall } = require('./transcripts.js');
 
 const win = { startIso: '2026-10-19T00:00:00.000Z', endIso: '2026-10-26T00:00:00.000Z' };
 const use = (id, ts, name, input, extra = {}) => ({
@@ -62,7 +62,12 @@ test('core tags: push, sleeps, loops, hooks', () => {
   const cfg = compileConfig({});
   const t = (cmd, extra = {}) => tagCall({ name: 'Bash', cmd, ...extra }, cfg);
   assert.ok(t('git push origin main | tail -3').includes('piped_push'));
+  assert.ok(!t('git push > $f 2>&1; echo "exit $?"; tail -3 $f').includes('piped_push'));
+  assert.ok(!t('git push || echo failed').includes('piped_push'));
+  assert.ok(t('git push origin main 2>&1 | tail -3').includes('piped_push'));
+  assert.ok(!t('git push && git log | head -1').includes('piped_push'));
   assert.ok(t('git push --no-verify').includes('no_verify'));
+  assert.ok(!t("python3 - <<'EOF'\nwhile True:\n    break\nEOF\necho ok").includes('loop'));
   assert.ok(t('sleep 5').includes('sleep_only'));
   assert.ok(t('until curl -s localhost:3000; do sleep 1; done').includes('loop_unbounded'));
   assert.ok(!t('for i in $(seq 1 30); do until x; do :; done; done').includes('loop_unbounded'));
@@ -107,4 +112,18 @@ test('the config adds the repo\'s own helpers and screen reads', () => {
   assert.ok(tagCall({ name: 'Bash', cmd: 'npm run validate' }, cfg).includes('gate'));
   assert.ok(!tagCall({ name: 'Read', path: '/tmp/figma.png' }, cfg).includes('screen_seen'));
   assert.ok(!tagCall({ name: 'Bash', cmd: 'grep "npm run shot" README.md' }, cfg).includes('shot'));
+});
+
+test('rawCount, the cross-check, counts main-thread calls in the window once each', async () => {
+  const lines = [
+    use('a', '2026-10-20T10:00:00Z', 'Bash', { command: 'ls' }),
+    use('a', '2026-10-20T10:00:00Z', 'Bash', { command: 'ls' }), // replayed on resume
+    use('b', '2026-10-20T10:01:00Z', 'Read', {}),
+    use('c', '2026-10-20T10:02:00Z', 'Bash', {}, { record: { isSidechain: true } }),
+    use('d', '2026-10-27T10:00:00Z', 'Bash', {}), // after the window
+  ];
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ci-audit-')), 's1.jsonl');
+  fs.writeFileSync(file, lines.map((l) => JSON.stringify(l)).join('\n'));
+  const w = { start: new Date(win.startIso), end: new Date(win.endIso) };
+  assert.strictEqual(await rawCount(file, w), 2);
 });

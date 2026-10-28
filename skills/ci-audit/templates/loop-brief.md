@@ -11,10 +11,16 @@ Read-only: do not edit, commit, push, re-run or cancel anything. Do not start bu
 
 Inputs (already measured; use these numbers, never a parser of your own):
 - <OUT>/ci.txt and ci.json (GitHub Actions), <OUT>/checks.txt (workflow files and hooks),
-  <OUT>/metrics.txt and metrics.json (agent time, gate, QA), <OUT>/calls.json (every tool call, for evidence).
+  <OUT>/metrics.txt and metrics.json (agent time, gate, QA), <OUT>/calls.json (every tool call, for evidence:
+  `calls[]` with id, session, ts_use, ts_res, tool_s, name, tags, res_head, res_tail, is_error; a Bash call has
+  cmd, desc and bg, other tools have input, path, action or device). Every time in these files is UTC; the window
+  is local time.
+- Commits since the window end that changed workflows or hooks are at the top of checks.txt: a problem one of them
+  fixes is "fixed since", not open.
 - Last week's trend row: <row, or "first run">. Last report: <path, or "none">.
 - Check lists: <skill dir>/references/checks-ci.md, checks-local.md, checks-agent-time.md
-  <, addon-mobile.md> <, addon-web.md>. Do the <Reliability | Speed> section of each.
+  <, addon-mobile.md> <, addon-web.md>. Do the <Reliability | Speed> section of each (in checks-agent-time.md,
+  Reliability is "what counts as waste").
 
 You may run read-only commands for evidence: gh run view <id> [--log-failed], gh api, git log/show, and reading
 calls.json or a transcript by tool_use id.

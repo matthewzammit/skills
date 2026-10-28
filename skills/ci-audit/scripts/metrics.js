@@ -129,7 +129,9 @@ function compute(data, ci) {
     })),
     timeout_cmds: calls.filter((r) => has(r, 'timeout_cmd')).length,
     hook_refusals: calls.filter((r) => has(r, 'hook_refused')).length,
-    hook_refusals_by_text: countBy(calls.filter((r) => has(r, 'hook_refused')), (r) => (r.res_head || '').replace(/\s+/g, ' ').slice(0, 90)),
+    // Device ids and paths would split one rule into many lines, so they are masked before grouping.
+    hook_refusals_by_text: countBy(calls.filter((r) => has(r, 'hook_refused')), (r) => (r.res_head || '').replace(/\s+/g, ' ')
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<ID>').replace(/\/(Users|home)\/\S+/g, '<path>').slice(0, 140)),
     classifier_denials: calls.filter((r) => has(r, 'classifier_denied')).length,
     permission_denials: calls.filter((r) => has(r, 'permission_denied')).length,
     by_tool: Object.fromEntries(Object.entries(countBy(calls, (r) => r.name)).sort((a, b) => b[1] - a[1]).slice(0, 15)),
@@ -152,6 +154,17 @@ function compute(data, ci) {
   agent.model_after_error_min = modelAfter((r) => r.is_error).min;
   agent.top_bash_shapes = Object.entries(countBy(calls.filter((r) => r.name === 'Bash' && r.cmd), (r) => shape(r.cmd)))
     .sort((a, b) => b[1] - a[1]).slice(0, 25);
+  // The same shapes by time: a slow lookup run in a loop shows here even when it is rare by count.
+  const shapeMin = {};
+  for (const r of calls) {
+    if (r.name !== 'Bash' || !r.cmd || r.tool_s == null) continue;
+    const k = shape(r.cmd);
+    const e = shapeMin[k] || (shapeMin[k] = { n: 0, s: 0 });
+    e.n++;
+    e.s += r.tool_s;
+  }
+  agent.top_bash_shapes_by_min = Object.entries(shapeMin).sort((a, b) => b[1].s - a[1].s).slice(0, 15)
+    .map(([k, e]) => [k, e.n, round(e.s / 60, 1)]);
 
   // Local gate: pushes (the hook runs inside them) and gate commands run by hand.
   const pushes = calls.filter((r) => has(r, 'git_push') && r.t1 != null);
@@ -243,7 +256,8 @@ function compute(data, ci) {
     }
   }
   qa.consecutive_screens = cons;
-  // Setup: start of a QA episode to its first input. Cold when a build, install or helper start ran first.
+  // Setup: the QA tools' own wall time before an episode's first input (coding in between is not setup). Cold when a
+  // build, an install, a dev server start, or a start helper that ran over 2 minutes (it built) came first.
   const setupWarm = [];
   const setupCold = [];
   const episodes = [];
@@ -255,10 +269,10 @@ function compute(data, ci) {
       const first = cur.find((r) => has(r, 'input'));
       if (first) {
         const pre = cur.filter((r) => r.t0 < first.t0);
-        const cold = pre.some((r) => has(r, 'native') || has(r, 'dev_server') || has(r, 'install') || has(r, 'helper_start'));
-        const dt = (first.t0 - cur[0].t0) / 1000;
+        const cold = pre.some((r) => has(r, 'native') || has(r, 'dev_server') || has(r, 'install') || (has(r, 'helper_start') && r.tool_s > 120));
+        const dt = unionMin(pre) * 60;
         (cold ? setupCold : setupWarm).push(dt);
-        episodes.push({ session: s.slice(0, 8), at: cur[0].ts_use.slice(5, 16), setup_s: Math.round(dt), cold, calls: cur.length, inputs: cur.filter((r) => has(r, 'input')).length });
+        episodes.push({ session: s.slice(0, 8), at: cur[0].ts_use.slice(5, 16), setup_s: Math.round(dt), span_s: Math.round((first.t0 - cur[0].t0) / 1000), cold, calls: cur.length, inputs: cur.filter((r) => has(r, 'input')).length });
       }
       cur = [];
     };
@@ -357,14 +371,15 @@ function appendTrend(file, row) {
 function summary(M) {
   const out = [];
   const line = (k, v) => out.push(`${k}: ${typeof v === 'object' && v !== null ? JSON.stringify(v) : v}`);
-  out.push(`# Window ${M.window.from} to ${M.window.to} (end exclusive)`, '', '## Agent');
-  for (const [k, v] of Object.entries(M.agent)) if (!['person_wait_examples', 'long_calls', 'top_bash_shapes', 'retry_examples', 'loops_unbounded_over_60s', 'hook_refusals_by_text'].includes(k)) line(k, v);
+  out.push(`# Window ${M.window.from} to ${M.window.to} (end exclusive, local time). Every "at" below is UTC.`, '', '## Agent');
+  for (const [k, v] of Object.entries(M.agent)) if (!['person_wait_examples', 'long_calls', 'top_bash_shapes', 'top_bash_shapes_by_min', 'retry_examples', 'loops_unbounded_over_60s', 'hook_refusals_by_text'].includes(k)) line(k, v);
   out.push('waits on the person (left out of tool and wall time):', ...M.agent.person_wait_examples.map((e) => `  ${JSON.stringify(e)}`));
-  out.push('long calls:', ...M.agent.long_calls.map((e) => `  ${JSON.stringify(e)}`));
+  out.push(`long calls (the ${M.agent.long_calls.length} longest of ${M.agent.calls_over_60s}):`, ...M.agent.long_calls.map((e) => `  ${JSON.stringify(e)}`));
   out.push('retries:', ...M.agent.retry_examples.map((e) => `  ${JSON.stringify(e)}`));
   out.push('unbounded loops over 60 s:', ...M.agent.loops_unbounded_over_60s.map((e) => `  ${JSON.stringify(e)}`));
   out.push('hook refusals:', ...Object.entries(M.agent.hook_refusals_by_text).map(([k, v]) => `  ${v} x ${k}`));
   out.push('top command shapes:', ...M.agent.top_bash_shapes.map(([k, v]) => `  ${v} x ${k}`));
+  out.push('top command shapes by time (calls, minutes):', ...M.agent.top_bash_shapes_by_min.map(([k, n, m]) => `  ${m} min, ${n} x ${k}`));
   out.push('', '## Gate');
   for (const [k, v] of Object.entries(M.gate)) if (k !== 'push_failed') line(k, v);
   out.push('failed pushes:', ...M.gate.push_failed.map((e) => `  ${JSON.stringify(e)}`));

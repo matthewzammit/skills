@@ -1,7 +1,7 @@
 // Run with: node --test skills/ci-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { checkWorkflow, commandsIn, expand } = require('./repo-checks.js');
+const { hookDrift, checkWorkflow, commandsIn, expand } = require('./repo-checks.js');
 
 const WORKFLOW = `name: CI
 on:
@@ -56,4 +56,13 @@ test('commandsIn names scripts and tools', () => {
 test('expand follows package.json scripts, with pre scripts', () => {
   const scripts = { validate: 'npm run lint && npm run typecheck', lint: 'eslint .', prelint: 'node clean.js', typecheck: 'tsc --noEmit' };
   assert.deepStrictEqual(expand(['script:validate'], scripts), ['script:lint', 'script:typecheck', 'script:validate', 'tool:eslint', 'tool:tsc']);
+});
+
+test('hookDrift lists worktrees whose hooks differ from the main branch\'s', () => {
+  const d = hookDrift([
+    { path: '/r/main', branch: 'main', git_hooks: 'aa', agent_hooks: 'bb' },
+    { path: '/r/new', branch: 'feat/new', git_hooks: 'aa', agent_hooks: 'bb' },
+    { path: '/r/old', branch: 'feat/old', git_hooks: 'a0', agent_hooks: 'b0' },
+  ], '/r/main');
+  assert.deepStrictEqual(d.map((x) => [x.branch, x.git_differs, x.agent_differs]), [['feat/old', true, true]]);
 });

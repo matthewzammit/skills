@@ -37,15 +37,19 @@ Done when: you can say the window in one line, and you have last week's row (or 
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/ci-runs.js <window> --out $OUT/ci.json > $OUT/ci.txt
-node ${CLAUDE_SKILL_DIR}/scripts/repo-checks.js --out $OUT/checks.json > $OUT/checks.txt
+node ${CLAUDE_SKILL_DIR}/scripts/repo-checks.js <window> --out $OUT/checks.json > $OUT/checks.txt
 node ${CLAUDE_SKILL_DIR}/scripts/transcripts.js <window> --out $OUT/calls.json
 node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --out $OUT/metrics.json > $OUT/metrics.txt
 ```
 
-`ci-runs.js` needs `gh` signed in; it checks the API rate limit first and says so if it is low. If a script
+`<window>` is the same options for each, one per argument (in zsh, an unquoted `$VAR` does not split: use an
+array). `ci-runs.js` needs `gh` signed in; it checks the API rate limit first and says so if it is low.
+`repo-checks.js` reads the files as they are now and lists the commits since the window end that changed workflows
+or hooks: a finding one of them fixes is reported as "fixed since", not as open. If a script
 misses a command shape this repo uses (its own helper scripts), add a tag to the config's `tags` and run again;
-never write a second parser. Cross-check one session: its call count in `metrics.txt` against
-`grep -c '"type":"tool_use"'` on its transcript (a resumed session may count higher in grep: replays).
+never write a second parser. Cross-check the busiest session: `transcripts.js <window> --check <session>`
+counts its calls with a plain reader; the number equals its `calls` under Sessions in `metrics.txt`. (A grep of
+the whole transcript counts other weeks, replays and subagents, so it is always higher.)
 
 Done when: all four outputs exist, and the cross-check holds or you know why it differs.
 

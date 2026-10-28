@@ -39,6 +39,16 @@ test('summarizeJobs uses successful runs only', () => {
   assert.strictEqual(s.jobs.test.queue_median_s, 30);
 });
 
+test('summarizeJobs numbers steps that share a name', () => {
+  const steps = [
+    { name: 'Run actions/cache@v5', conclusion: 'success', started_at: at(0), completed_at: at(0.5) },
+    { name: 'Run actions/cache@v5', conclusion: 'success', started_at: at(1), completed_at: at(1.05) },
+  ];
+  const s = summarizeJobs([{ ...runOf(1, 'a'), jobs: [job('test', 0, 2, { steps })] }]).CI.jobs.test.steps;
+  assert.strictEqual(s['Run actions/cache@v5'].median_s, 30);
+  assert.strictEqual(s['Run actions/cache@v5 #2'].median_s, 3);
+});
+
 test('flakes: green on a re-run, or a later run on the same commit', () => {
   const runs = [
     runOf(1, 'aaaaaaaa1', { run_attempt: 2 }),
@@ -120,4 +130,17 @@ test('collect reads gh and git through the functions it is given', () => {
   assert.strictEqual(out.summary.holes, 0);
   assert.strictEqual(out.summary.billed_min, 2);
   assert.ok(calls.some((c) => c.includes('created=2026-10-20')));
+});
+
+test('with real pushes, a push no workflow ran on is a hole only when CI watches its files', () => {
+  const c = (sha, files) => ({ sha, date: at(0), subject: `commit ${sha}`, files });
+  const commits = [c('d1', ['docs/x.md']), c('s1', ['src/a.ts']), c('s2', ['src/b.ts'])];
+  const runs = [runOf(1, 's2', { created_at: at(200) })];
+  const filters = { CI: pushFilters("on:\n  push:\n    paths-ignore: ['docs/**']\n") };
+  const pushes = new Map([['d1', at(0)], ['s1', at(5)], ['s2', at(200)]]);
+  const by = Object.fromEntries(findHoles(commits, runs, ['CI'], filters, pushes).map((g) => [g.tip, g]));
+  assert.strictEqual(by.d1.status, 'no_run');
+  assert.strictEqual(by.d1.hole, false);
+  assert.strictEqual(by.s1.hole, true); // code with no run; the next pass came over an hour later
+  assert.strictEqual(by.s2.hole, false);
 });

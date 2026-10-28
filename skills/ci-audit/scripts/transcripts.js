@@ -6,6 +6,9 @@
  *   node transcripts.js --out calls.json                    last week (Monday to Monday, local time)
  *   node transcripts.js --from 2026-10-19 --to 2026-10-26 --out calls.json   (--to is exclusive)
  *   node transcripts.js --days 7 --out calls.json
+ *   node transcripts.js --check <session id start> [window]  the cross-check: that session's tool calls in the
+ *     window, counted by a plain reader with none of the rules below. It should equal the session's `calls` in
+ *     metrics.txt; a whole-file grep does not (it counts replays, subagents and other weeks).
  *   options: --config <file>  --match <folder text> (repeatable)  --projects <dir, default ~/.claude/projects>
  *
  * The rules (see references/checks-agent-time.md):
@@ -242,16 +245,19 @@ function tagCall(rec, cfg) {
     if (/git push/.test(c) && !/^\s*(cat|grep|sed|rg)\b/.test(c)) {
       add('git_push');
       if (/--no-verify/.test(c)) add('no_verify');
-      if (/git push[^\n|]*\|/.test(c)) add('piped_push');
+      // A pipe inside the push command itself; `> file`, `||` and a pipe after `;` or `&&` do not hide its exit code.
+      if (/git push(?:(?!&&)[^\n|;])*\|(?!\|)/.test(c)) add('piped_push');
     }
     if (/\b(tsc|npm run typecheck|npm run type-check|vue-tsc|mypy|pyright)\b/.test(c)) add('typecheck');
     if (/\b(eslint|npm run lint|biome (check|lint)|ruff|golangci-lint|rubocop|swiftlint|ktlint)\b/.test(c)) add('lint');
     if (/\b(jest|vitest|npm (run )?test|pnpm test|yarn test|pytest|go test|cargo test|rspec|phpunit|mocha|node --test)\b/.test(c)) add('test');
     if (/\b(npm (ci|install|i)|pnpm (i|install)|yarn( install)?|bun install|pip install|bundle install|poetry install)\b/.test(c) && !readonly) add('install');
     if (SLEEP_ONLY.test(c)) add('sleep_only');
-    if (/\b(until|while)\b/.test(c) && !readonly) {
+    // Loops in the shell only: a heredoc body is a script for another language (a Python `while` is not a wait).
+    const shellOnly = c.replace(/<<-?\s*['"]?(\w+)['"]?[\s\S]*?\n\s*\1\s*(\n|$)/g, '\n');
+    if (/\b(until|while)\b/.test(shellOnly) && !readonly) {
       add('loop');
-      if (!BOUND.test(c)) add('loop_unbounded');
+      if (!BOUND.test(shellOnly)) add('loop_unbounded');
     }
     if (/(^|\s)timeout\s+\d/.test(c)) add('timeout_cmd');
     let nominal = 0;
@@ -304,9 +310,25 @@ async function readFile(state, file, folder, win) {
   }
 }
 
+/** The cross-check: main-thread tool_use ids in the window, with no de-duplication rules beyond the id itself. */
+async function rawCount(file, win) {
+  const ids = new Set();
+  const rl = readline.createInterface({ input: fs.createReadStream(file, { encoding: 'utf8' }), crlfDelay: Infinity });
+  for await (const line of rl) {
+    if (!line.includes('"tool_use"')) continue;
+    let d;
+    try { d = JSON.parse(line); } catch { continue; }
+    if (d.type !== 'assistant' || d.isSidechain) continue;
+    const t = Date.parse(d.timestamp);
+    if (!(t >= win.start.getTime() && t < win.end.getTime())) continue;
+    for (const c of (d.message && d.message.content) || []) if (c && c.type === 'tool_use') ids.add(c.id);
+  }
+  return ids.size;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.out) throw new Error('give --out <calls.json>');
+  if (!args.out && !args.check) throw new Error('give --out <calls.json>');
   const win = windowFrom(args);
   const config = loadConfig(args);
   const cfg = compileConfig(config);
@@ -324,6 +346,14 @@ async function main() {
     }
   }
   files.sort((a, b) => fs.statSync(a.p).mtimeMs - fs.statSync(b.p).mtimeMs);
+  if (args.check) {
+    const mine = files.filter((f) => path.basename(f.p).startsWith(String(args.check)));
+    if (!mine.length) throw new Error(`no transcript for session ${args.check} in the window`);
+    let n = 0;
+    for (const f of mine) n += await rawCount(f.p, win);
+    console.log(`session ${args.check}: ${n} tool calls in ${win.from} to ${win.to} (compare with its calls in metrics.txt)`);
+    return;
+  }
   const state = newState();
   for (const { p, folder } of files) await readFile(state, p, folder, win);
   const calls = buildCalls(state, cfg);
@@ -345,4 +375,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
 
-module.exports = { encodeProjectPath, projectFolders, isHumanMessage, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };
+module.exports = { rawCount, encodeProjectPath, projectFolders, isHumanMessage, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };

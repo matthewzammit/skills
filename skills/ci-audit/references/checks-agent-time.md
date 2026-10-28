@@ -23,11 +23,12 @@ when a script changed: a new rule moves the numbers a few percent.
   command that contains a sleep is not all sleep.
 - **Retries:** a Bash command run again within 10 minutes after the same command failed.
 - **QA** (the agent checking its work on a device or in a browser; the add-ons say what counts): a QA episode starts
-  after 20 minutes with no QA call; setup is its start to its first input, cold when a build, install or start helper
-  ran first. A **check step** is an input to the first screen the agent sees after it; it is **batched** when the
+  after 20 minutes with no QA call. **Setup** is the QA tools' own wall time before its first input (coding in
+  between does not count; `span_s` in the episode row is the elapsed time), **cold** when a build, an install, a dev
+  server start or a start helper over 2 minutes ran first. A build sent to the background is not in setup. A **check step** is an input to the first screen the agent sees after it; it is **batched** when the
   look went in the same message as the input (one round trip instead of two).
 
-## What counts as waste
+## Reliability: what counts as waste
 
 1. **Waits:** sleep-only calls, sleeps before a check that already waits, and unbounded `until`/`while` loops that
    ran over a minute (`loops_unbounded_over_60s`). A bounded wait on something real (a build) is fine.
@@ -39,7 +40,8 @@ when a script changed: a new rule moves the numbers a few percent.
    agent keeps hitting is a doc gap; a refusal of a correct action is a hook or settings gap.
 5. **Repeated command shapes** (`top_bash_shapes`): a long command typed by hand dozens of times wants a script. A
    shape that is only `python3 - <<EOF` or `node -e` means the agent wrote throwaway code again and again: name what
-   it computed.
+   it computed. `top_bash_shapes_by_min` ranks the same shapes by time: a slow lookup run in a loop (a whole task
+   list fetched once per name) shows there.
 6. **Model time after errors** (`model_after_error_min`): the thinking an error cost.
 7. **QA, per input** (`qa.per_input_s` = (QA wall + QA model) / inputs): the one number that compares weeks with
    different amounts of testing. Then: setup warm and cold, the check step median, the batched share, screenshots

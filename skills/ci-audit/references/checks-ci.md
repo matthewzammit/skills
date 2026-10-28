@@ -10,7 +10,8 @@ re-ran) rank above runner-minutes (only money).
    under `NOT ON origin/<branch>` in checks.txt (committed but never pushed, so GitHub has never run it). Either
    means every push is unchecked; it outranks everything else.
 2. **Holes** (top priority, always fix): a push to the main branch that changed files CI watches and never got a
-   passing run (`holes` in ci.json, `hole: true`). Say what reached the branch unchecked and for how long. A cancelled
+   passing run (`holes` in ci.json, `hole: true`). Pushes come from GitHub's activity API; when ci.txt says
+   "from the runs (guessed)", a push no workflow ran on is folded into the next one, so say holes may be missed. Say what reached the branch unchecked and for how long. A cancelled
    run covered by the next push within the hour is not a hole.
 3. **Skipped by the workflow's own condition** (`status: skipped`): read the job's `if:`. Fine when it only skips
    commits that need no check (a version stamp right after a checked merge); a hole when it can skip real code.
@@ -43,7 +44,8 @@ re-ran) rank above runner-minutes (only money).
    10 on macOS. A job just over a minute bills 2: show how many runs sit just over a boundary and what would bring
    them under. `billed_wasted_min` is failed and cancelled runs.
 5. **Path filters** (`path_filter_use`): a workflow with a path filter that still ran on 80% or more of pushes filters
-   almost nothing. Missing filters: a docs-only push that ran the full suite.
+   almost nothing (only meaningful when pushes come from the activity API).
+   Steps that share a name in one job are numbered (`#2`) in `speed`. Missing filters: a docs-only push that ran the full suite.
 6. **Cache:** a warm run that took as long as a cold one (dependency install or lint step at its cold time) means
    a cache was missed or rejected; look at the step's log for the restore line.
 

@@ -99,11 +99,15 @@ function summarizeJobs(runs) {
       e.durs.push(dur(j.started_at, j.completed_at));
       const q = dur(j.created_at, j.started_at);
       if (q != null && q >= 0) e.queues.push(q);
+      const named = {};
       for (const st of j.steps || []) {
+        // Two steps can share a name (two cache restores); number the second so their times stay apart.
+        named[st.name] = (named[st.name] || 0) + 1;
+        const key = named[st.name] > 1 ? `${st.name} #${named[st.name]}` : st.name;
         if (st.conclusion !== 'success') continue;
         const d = dur(st.started_at, st.completed_at);
         if (d == null) continue;
-        (e.steps[st.name] || (e.steps[st.name] = [])).push(d);
+        (e.steps[key] || (e.steps[key] = [])).push(d);
       }
     }
   }
@@ -194,11 +198,13 @@ function statusOf(runs) {
 /**
  * Group first-parent commits (oldest first) by push and decide which groups are holes.
  * commits: [{ sha, date, subject, files: [..] }]; runs: push runs on the branch (every workflow);
- * ciNames: the workflows that check code; filters: { [workflow name]: pushFilters result }.
+ * ciNames: the workflows that check code; filters: { [workflow name]: pushFilters result };
+ * pushes: Map of pushed tip sha to push time, from GitHub's activity API. Without it, a push is guessed as a commit
+ * that has runs, which hides pushes no workflow ran on (a docs-only push, or code CI never saw).
  */
-function findHoles(commits, runs, ciNames, filters = {}) {
+function findHoles(commits, runs, ciNames, filters = {}, pushes = null) {
   const pushRuns = runs.filter((r) => r.event === 'push');
-  const tips = new Set(pushRuns.map((r) => r.head_sha));
+  const tips = pushes ? new Set(pushes.keys()) : new Set(pushRuns.map((r) => r.head_sha));
   const groups = [];
   let cur = [];
   for (const c of commits) {
@@ -217,7 +223,7 @@ function findHoles(commits, runs, ciNames, filters = {}) {
     g.watched_sample = watched.slice(0, 5);
     const pass = ciRuns.filter((r) => r.conclusion === 'success').sort((a, b) => ms(a.created_at) - ms(b.created_at))[0];
     g.passed_at = pass ? pass.created_at : null;
-    g.pushed_at = (pushRuns.filter((r) => r.head_sha === g.tip).sort((a, b) => ms(a.created_at) - ms(b.created_at))[0] || {}).created_at || g.commits[g.commits.length - 1].date;
+    g.pushed_at = (pushes && pushes.get(g.tip)) || (pushRuns.filter((r) => r.head_sha === g.tip).sort((a, b) => ms(a.created_at) - ms(b.created_at))[0] || {}).created_at || g.commits[g.commits.length - 1].date;
     g.runs = ciRuns.map((r) => ({ id: r.id, workflow: r.name, conclusion: r.conclusion || r.status }));
   }
   groups.forEach((g, i) => {
@@ -267,6 +273,7 @@ function summarize(runs, win, ciNames, holes, flakes) {
     skipped_pushes: holes.filter((h) => h.status === 'skipped' && h.watched_files > 0).length,
     main_commits: holes.reduce((a, g) => a + g.commits, 0),
     pushes: holes.length,
+    pushes_no_run_filtered: holes.filter((h) => h.status === 'no_run' && h.watched_files === 0).length,
     run_median_s: median(walls),
     run_p90_s: p90(walls),
     queue_median_s: median(queues),
@@ -281,6 +288,19 @@ function ghJsonLines(text) {
 }
 
 /** Everything that talks to gh and git, injectable for tests. */
+/** Pushes to the branch in the window (tip sha to time), or null when the activity API is not available. */
+function fetchPushes(gh, repo, branch, win) {
+  const age = (Date.now() - ms(win.startIso)) / 86400000;
+  const period = age <= 1 ? 'day' : age <= 7 ? 'week' : age <= 31 ? 'month' : age <= 92 ? 'quarter' : 'year';
+  try {
+    const list = ghJsonLines(gh(['api', '--paginate', '-X', 'GET', `repos/${repo}/activity`, '-f', `ref=refs/heads/${branch}`,
+      '-f', `time_period=${period}`, '-f', 'per_page=100', '--jq', '.[] | {after, timestamp, activity_type}']));
+    const kinds = new Set(['push', 'force_push', 'pr_merge', 'merge_queue_merge']);
+    return new Map(list.filter((a) => kinds.has(a.activity_type) && a.timestamp >= win.startIso && a.timestamp < win.endIso)
+      .map((a) => [a.after, a.timestamp]));
+  } catch { return null; }
+}
+
 function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, log = () => {} }) {
   const rate = JSON.parse(gh(['api', 'rate_limit', '--jq', '.resources.core']));
   const days = utcDays(win, 1);
@@ -332,7 +352,9 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
     try { filters[name] = pushFilters(git(['show', `origin/${branch}:${r.path}`])); } catch { /* workflow file moved */ }
   }
   const branchRuns = runs.filter((r) => r.head_branch === branch);
-  const holes = findHoles(commits, branchRuns, ciNames, filters);
+  const pushList = fetchPushes(gh, repo, branch, win);
+  if (!pushList) log('warning: the activity API gave no pushes, so pushes are guessed from runs (docs-only pushes are hidden)');
+  const holes = findHoles(commits, branchRuns, ciNames, filters, pushList);
 
   const inWin = runs.filter((r) => r.in_window);
   const failures = inWin.filter((r) => FAILED.has(r.conclusion)).map((r) => ({
@@ -355,7 +377,7 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
   return {
     repo, branch, window: { from: win.from, to: win.to, start_utc: win.startIso, end_utc: win.endIso },
     rate_limit: { before: rate.remaining, after: JSON.parse(gh(['api', 'rate_limit', '--jq', '.resources.core'])).remaining },
-    summary: summarize(runs, win, ciNames, holes, flakes),
+    summary: { ...summarize(runs, win, ciNames, holes, flakes), pushes_from: pushList ? 'activity API' : 'runs (guessed)' },
     speed: summarizeJobs(inWin),
     failures, cancelled, flakes, holes, path_filter_use: filterUse,
     long_jobs: inWin.flatMap((r) => (r.jobs || []).map((j) => ({ run: r.id, workflow: r.name, job: j.name, conclusion: j.conclusion, s: dur(j.started_at, j.completed_at) })))
@@ -371,14 +393,14 @@ function text(out) {
     `runs ${s.runs} (CI workflows ${s.ci_workflows.join(', ') || 'none found'}: ${s.ci_runs}); by conclusion ${JSON.stringify(s.by_conclusion)}`,
     `by workflow ${JSON.stringify(s.by_workflow)}`,
     ...(s.ci_workflows.length ? [] : [`NO CI: no workflow that checks code ran on ${out.branch} in the window, so every push is unchecked (${s.main_commits} commits). Check that the workflow files are pushed and that Actions is on.`]),
-    `failed ${s.failed}, cancelled ${s.cancelled}, flaky ${s.flaky}, holes ${s.holes}, skipped by the workflow's own condition ${s.skipped_pushes} (${s.main_commits} commits on ${out.branch} in ${s.pushes} pushes)`,
+    `failed ${s.failed}, cancelled ${s.cancelled}, flaky ${s.flaky}, holes ${s.holes}, skipped by the workflow's own condition ${s.skipped_pushes} (${s.main_commits} commits on ${out.branch} in ${s.pushes} pushes, from the ${s.pushes_from}; ${s.pushes_no_run_filtered} changed only paths CI ignores)`,
     `CI run wall (successful): median ${s.run_median_s} s, p90 ${s.run_p90_s} s; queue median ${s.queue_median_s} s`,
     `billed minutes (estimate) ${s.billed_min}, of which failed or cancelled ${s.billed_wasted_min}; jobs fetched for ${s.jobs_fetched} runs`,
     `rate limit ${out.rate_limit.before} -> ${out.rate_limit.after}`,
     '', 'failures:', ...out.failures.map((f) => `  ${JSON.stringify(f)}`),
     'cancelled:', ...out.cancelled.map((f) => `  ${JSON.stringify(f)}`),
     'flakes:', ...out.flakes.map((f) => `  ${JSON.stringify(f)}`),
-    'pushes to the main branch (not passed):', ...out.holes.filter((g) => g.status !== 'passed').map((g) => `  ${JSON.stringify(g)}`),
+    'pushes to the main branch (not passed; pushes that changed only ignored paths left out):', ...out.holes.filter((g) => g.status !== 'passed' && g.watched_files > 0).map((g) => `  ${JSON.stringify(g)}`),
     'path filters (share of pushes the workflow ran on):', ...Object.entries(out.path_filter_use).map(([n, v]) => `  ${n} ${JSON.stringify(v)}`),
     'speed:', ...Object.entries(out.speed).map(([n, v]) => `  ${n} ${JSON.stringify(v)}`),
     'longest jobs:', ...out.long_jobs.map((j) => `  ${JSON.stringify(j)}`),
@@ -409,4 +431,4 @@ if (require.main === module) {
   try { main(); } catch (e) { console.error(e.message); process.exit(1); }
 }
 
-module.exports = { utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };
+module.exports = { fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };

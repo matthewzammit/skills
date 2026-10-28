@@ -69,16 +69,18 @@ test('pushes: refused by a hook, ran, failed', () => {
   assert.strictEqual(M.gate.push_median_s, 9.5);
 });
 
-test('setup is cold when a build or start helper ran before the first input', () => {
+test('setup is the QA tools\' time before the first input; cold when a build ran first', () => {
   const M = compute(data([
     call(0, 100, { tags: ['native', 'qa'] }),
     call(120, 122, { tags: ['input', 'qa'] }),
     call(5000, 5002, { tags: ['screenshot', 'qa'] }), // a new episode (over 20 min later)
-    call(5010, 5012, { tags: ['input', 'qa'] }),
+    call(5600, 5610, { tags: ['helper', 'helper_start', 'qa'] }), // a quick start helper: warm; 10 min of coding before it
+    call(5620, 5622, { tags: ['input', 'qa'] }),
   ]));
   assert.strictEqual(M.qa.episodes, 2);
-  assert.strictEqual(M.qa.setup_median_cold_s, 120);
-  assert.strictEqual(M.qa.setup_median_warm_s, 10);
+  assert.strictEqual(M.qa.setup_median_cold_s, 100);
+  assert.strictEqual(M.qa.setup_median_warm_s, 12);
+  assert.strictEqual(M.qa.episode_rows[1].span_s, 620);
 });
 
 test('time waiting on the person is left out of tool and wall time', () => {

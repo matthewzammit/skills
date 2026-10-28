@@ -11,6 +11,10 @@ test('parseArgs reads flags, values and repeats', () => {
   assert.deepStrictEqual(a._, ['x']);
 });
 
+test('parseArgs refuses options joined into one argument', () => {
+  assert.throws(() => parseArgs(['--from 2026-10-19 --config c.json']), /one option per argument/);
+});
+
 test('the default window is last week, Monday to Monday', () => {
   const w = windowFrom({}, new Date(2026, 9, 28, 15, 0)); // a Wednesday
   assert.strictEqual(w.from, '2026-10-19');
