@@ -23,6 +23,31 @@ modes, and text styles, so designers can comment, change a component and see eve
 
 ---
 
+## Install
+
+Install both: figma-from-code builds the file, figma-sync keeps it updated.
+
+```bash
+npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
+```
+
+It works in Claude Code, Cursor, Codex and other agents. Add `-g` to install them for every project. Run it again to
+update.
+
+Or as a Claude Code plugin, which installs all the skills in this repo:
+
+```
+/plugin marketplace add matthewzammit/skills
+/plugin install matthewzammit-skills@matthewzammit
+```
+
+Or copy the two folders into `~/.claude/skills/` (for you) or `<your repo>/.claude/skills/` (for your team).
+
+Then, in your app's repo, say "rebuild our app in Figma from the code", or type `/figma-from-code`
+(`/matthewzammit-skills:figma-from-code` when installed as a plugin). Claude reads your code first, then asks only what
+it cannot find out: your Figma file, what to build first, the default theme, which version of the app, your old
+designs, web widths, who reviews. It tests every font your code uses before it draws anything.
+
 ## What you get
 
 Up to four Figma pages, built from your code:
@@ -94,28 +119,6 @@ what to set up: the font installed, the Claude in Chrome extension, and Figma op
 |---|---|---|
 | `figma-from-code` | Once, for the first build | Asks a few questions, checks your setup, maps the product, then builds it in Figma in batches while you review. |
 | `figma-sync` | After a change, at each release, and weekly | Finds what changed in the code since the last sync, checks the Figma file's own rules, asks what to update, redraws it, and records the sync. |
-
-## Install
-
-Install both skills: figma-from-code builds the file, figma-sync keeps it updated. With the `skills` CLI (it installs into Claude Code, Cursor, Codex and other agents):
-
-```
-npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
-```
-
-Or as a Claude Code plugin (terminal or the Claude desktop app's Code tab):
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
-
-Or copy the two folders into `~/.claude/skills/` (for you) or `<your repo>/.claude/skills/` (for your team).
-
-Then, in your app's repo, say "rebuild our app in Figma from the code", or type `/figma-from-code`
-(`/matthewzammit-skills:figma-from-code` when installed as a plugin). Claude reads your code first, then asks only what
-it cannot find out: your Figma file, what to build first, the default theme, which version of the app, your old
-designs, web widths, who reviews. It tests every font your code uses before it draws anything.
 
 ## What you need first
 

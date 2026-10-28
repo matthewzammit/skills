@@ -20,6 +20,22 @@ yours (design system docs, an accessibility guide, a copy guide). If there are n
 what your code already does: your real tokens, components and wording, plus sensible defaults for the gaps, each
 marked so you can see which is which. You approve it before any pass, and every pass after that judges against it.
 
+## Install
+
+```bash
+npx skills add matthewzammit/skills --skill qol-pass
+```
+
+It works in Claude Code, Cursor, Codex and other agents. Add `-g` to install it for every project. Run it again to
+update.
+
+Or as a Claude Code plugin, which installs all the skills in this repo:
+
+```
+/plugin marketplace add matthewzammit/skills
+/plugin install matthewzammit-skills@matthewzammit
+```
+
 ## Run it
 
 | You type | When | What happens |
