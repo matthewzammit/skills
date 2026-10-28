@@ -31,6 +31,11 @@ It asks which skills and agents to install. Add `-g` to install for every projec
 - **[figma-sync](skills/figma-sync/)**: keep that Figma file updated with the code, for mobile and web, with a weekly
   drift check that asks before it changes anything.
 
+**Engineering**
+
+- **[ci-audit](skills/ci-audit/)**: CI, git hooks and AI agent time, in one weekly audit: where your development
+  loop lost time, ranked by minutes, with a trend and the fixes to build.
+
 More skills are coming. Watch the repo to hear about them.
 
 ---

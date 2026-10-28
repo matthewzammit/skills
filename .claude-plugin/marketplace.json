@@ -6,7 +6,7 @@
     {
       "name": "matthewzammit-skills",
       "source": "./",
-      "description": "figma-from-code (rebuild an app in Figma from its code) and figma-sync (keep it updated)."
+      "description": "figma-from-code (rebuild an app in Figma from its code), figma-sync (keep it updated) and ci-audit (CI, git hooks and AI agent time)."
     }
   ]
 }
