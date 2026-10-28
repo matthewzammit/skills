@@ -6,6 +6,11 @@ what the product already does. Change any line by pull request, like code.
 
 Platforms: <mobile, web>. Themes: <light, dark>.
 
+## Product
+
+- <What each main screen is for, in one line: "Home shows the next thing to do".>
+- <What the product never adds: "no badges or streaks", "no more than 50 items in rotation".>
+
 ## Layout and spacing
 
 - <Spacing comes from <the token scale, named>; no one-off values.>

@@ -38,13 +38,14 @@ Done when: the person has confirmed the section and its screen list.
 
 ## 2. Survey
 
-Start the product with the config's `run` commands and walk every screen on the list, in each theme the product
-has. Follow [references/survey.md](references/survey.md): eight areas, how to test each on mobile and on web. Take
+Start the product with the config's `run` commands and walk every screen on the list, in each theme a person can
+switch to. Follow [references/survey.md](references/survey.md): eight areas, how to test each on mobile and on web. Take
 a **before** screenshot of every finding into a scratch folder as you go, and note the steps to reach it.
 
-Use test accounts and test data. To check an action with a real-world effect (a payment, a sent message, a
-submitted application), stop at the last screen before it and write "not tested: <why>". If the product cannot run
-here, survey from the code, and say so in the first line of the findings.
+Use test accounts and test data. With `"readOnly": true`, change no data at all. To check an action with a real-world effect (a payment, a sent message, a
+submitted application), stop at the last screen before it and write "not tested: <why>". A state the test data cannot
+produce (an empty list in a demo full of samples) is read in the code and marked "seen in code only". If the
+product cannot run here, survey from the code, and say so in the first line of the findings.
 
 Done when: every screen on the list has been walked, and each of the eight areas has a finding or a one-line
 "checked, fine: <what you tried>".
@@ -63,8 +64,8 @@ Done when: the findings file exists, and the person has the list and the questio
 
 ## 4. Build the picks
 
-Build only the picked findings, on a new branch (`qol/<section>-<date>`) from the main branch: one commit per
-finding unless the person asked for one commit for the pass. Take every value from the bar and the existing
+Build only the picked findings, following the repo's own rules for branches and commits (by default a new branch,
+`qol/<section>-<date>`, from the main branch): one commit per finding unless the person asked for one commit for the pass. Take every value from the bar and the existing
 design system; reuse the product's own components. Run the repo's own checks (tests, lint, types) before each
 commit.
 

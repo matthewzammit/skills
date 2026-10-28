@@ -18,7 +18,7 @@ N. <Area>: <what is wrong, in the person's words>
 ```
 
 Areas are the eight in [survey.md](survey.md): Behaviour, Dead end, Data, Wording, States, Layout, Motion,
-Accessibility. A finding about the bar itself uses **Bar**.
+Accessibility. A finding about the bar itself (silent, wrong, or broken by the code on purpose) uses **Bar**.
 
 ## Order
 
