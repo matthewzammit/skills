@@ -31,8 +31,8 @@ Say in two lines what you found ("A Next.js app, CI is one workflow `test.yml`, 
 Ask only what is left, with the question tool if you have one (at most 4 questions), each with your
 recommendation first:
 
-1. **Where records go:** `.ci-audit/` in the repo, git-ignored (recommended: it stays beside the code), or
-   `~/.claude/ci-audit/<repo>/`, where `<repo>` is the repo's name on GitHub (outside the repo: nothing to ignore,
+1. **Where records go:** `.dev-loop-audit/` in the repo, git-ignored (recommended: it stays beside the code), or
+   `~/.claude/dev-loop-audit/<repo>/`, where `<repo>` is the repo's name on GitHub (outside the repo: nothing to ignore,
    and a scheduled run never dirties the checkout).
 2. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira, ClickUp)? If so, how you file to
    it: a CLI (`gh issue create`, `linear`), an API script the repo already has, or the person files from your list.
@@ -43,14 +43,14 @@ Done when: every question is answered.
 
 ## 3. Write the config
 
-`<records>/config.json`. With records in `.ci-audit/`, add `.ci-audit/` to `.gitignore` (on a branch with a pull
+`<records>/config.json`. With records in `.dev-loop-audit/`, add `.dev-loop-audit/` to `.gitignore` (on a branch with a pull
 request, like any change). Keys:
 
 ```json
 {
   "repo": "owner/name",
   "mainBranch": "main",
-  "records": ".ci-audit",
+  "records": ".dev-loop-audit",
   "addons": ["web"],
   "transcripts": { "match": ["my-app"] },
   "ci": { "workflows": ["CI"] },
@@ -60,7 +60,7 @@ request, like any change). Keys:
     { "pattern": "npm run (-s )?shot\\b", "tags": ["screenshot"] },
     { "pattern": "npm run (-s )?dev:up\\b", "tags": ["helper", "helper_start"] }
   ],
-  "tickets": { "tool": "github", "how": "gh issue create --label ci-audit" },
+  "tickets": { "tool": "github", "how": "gh issue create --label dev-loop-audit" },
   "routine": "weekly, Monday 09:00, this computer"
 }
 ```

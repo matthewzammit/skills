@@ -1,4 +1,4 @@
-// Run with: node --test skills/ci-audit/scripts/*.test.js
+// Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const { hookDrift, checkWorkflow, commandsIn, expand } = require('./repo-checks.js');

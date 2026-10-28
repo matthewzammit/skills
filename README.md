@@ -33,7 +33,7 @@ It asks which skills and agents to install. Add `-g` to install for every projec
 
 **Engineering**
 
-- **[ci-audit](skills/ci-audit/)**: CI, git hooks and AI agent time, in one audit you run any time or weekly:
+- **[dev-loop-audit](skills/dev-loop-audit/)**: CI, git hooks and AI agent time, in one audit you run any time or weekly:
   where your development loop lost time, ranked by minutes, with a trend and the fixes to build.
 
 More skills are coming. Watch the repo to hear about them.
@@ -145,7 +145,7 @@ for the lessons that cost us hours, and the limits.
 
 ---
 
-## CI audit
+## Dev loop audit
 
 **Where did last week go? CI, your git hooks, and the time Claude Code spent waiting, retrying and checking its own
 work, in one audit, ranked by minutes lost.**
@@ -175,8 +175,8 @@ and ranks every problem in one list.
 
 | You type | When |
 |---|---|
-| `/ci-audit setup` | Once per repo: it looks first, then asks where records go and how you file tickets. |
-| `/ci-audit` | Any time: last week, Monday to Monday. Or `/ci-audit last 7 days`, or two dates. |
+| `/dev-loop-audit setup` | Once per repo: it looks first, then asks where records go and how you file tickets. |
+| `/dev-loop-audit` | Any time: last week, Monday to Monday. Or `/dev-loop-audit last 7 days`, or two dates. |
 
 It also starts when you ask "why is CI so slow?". To run it every Monday, schedule it in the Claude desktop app.
 
@@ -187,7 +187,7 @@ It also starts when you ask "why is CI so slow?". To run it every Monday, schedu
   Diffs, say) is fine: the pull requests and their runs stay on GitHub.
 - Node 18 or newer. The scripts install nothing.
 
-Read [the full guide](skills/ci-audit/) for what each check looks at.
+Read [the full guide](skills/dev-loop-audit/) for what each check looks at.
 
 ---
 

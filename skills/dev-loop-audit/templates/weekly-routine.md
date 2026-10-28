@@ -1,6 +1,6 @@
-# Weekly CI audit
+# Weekly dev loop audit
 
-A scheduled task that runs `ci-audit` once a week, on Monday, over the week before. It measures, writes the
+A scheduled task that runs `dev-loop-audit` once a week, on Monday, over the week before. It measures, writes the
 report and the trend row, proposes fixes, and waits. **It changes no code until you pick.** You answer in the same
 session, and it builds only what you picked.
 
@@ -22,12 +22,12 @@ Both are research previews. Check the current docs if a menu has moved.
 Fill the `<...>` and paste it as the task's prompt.
 
 ```
-Run the weekly CI audit for <repo>: use the ci-audit skill for last week.
+Run the weekly dev loop audit for <repo>: use the dev-loop-audit skill for last week.
 
 - Repo: <path>. Main branch: <main>. Records: <records folder>.
 - Read-only until I pick: do not edit code, commit, push, re-run or cancel workflows, or start builds, servers or
   simulators. The only files you write are the report and the trend row.
-- <If we use a ticket tool: open one parent item named "CI audit, YYYY-MM-DD" and one ticket per proposed fix
+- <If we use a ticket tool: open one parent item named "Dev loop audit, YYYY-MM-DD" and one ticket per proposed fix
   under it. Never reuse an earlier week's parent.>
 - Reply with minutes lost per area, what broke, what got slower or faster, and the numbered fixes ranked by minutes
   saved, then ask "Which should I build? Numbers, 'all' or 'none'." and stop.

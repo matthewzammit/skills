@@ -1,4 +1,4 @@
-// Run with: node --test skills/ci-audit/scripts/*.test.js
+// Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const { repoNameFromUrl, parseArgs, windowFrom, median, p90, parseYaml, globToRegex, redact } = require('./common.js');

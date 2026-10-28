@@ -1,7 +1,7 @@
-# CI audit: <from> to <to>
+# Dev loop audit: <from> to <to>
 
 Window: <from> 00:00 to <to> 00:00 (<timezone>). <N> sessions, <N> tool calls, <N> CI runs, <N> commits on <main>.
-Scripts: ci-audit <version or commit>; <any config or script change since last run, and what it moves>.
+Scripts: dev-loop-audit <version or commit>; <any config or script change since last run, and what it moves>.
 
 ## Summary: minutes lost
 

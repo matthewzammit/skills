@@ -1,4 +1,4 @@
-// Run with: node --test skills/ci-audit/scripts/*.test.js
+// Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const { utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');

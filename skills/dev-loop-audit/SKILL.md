@@ -1,10 +1,10 @@
 ---
-name: ci-audit
-description: CI, git hooks and AI agent time audit for a repo - measures the whole development loop over a week (GitHub Actions failures, flakes, holes on the main branch, slow jobs and billed minutes; local hooks and the pre-push gate; Claude Code's own waits, retries and simulator or browser checks), ranks every problem by minutes lost, keeps a trend, and asks which fixes to build. Use when someone asks why CI or the agent is slow or flaky, wants the pipeline audited, or wants a weekly CI audit scheduled.
+name: dev-loop-audit
+description: Development loop audit for a repo - CI, git hooks and AI agent time over a week (GitHub Actions failures, flakes, holes on the main branch, slow jobs and billed minutes; local hooks and the pre-push gate; Claude Code's own waits, retries and simulator or browser checks), ranks every problem by minutes lost, keeps a trend, and asks which fixes to build. Use when someone asks why CI or the agent is slow or flaky, wants a CI or pipeline audit, or wants a weekly audit scheduled.
 argument-hint: "[setup | last week | last 7 days | YYYY-MM-DD YYYY-MM-DD]"
 ---
 
-# CI audit
+# Dev loop audit
 
 Measure where the development loop lost time last week, rank every problem by **minutes lost**, prove the top
 ones, and ask which fixes to build. Three areas, one ranking: **CI** (GitHub Actions), the **gate** (git hooks and
@@ -20,7 +20,7 @@ output in a scratch folder (`$OUT` below), never in the repo.
 
 ## 1. Setup (first run only)
 
-If the repo has no ci-audit config (`.ci-audit/config.json`, or `~/.claude/ci-audit/<repo>/config.json`), or
+If the repo has no dev-loop-audit config (`.dev-loop-audit/config.json`, or `~/.claude/dev-loop-audit/<repo>/config.json`), or
 `$ARGUMENTS` is `setup`, follow [references/setup.md](references/setup.md), then stop if the argument was `setup`.
 
 Done when: a config exists and says where records go, which workflows are CI, the add-ons, and how tickets are filed.
@@ -81,7 +81,7 @@ Done when: each of the five is "holds", "downgraded" (with the new number) or "d
 1. Write the report from [templates/report.md](templates/report.md) to `<records>/<YYYY-MM-DD>.md` (the run's date),
    following [references/report.md](references/report.md).
 2. Append the trend row: `node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --append-trend <records>/trend.csv`.
-3. If the config files tickets: one parent named "CI audit, YYYY-MM-DD" and one ticket per proposed fix under it.
+3. If the config files tickets: one parent named "Dev loop audit, YYYY-MM-DD" and one ticket per proposed fix under it.
    Never reuse an earlier run's parent.
 
 Done when: the report and the row exist, and tickets are filed if the config asks for them.
@@ -101,7 +101,7 @@ Done when: the person has the list and the question.
 
 ## If the person picks fixes
 
-Build only those, on a new branch (`fix/ci-audit-<date>`) from the main branch, one commit per fix, with the
+Build only those, on a new branch (`fix/dev-loop-audit-<date>`) from the main branch, one commit per fix, with the
 repo's own checks green. A rule for agents (not code) goes in the repo's agent docs (`AGENTS.md`, `CLAUDE.md`).
 A fix bigger than a day becomes a written plan instead of code. Open a pull request with the findings and what each
 fix should change in next week's numbers. Never merge it. Add a line per fix to the report's "Built" section.

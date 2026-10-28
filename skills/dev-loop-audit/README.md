@@ -1,6 +1,6 @@
-# CI audit
+# Dev loop audit
 
-**CI, git hooks and AI agent time, in one weekly audit.** Claude measures where your development loop lost time
+**CI, git hooks and AI agent time, in one audit you run any time or weekly.** Claude measures where your development loop lost time
 last week, ranks every problem by minutes lost, proves the top ones, keeps a trend, and asks which fixes to build.
 
 Most CI audits read your workflow files or your last few runs. This one also looks at:
@@ -19,10 +19,10 @@ had measured it.
 
 | You type | When | What happens |
 |---|---|---|
-| `/ci-audit setup` | Once per repo | Looks at your CI, hooks and transcripts, asks where records go, how you file tickets, and whether to schedule it. |
-| `/ci-audit` | Any time, or weekly | Audits last week (Monday to Monday). Or `/ci-audit last 7 days`, or two dates. |
+| `/dev-loop-audit setup` | Once per repo | Looks at your CI, hooks and transcripts, asks where records go, how you file tickets, and whether to schedule it. |
+| `/dev-loop-audit` | Any time, or weekly | Audits last week (Monday to Monday). Or `/dev-loop-audit last 7 days`, or two dates. |
 
-When installed as a Claude Code plugin, the command is `/matthewzammit-skills:ci-audit`. It also starts when you ask
+When installed as a Claude Code plugin, the command is `/matthewzammit-skills:dev-loop-audit`. It also starts when you ask
 "why is CI so slow?" or "audit our pipeline".
 
 It is **read-only until you pick**: it writes only its report and a row in `trend.csv`. When you pick fixes, it

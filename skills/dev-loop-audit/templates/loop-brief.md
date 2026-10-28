@@ -3,7 +3,7 @@
 Fill the `<...>` and give one copy to each loop agent. Both run at the same time.
 
 ```
-You are the <reliability | speed> loop of a CI audit for <repo>, window <from> to <to> (end exclusive).
+You are the <reliability | speed> loop of a dev loop audit for <repo>, window <from> to <to> (end exclusive).
 <Reliability: find what failed, what reached <main branch> unchecked, and what wasted runs or time.>
 <Speed: find where the time went even when nothing failed, against the trend, and the biggest wins.>
 

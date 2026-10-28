@@ -1,4 +1,4 @@
-// Run with: node --test skills/ci-audit/scripts/*.test.js
+// Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
@@ -27,7 +27,7 @@ test('Claude Code encodes a project folder from its path', () => {
 });
 
 test('projectFolders: match texts, or the worktrees and folders nested in them', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-audit-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-'));
   for (const n of ['-Users-me-app', '-Users-me-app--claude-worktrees-x', '-Users-me-app-two', '-Users-me-application', '-Users-me-other']) fs.mkdirSync(path.join(dir, n));
   assert.deepStrictEqual(projectFolders(dir, { worktrees: ['/Users/me/app'] }).sort(), ['-Users-me-app', '-Users-me-app--claude-worktrees-x']);
   assert.deepStrictEqual(projectFolders(dir, { match: ['other'], worktrees: [] }), ['-Users-me-other']);
@@ -122,7 +122,7 @@ test('rawCount, the cross-check, counts main-thread calls in the window once eac
     use('c', '2026-10-20T10:02:00Z', 'Bash', {}, { record: { isSidechain: true } }),
     use('d', '2026-10-27T10:00:00Z', 'Bash', {}), // after the window
   ];
-  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ci-audit-')), 's1.jsonl');
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-')), 's1.jsonl');
   fs.writeFileSync(file, lines.map((l) => JSON.stringify(l)).join('\n'));
   const w = { start: new Date(win.startIso), end: new Date(win.endIso) };
   assert.strictEqual(await rawCount(file, w), 2);

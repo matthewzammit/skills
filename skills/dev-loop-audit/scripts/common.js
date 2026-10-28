@@ -1,5 +1,5 @@
 /**
- * Shared helpers for the ci-audit scripts: arguments, the audit window, the config, simple statistics, and a
+ * Shared helpers for the dev-loop-audit scripts: arguments, the audit window, the config, simple statistics, and a
  * small YAML reader that is enough for GitHub workflow files. Node 18 or newer, no dependencies.
  */
 const { execFileSync } = require('node:child_process');
@@ -104,8 +104,8 @@ function repoNameFromUrl(url) {
 }
 
 /**
- * The repo's ci-audit config, or {}. Looks at --config, then `.ci-audit/config.json` in the repo, then
- * `~/.claude/ci-audit/<repo name on the remote>/config.json`, then the same under the repo's folder name. The remote
+ * The repo's dev-loop-audit config, or {}. Looks at --config, then `.dev-loop-audit/config.json` in the repo, then
+ * `~/.claude/dev-loop-audit/<repo name on the remote>/config.json`, then the same under the repo's folder name. The remote
  * name comes first because worktree layouts often name the main checkout `main`.
  * Regex fields stay strings here; each script compiles its own.
  */
@@ -113,9 +113,9 @@ function loadConfig(args = {}, cwd = process.cwd()) {
   const root = repoRoot(cwd) || cwd;
   let remote = null;
   try { remote = repoNameFromUrl(run('git', ['remote', 'get-url', 'origin'], { cwd: root })); } catch { /* no remote */ }
-  const home = (name) => path.join(os.homedir(), '.claude', 'ci-audit', name, 'config.json');
+  const home = (name) => path.join(os.homedir(), '.claude', 'dev-loop-audit', name, 'config.json');
   const candidates = args.config ? [path.resolve(String(args.config))] : [
-    path.join(root, '.ci-audit', 'config.json'),
+    path.join(root, '.dev-loop-audit', 'config.json'),
     ...(remote ? [home(remote)] : []),
     home(path.basename(commonRepoDir(root) || root)),
   ];

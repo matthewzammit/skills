@@ -1,4 +1,4 @@
-// Run with: node --test skills/ci-audit/scripts/*.test.js
+// Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
@@ -108,7 +108,7 @@ test('the trend row has one value per column, and appending replaces the same we
   const row = trendRow(M);
   assert.strictEqual(row.split(',').length, TREND_COLUMNS.length);
   assert.ok(row.startsWith('2026-10-19,7,4,1,0,0,90,'));
-  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'ci-audit-')), 'trend.csv');
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-')), 'trend.csv');
   appendTrend(file, row);
   appendTrend(file, row);
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
