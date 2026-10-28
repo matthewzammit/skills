@@ -12,7 +12,8 @@ and show it. **The person sends it.** You never post it anywhere.
 
 ## 1. Setup (first run, or `setup`)
 
-If the repo has no config (`.progress-notes/config.json`, or `~/.claude/progress-notes/<repo>/config.json`), or
+If the repo has no config (`.progress-notes/config.json`, or `~/.claude/progress-notes/<repo>/config.json`, where `<repo>` is the
+repo's name on GitHub, not its folder name), or
 `$ARGUMENTS` is `setup`, follow [references/setup.md](references/setup.md): the default period, where the log of
 sent notes lives, which sources exist, and whether to schedule it. Stop there if the argument was `setup`.
 
