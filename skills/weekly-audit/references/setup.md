@@ -34,7 +34,7 @@ recommendation first:
 2. **Where records go:** `.weekly-audit/` in the repo (recommended: a person reviews each record and commits it,
    so the team sees the history), or `~/.claude/weekly-audit/<repo>/` (outside the repo, only on this computer).
    Either way the next run reads the last record for where to start.
-3. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira, ClickUp)? If so, how you file to
+3. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira)? If so, how you file to
    it: a CLI (`gh issue create`, `linear`), an API script the repo already has, or the person files from the
    record. Then the weekly schedule: now (recommended), later, or never.
 4. **Fixes:** off (recommended to start) or on. On means a draft pull request for each finding that has one clear
