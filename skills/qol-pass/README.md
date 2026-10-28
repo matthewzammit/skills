@@ -4,9 +4,9 @@
 
 # QoL pass
 
-**A picky user's pass over one section of your app, with the fixes ready to pick.**
+**Checks one section of your app for the small problems users notice, and fixes the ones you pick.**
 
-Code review catches bugs. It rarely catches the small stuff people actually feel: a blank screen after you delete
+Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you delete
 the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest text size.
 This skill walks your running app one section at a time, checks eight areas against your written standards, and
 hands you one numbered list. Nothing changes until you pick.

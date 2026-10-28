@@ -8,7 +8,7 @@
 [![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
 
 Agent skills for the jobs around the code that never make it to the top of the list: keeping Figma in line with
-what you actually shipped, catching the small stuff users feel, and working out where the week went. Each one came out of shipping a real app with AI
+what you actually shipped, finding the small problems users notice, and working out where the week went. Each one came out of shipping a real app with AI
 agents, so the mistakes are already made for you.
 
 Each skill is a folder: a `SKILL.md` your agent follows step by step, and a `README.md` for you. They ask before they
@@ -28,7 +28,7 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 
 | Skill | What it does | When you run it |
 |---|---|---|
-| [qol-pass](skills/qol-pass/) | Walks one section of your running app like a picky user: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none). | Any time, one section per pass |
+| [qol-pass](skills/qol-pass/) | Checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none). | Any time, one section per pass |
 
 **Engineering**
 
@@ -114,13 +114,13 @@ fixes to build. Run it any time, or every Monday.
 
 <br>
 
-### #3: The small stuff ships broken
+### #3: Small problems reach your users
 
 <p align="center">
   <img src="assets/qol-pass.png" alt="QoL pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
 </p>
 
-**The problem.** Code review catches bugs. It rarely catches what people actually feel: a blank screen after you
+**The problem.** Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you
 delete the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest
 text size. And most teams have no written quality bar, so every review is one person's taste.
 

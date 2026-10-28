@@ -6,7 +6,7 @@ argument-hint: "[setup | next | <section name>]"
 
 # QoL pass
 
-Check one section of the product (a tab, a flow, a group of pages) the way a picky user would, judge it against
+Check one section of the product (a tab, a flow, a group of pages) for the small problems users notice, judge it against
 written standards (**the bar**), and hand back one numbered list of findings. **Build nothing before the person
 picks.** One section per pass keeps the list short enough to decide on and the pull request small enough to review.
 
