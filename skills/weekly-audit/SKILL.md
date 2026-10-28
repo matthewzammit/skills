@@ -14,7 +14,8 @@ Talk to the person in short, plain sentences. A finding is real only when you ha
 
 ## 1. Setup (first run, or `setup`)
 
-The config is `.weekly-audit/config.json` in the repo or `~/.claude/weekly-audit/<repo>/config.json`, wherever
+The config is `.weekly-audit/config.json` in the repo or `~/.claude/weekly-audit/<repo>/config.json` (`<repo>` is
+the repo's name on GitHub, not its folder name), wherever
 the records go. If there is none, or `$ARGUMENTS` is `setup`, follow [references/setup.md](references/setup.md). It
 recommends review skills from [references/review-skills.md](references/review-skills.md), asks where records go
 and how tickets are filed, and offers the weekly schedule. Stop there if the argument was `setup`.
