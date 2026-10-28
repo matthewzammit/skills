@@ -69,7 +69,9 @@ run it.
 
 ## What they do for you
 
-### #1: Build your Figma from your codebase
+### Design
+
+#### #1: Build your Figma from your codebase
 
 <p align="center">
   <img src="assets/figma-from-code.png" alt="Figma from code: your app's code on the left, Claude Code in the middle, and on the right a Figma file with screens in light and dark, an empty state, and a design system of colours, buttons and components." width="100%">
@@ -89,7 +91,45 @@ reviews, finds a screen, and makes marketing assets.
 
 <br>
 
-### #2: Find what slows down your CI and agents
+### Product
+
+#### #2: Keep your product to a quality standard
+
+<p align="center">
+  <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
+</p>
+
+[**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, checks one section of your running app against your
+quality standard: behaviour, dead ends, wrong data, wording, empty and error states, layout at the largest text
+size, motion and accessibility. No written standard yet? It writes a `QUALITY.md` from what your code already does.
+You get a list of fixes, and it builds the ones you pick, with before and after screenshots.
+
+Code review catches bugs, not a blank screen, a vague button or a cut-off label. A written standard holds every
+section to the same bar, not one person's taste.
+
+[Read more about the Quality of Life pass](skills/qol-pass/)
+
+<br>
+
+#### #3: Prepare a summary of what was built
+
+<p align="center">
+  <img src="assets/weekly-progress-note.png" alt="Weekly progress note: merged pull requests, releases and the changelog on the left, your agent in the middle, and on the right a short draft note with what shipped last week and a suggested plan for this week." width="100%">
+</p>
+
+[**weekly-progress-note**](skills/weekly-progress-note/) prepares a short summary of what was built and what is next,
+in plain words: perfect for a PM, founder or client update. Every line comes from something merged or released. Use
+it for last week, the last 7 days or any dates. It never posts: you edit it and send it.
+
+The changelog lists every change, but nobody reads it. This is the short version, ready in a minute.
+
+[Read more about the weekly progress note](skills/weekly-progress-note/)
+
+<br>
+
+### Engineering
+
+#### #4: Find what slows down your CI and agents
 
 <p align="center">
   <img src="assets/dev-loop-audit.png" alt="Dev loop audit: GitHub Actions, git hooks and Claude Code transcripts on the left, Claude Code in the middle, and on the right minutes lost per area (agent time, gate, CI) and fixes ranked by minutes saved." width="100%">
@@ -108,25 +148,7 @@ only at CI.
 
 <br>
 
-### #3: Keep your product to a quality standard
-
-<p align="center">
-  <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
-</p>
-
-[**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, checks one section of your running app against your
-quality standard: behaviour, dead ends, wrong data, wording, empty and error states, layout at the largest text
-size, motion and accessibility. No written standard yet? It writes a `QUALITY.md` from what your code already does.
-You get a list of fixes, and it builds the ones you pick, with before and after screenshots.
-
-Code review catches bugs, not a blank screen, a vague button or a cut-off label. A written standard holds every
-section to the same bar, not one person's taste.
-
-[Read more about the Quality of Life pass](skills/qol-pass/)
-
-<br>
-
-### #4: Review every change for security, accessibility and quality
+#### #5: Review every change for security, accessibility and quality
 
 <p align="center">
   <img src="assets/weekly-audit.png" alt="Weekly audit: last week's commits and your installed review skills on the left, your agent in the middle, and on the right one checked list of findings with severity, a decision with options, and what carried over." width="100%">
@@ -141,22 +163,6 @@ When agents write much of the code, a week brings more changes than anyone can r
 them a proper review. It also tells you which review skills to install for your stack.
 
 [Read more about the weekly audit](skills/weekly-audit/)
-
-<br>
-
-### #5: Prepare a summary of what was built
-
-<p align="center">
-  <img src="assets/weekly-progress-note.png" alt="Weekly progress note: merged pull requests, releases and the changelog on the left, your agent in the middle, and on the right a short draft note with what shipped last week and a suggested plan for this week." width="100%">
-</p>
-
-[**weekly-progress-note**](skills/weekly-progress-note/) prepares a short summary of what was built and what is next,
-in plain words: perfect for a PM, founder or client update. Every line comes from something merged or released. Use
-it for last week, the last 7 days or any dates. It never posts: you edit it and send it.
-
-The changelog lists every change, but nobody reads it. This is the short version, ready in a minute.
-
-[Read more about the weekly progress note](skills/weekly-progress-note/)
 
 ## Contributing
 
