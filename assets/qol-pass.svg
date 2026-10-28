@@ -14,7 +14,7 @@
   <rect width="1280" height="640" fill="#0a0a0a"/>
 
   <!-- Title -->
-  <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">QoL pass<tspan fill="#737373" font-size="34" letter-spacing="-0.5"> (quality of life)</tspan></text>
+  <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Quality of Life <tspan fill="#737373">(QoL)</tspan> pass</text>
   <text x="64" y="140" fill="#a3a3a3" font-size="21">Checks one section of your app for the small problems users notice.</text>
 
   <!-- Bar card -->

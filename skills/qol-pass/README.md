@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="../../assets/qol-pass.png" alt="QoL (quality of life) pass: one section of an app on the left, checked against a QUALITY.md, and on the right a numbered list of findings with a recommended fix each and the question which to build." width="100%">
+  <img src="../../assets/qol-pass.png" alt="Quality of Life (QoL) pass: one section of an app on the left, checked against a QUALITY.md, and on the right a numbered list of findings with a recommended fix each and the question which to build." width="100%">
 </p>
 
-# QoL pass
+# Quality of Life (QoL) pass
 
-QoL is short for **quality of life**: the small things that make an app easier and nicer to use.
+Quality of Life means the small things that make an app easier and nicer to use.
 
 **Checks one section of your app for the small problems users notice, and fixes the ones you pick.**
 
