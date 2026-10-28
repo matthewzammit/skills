@@ -49,7 +49,8 @@ More are on the way. Watch the repo to hear when they land.
 npx skills add matthewzammit/skills
 ```
 
-It asks which skills and which agents you want. Add `-g` to install them for every project.
+It asks which skills you want, which agents, and where: this project only, or global (every project on your
+computer).
 
 **Updates:** run the same command again.
 
