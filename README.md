@@ -19,22 +19,25 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 
 **Design**
 
-| Skill | What it does | When you run it |
-|---|---|---|
-| [figma-from-code](skills/figma-from-code/) | Rebuilds your mobile or web app in Figma from its code: every screen and state in light and dark, responsive web views, a real design system. | Once, for the first build |
-| [figma-sync](skills/figma-sync/) | Keeps that Figma file in step with the code: finds what changed, asks, redraws, records the sync. Works on any Figma file that mirrors your app. | After a change, each release, weekly |
+<table>
+<tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
+<tr><td><a href="skills/figma-from-code/">figma-from-code</a></td><td>Rebuilds your mobile or web app in Figma from its code: every screen and state in light and dark, responsive web views, a real design system.</td><td>Once, for the first build</td></tr>
+<tr><td><a href="skills/figma-sync/">figma-sync</a></td><td>Keeps that Figma file in step with the code: finds what changed, asks, redraws, records the sync. Works on any Figma file that mirrors your app.</td><td>After a change, each release, weekly</td></tr>
+</table>
 
 **Product**
 
-| Skill | What it does | When you run it |
-|---|---|---|
-| [qol-pass](skills/qol-pass/) | A Quality of Life (QoL) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none). | Any time, one section per pass |
+<table>
+<tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
+<tr><td><a href="skills/qol-pass/">qol-pass</a></td><td>A Quality of Life (QoL) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none).</td><td>Any time, one section per pass</td></tr>
+</table>
 
 **Engineering**
 
-| Skill | What it does | When you run it |
-|---|---|---|
-| [dev-loop-audit](skills/dev-loop-audit/) | Audits CI, your local checks and your agent's time together: where the week went, ranked by minutes, with a trend and the fixes to build. | Any time, or weekly |
+<table>
+<tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
+<tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Audits CI, your local checks and your agent's time together: where the week went, ranked by minutes, with a trend and the fixes to build.</td><td>Any time, or weekly</td></tr>
+</table>
 
 More are on the way. Watch the repo to hear when they land.
 
