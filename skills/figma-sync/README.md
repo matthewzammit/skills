@@ -6,6 +6,24 @@ with [figma-from-code](../figma-from-code/), or one your team drew by hand.
 A Figma copy of an app goes stale in a week. This skill finds where Figma is behind the code, asks what to update,
 redraws it, and records the sync.
 
+## Install
+
+If you built the Figma file with [figma-from-code](../figma-from-code/), you likely have both already.
+
+```bash
+npx skills add matthewzammit/skills --skill figma-sync
+```
+
+It works in Claude Code, Cursor, Codex and other agents. Add `-g` to install it for every project. Run it again to
+update.
+
+Or as a Claude Code plugin, which installs all the skills in this repo:
+
+```
+/plugin marketplace add matthewzammit/skills
+/plugin install matthewzammit-skills@matthewzammit
+```
+
 ## Three ways to run it
 
 | You type | When | What happens |

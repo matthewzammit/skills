@@ -21,6 +21,22 @@ It checks three areas:
 Most audits look at one of these. Time lost in one area often shows up in another, so this one ranks them all on
 one list.
 
+## Install
+
+```bash
+npx skills add matthewzammit/skills --skill dev-loop-audit
+```
+
+It works in Claude Code, Cursor, Codex and other agents. Add `-g` to install it for every project. Run it again to
+update.
+
+Or as a Claude Code plugin, which installs all the skills in this repo:
+
+```
+/plugin marketplace add matthewzammit/skills
+/plugin install matthewzammit-skills@matthewzammit
+```
+
 ## Run it
 
 | You type | When | What happens |
