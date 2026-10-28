@@ -4,8 +4,8 @@ A recommended set of review skills written by other authors. This repo does not 
 from its own author, so it stays current and stays theirs. The weekly audit runs whichever of them are installed
 and fit the repo (the config's `skills`).
 
-Install one with the command in its row. Check the skill's page on skills.sh first if you want to read what it
-does.
+Install one with the command in its row, only after reading it: each is another author's open source skill, and
+its skills.sh page shows its security checks. The weekly audit never installs a skill by itself.
 
 ## The set
 

@@ -30,7 +30,8 @@ Or as a Claude Code plugin, which installs all the skills in this repo:
 ## Then install the review skills
 
 This skill runs other people's review skills, so it is only as good as the ones you install. Setup tells you which
-fit your repo. The starter set:
+fit your repo; you choose what to install, and it never installs anything by itself. Read each one first: they are
+open source. The starter set:
 
 | Skill | What it checks | For |
 |---|---|---|
