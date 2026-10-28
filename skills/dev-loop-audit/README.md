@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../assets/dev-loop-audit.png" alt="Dev loop audit: GitHub Actions, git hooks and Claude Code transcripts on the left, Claude Code in the middle, and on the right minutes lost per area (agent time, gate, CI) and fixes ranked by minutes saved." width="100%">
+</p>
+
 # Dev loop audit
 
 **CI, git hooks and AI agent time, in one audit you run any time or weekly.** Claude measures where your development loop lost time

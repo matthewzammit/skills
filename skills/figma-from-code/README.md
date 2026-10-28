@@ -42,6 +42,52 @@ views: desktop and mobile for every screen, and tablet where the layout changes.
 and a second team used an earlier version on a web platform; the web steps in this form are newer, so tell me what you
 find.
 
+## Why you need it
+
+When AI builds the product with you, there is no point drawing every screen in Figma first. You sketch, then grow
+the product in code with Claude, screen by screen. But Figma is still the best place to:
+
+- **Review**: designers, product people and clients comment on the real product, side by side, in light and dark.
+- **Keep a reference**: every screen, state and component in one place, for onboarding, audits and the next feature.
+- **Make marketing assets**: app store screenshots, decks, launch posts and the website, from real screens, not mockups.
+
+So run the loop the other way. Figma is where you start and where you review; code is where you build.
+
+```
+   Figma                     Code, with Claude              Figma
+   a basic design system  -> grow the product,           -> every screen, state and component,
+   and a few pages           screen by screen               rebuilt from the code, kept updated
+```
+
+This is how we work on the Binderr Wallet: we started in Figma with a basic design system and a few pages, grew the
+app with Claude, then rebuilt Figma from the code with every new page and component.
+
+## How it works
+
+```
+  You: "Rebuild our app in Figma from the code"
+        |
+  1. Claude reads your repo, then asks what it cannot find out
+        |      the Figma link, what to build, themes, fonts, who reviews
+  2. It checks every access, and every font Figma can and cannot load
+        |
+  3. It maps every screen and state, and you approve the plan
+        |
+  4. Foundations, then a pilot of 2 or 3 screens: you review hard
+        |
+  5. Batches, one area at a time, each reviewed against the running app
+        |
+  6. figma-sync: a sync record, a diff, and a weekly drift check
+```
+
+**It asks before it builds.** Claude looks at your code first, says what it found ("an Expo app, 84 screens, light and
+dark, one local font"), then asks only what is left: your Figma file, what to build first, which theme is the default,
+which version of the app to show, your old designs, web widths, and who reviews.
+
+**It catches the font problem early.** Claude's Figma tool cannot load a font that lives only on your computer (a
+licensed brand font, say). The skill tests every font your code uses before it draws anything, and tells you exactly
+what to set up: the font installed, the Claude in Chrome extension, and Figma open in that Chrome.
+
 ## Two skills
 
 | Skill | When | What it does |
