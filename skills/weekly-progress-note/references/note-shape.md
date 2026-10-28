@@ -25,8 +25,23 @@ This week (suggested)
 - **Say what changed for the user,** when there is one. Internal work gets one line for all of it ("Faster test
   runs and a cleaner release process").
 - **Plain words.** The person reading may not be an engineer. Explain or drop any term they would not know.
-- **No claims you cannot point to.** A line comes from a merged pull request, a release, a changelog entry or a
-  closed ticket in the period.
+- **No claims you cannot point to.** A line comes from a merged pull request or a commit to the main branch, a
+  release, a changelog entry or a closed ticket in the period; an "In progress" line from an open pull request.
+
+## A quiet week
+
+A week with nothing merged still gets a short note, so nobody wonders:
+
+```
+Weekly progress, 19 to 25 October
+A quiet week in the code: <context: add what the repo cannot show>.
+
+Last week
+- In progress: the invoice redesign (the detail page, not merged yet)
+
+This week (suggested)
+- Carried over: the invoice redesign
+```
 
 ## A made-up example
 

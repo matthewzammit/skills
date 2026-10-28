@@ -7,11 +7,14 @@ Once per repo.
 Find out, without asking:
 
 - **The main branch:** `gh repo view --json defaultBranchRef`, or `git symbolic-ref refs/remotes/origin/HEAD`.
-- **How pull requests merge:** merge commits (`git log --merges` finds them) or squash (it does not; use `gh`).
+- **How work reaches the main branch:** merge commits (`git log --first-parent --merges` finds them), squash
+  merges (it finds none; use `gh`), or direct commits with no pull requests.
 - **Release tags:** `git tag --sort=-creatordate | head`. Note the pattern (`v1.2.3`, `release-*`).
 - **A changelog:** `CHANGELOG.md`, `changelog.json`, release notes in `docs/`.
 - **Plans or a roadmap:** a `plans/` or `roadmap` file the team keeps open work in.
 - **A ticket tool:** a CLI or script the repo uses (`gh issue`, `linear`, Jira, ClickUp).
+- **An existing note or routine:** a file of past notes (`docs/*progress*`, `*weekly*`), or a scheduled task
+  that already drafts one. Use its log and its shape rather than starting a second one.
 
 Say in two lines what you found ("Squash merges, tags `v*`, a CHANGELOG.md, GitHub Issues; no plans folder").
 
@@ -23,12 +26,13 @@ Ask only what is left, with the question tool if you have one, each with your re
    Any run can still ask for other dates.
 2. **Where the log of sent notes goes:** `.progress-notes/` in the repo (recommended: the team sees the history),
    or `~/.claude/progress-notes/<repo>/` (only on this computer). Next week's note compares with the last one.
-3. **Tickets:** read closed tickets too (show how), or git only.
+3. **Tickets:** git only (recommended: a ticket closed with no code behind it is rarely news), or closed tickets
+   too (show how), when the team tracks work that never touches the repo.
 4. **The weekly run:** schedule it for Monday morning (recommended), or run it by hand.
 
 ## 3. Write the config
 
-`<log>/config.json`:
+`.progress-notes/config.json` in the repo, or `~/.claude/progress-notes/<repo>/config.json`, wherever the log is:
 
 ```json
 {
@@ -37,6 +41,7 @@ Ask only what is left, with the question tool if you have one, each with your re
   "log": ".progress-notes",
   "draft": "~/.claude/progress-notes/<repo>/draft.md",
   "merges": "squash",
+  "logIsFile": false,
   "tags": "v*",
   "changelog": "CHANGELOG.md",
   "plans": "docs/roadmap.md",
@@ -46,7 +51,8 @@ Ask only what is left, with the question tool if you have one, each with your re
 }
 ```
 
-Leave out a key the repo has no source for. `audience` sets the words: for a founder or a client, even plainer.
+`log` is a folder (one file per note) or, with `logIsFile`, one file with the newest note on top. Leave out a key
+the repo has no source for. `audience` sets the words: for a founder or a client, even plainer.
 
 ## 4. The weekly run
 
