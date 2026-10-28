@@ -26,8 +26,8 @@ marked so you can see which is which. You approve it before any pass, and every 
 npx skills add matthewzammit/skills --skill qol-pass
 ```
 
-It works in Claude Code, Cursor, Codex and other agents. Add `-g` to install it for every project. Run it again to
-update.
+It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
+(every project on your computer). Run it again to update.
 
 Or as a Claude Code plugin, which installs all the skills in this repo:
 
