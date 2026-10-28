@@ -33,8 +33,8 @@ It asks which skills and agents to install. Add `-g` to install for every projec
 
 **Engineering**
 
-- **[ci-audit](skills/ci-audit/)**: CI, git hooks and AI agent time, in one weekly audit: where your development
-  loop lost time, ranked by minutes, with a trend and the fixes to build.
+- **[ci-audit](skills/ci-audit/)**: CI, git hooks and AI agent time, in one audit you run any time or weekly:
+  where your development loop lost time, ranked by minutes, with a trend and the fixes to build.
 
 More skills are coming. Watch the repo to hear about them.
 
@@ -142,6 +142,52 @@ one: at the end of the build it installs figma-sync, sets it up, and offers to s
 
 Then, in your app's repo, say **"rebuild our app in Figma from the code"**. Read [the full guide](skills/figma-from-code/)
 for the lessons that cost us hours, and the limits.
+
+---
+
+## CI audit
+
+**Where did last week go? CI, your git hooks, and the time Claude Code spent waiting, retrying and checking its own
+work, in one audit, ranked by minutes lost.**
+
+> On the [Binderr](https://binderr.com) Wallet app, one week: CI cost 0 people-minutes and 60 runner-minutes. Claude's
+> own checks on the simulator cost 190 minutes. The biggest problem was not in CI at all: another agent session
+> cleared a shared build cache during a release, and the release took 44 minutes instead of 24. Nobody had measured
+> any of it.
+
+### Why you need it
+
+Most CI audits read your workflow files and your last few runs. When agents write and test the code, most lost time
+is outside CI: waits, retries, refused commands, slow checks on a simulator or in a browser, a hook that runs the
+same tests twice. This skill reads Claude Code's transcripts on your machine, beside GitHub Actions and your hooks,
+and ranks every problem in one list.
+
+### What you get
+
+- **Holes:** code that reached your main branch with no passing CI run, and for how long.
+- **The gate:** hooks installed and matching CI, push times week on week, old hooks still running in old worktrees.
+- **Agent time:** sleeps, retries, hook refusals, slow commands run again and again, each with its minutes.
+- **Mobile and web add-ons:** simulator, emulator and browser checks, native builds, dev server starts.
+- **A report, a trend row and numbered fixes**, each marked measured or estimated. It changes nothing until you pick;
+  then it builds your picks on a branch and opens a pull request.
+
+### Run it
+
+| You type | When |
+|---|---|
+| `/ci-audit setup` | Once per repo: it looks first, then asks where records go and how you file tickets. |
+| `/ci-audit` | Any time: last week, Monday to Monday. Or `/ci-audit last 7 days`, or two dates. |
+
+It also starts when you ask "why is CI so slow?". To run it every Monday, schedule it in the Claude desktop app.
+
+### What you need
+
+- Claude Code, on the machine where you and Claude work (the transcripts live there).
+- GitHub Actions, and `gh` signed in. GitLab CI and others are not covered yet. Reviewing code somewhere else (Linear
+  Diffs, say) is fine: the pull requests and their runs stay on GitHub.
+- Node 18 or newer. The scripts install nothing.
+
+Read [the full guide](skills/ci-audit/) for what each check looks at.
 
 ---
 

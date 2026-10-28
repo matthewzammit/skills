@@ -20,7 +20,7 @@ had measured it.
 | You type | When | What happens |
 |---|---|---|
 | `/ci-audit setup` | Once per repo | Looks at your CI, hooks and transcripts, asks where records go, how you file tickets, and whether to schedule it. |
-| `/ci-audit` | Weekly, or now | Audits last week (Monday to Monday). Or `/ci-audit last 7 days`, or two dates. |
+| `/ci-audit` | Any time, or weekly | Audits last week (Monday to Monday). Or `/ci-audit last 7 days`, or two dates. |
 
 When installed as a Claude Code plugin, the command is `/matthewzammit-skills:ci-audit`. It also starts when you ask
 "why is CI so slow?" or "audit our pipeline".
@@ -48,12 +48,16 @@ Which should I build? Numbers, 'all' or 'none'.
 
 ## What it checks
 
-- **CI:** failures and their cause, flakes, cancelled runs, holes, jobs with no timeout, failures that cannot block
-  (`continue-on-error`, `|| true`, a summary job with `if: always()`), the longest job chain, run and queue times
-  from successful runs, billed minutes and the waste in them, path filters that filter nothing.
-- **Local checks:** hooks installed and executable, hooks against CI, failed pushes sorted into real catches and
-  waste, `--no-verify` and piped pushes, push and gate times.
-- **Agent time:** waits, long calls, retries, refusals, repeated commands, model time after errors.
+- **CI:** failures and their cause, flakes, cancelled runs, holes (from every real push, so a push no workflow ran
+  on still counts), jobs with no timeout, failures that cannot block (`continue-on-error`, `|| true`, a summary job
+  with `if: always()`), the longest job chain, run and queue times from successful runs, billed minutes and the waste
+  in them, path filters that filter nothing.
+- **Local checks:** hooks installed and executable, hooks against CI, worktrees still running an old copy of the
+  hooks, failed pushes sorted into real catches and waste, `--no-verify` and piped pushes, push and gate times.
+- **Agent time:** waits, long calls, retries, refusals, repeated commands (by count and by time, so a slow lookup run
+  in a loop shows), model time after errors.
+- **Fixed since:** the commits after the audited week that changed workflows or hooks, so a problem already fixed is
+  not reported as open.
 - **Mobile add-on** (on by itself for iOS and Android apps): native build times and failures, simulator and
   emulator checks, screenshots per tap, setup time.
 - **Web add-on** (on by itself for web apps): dev server starts, port clashes, browser test runs, preview deploys,
@@ -65,7 +69,8 @@ be checked.
 ## What it needs
 
 - Claude Code, in the repo, on the machine where you and Claude work (the transcripts live there).
-- `gh` signed in, for GitHub Actions. Other CI systems are not covered yet.
+- `gh` signed in, for GitHub Actions. GitLab CI and other CI systems are not covered yet. Code review in another
+  tool (Linear Diffs, say) is fine: the pull requests and their runs stay on GitHub.
 - Node 18 or newer. The scripts have no dependencies and do not install anything.
 
 ## The weekly run

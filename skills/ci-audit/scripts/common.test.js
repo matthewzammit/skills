@@ -1,7 +1,7 @@
 // Run with: node --test skills/ci-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { parseArgs, windowFrom, median, p90, parseYaml, globToRegex, redact } = require('./common.js');
+const { repoNameFromUrl, parseArgs, windowFrom, median, p90, parseYaml, globToRegex, redact } = require('./common.js');
 
 test('parseArgs reads flags, values and repeats', () => {
   const a = parseArgs(['--from', '2026-10-19', '--no-jobs', '--match', 'a', '--match', 'b', 'x']);
@@ -92,4 +92,10 @@ test('redact masks tokens and keeps the rest', () => {
   assert.ok(!s.includes('abcdefghijklmnop123'));
   assert.ok(!s.includes('ghp_abcdefghijklmnopqrstuvwxyz123'));
   assert.ok(s.endsWith('ok'));
+});
+
+test('repoNameFromUrl reads ssh and https remotes', () => {
+  assert.strictEqual(repoNameFromUrl('git@github.com:owner/my-app.git\n'), 'my-app');
+  assert.strictEqual(repoNameFromUrl('https://github.com/owner/my-app'), 'my-app');
+  assert.strictEqual(repoNameFromUrl(''), null);
 });

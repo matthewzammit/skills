@@ -97,15 +97,27 @@ function repoRoot(cwd = process.cwd()) {
   try { return run('git', ['rev-parse', '--show-toplevel'], { cwd }).trim(); } catch { return null; }
 }
 
+/** The repo name in a remote URL (`git@github.com:o/name.git`, `https://github.com/o/name`), or null. */
+function repoNameFromUrl(url) {
+  const m = /([^/:]+?)(\.git)?\/?$/.exec(String(url || '').trim());
+  return m ? m[1] : null;
+}
+
 /**
  * The repo's ci-audit config, or {}. Looks at --config, then `.ci-audit/config.json` in the repo, then
- * `~/.claude/ci-audit/<repo folder>/config.json`. Regex fields stay strings here; each script compiles its own.
+ * `~/.claude/ci-audit/<repo name on the remote>/config.json`, then the same under the repo's folder name. The remote
+ * name comes first because worktree layouts often name the main checkout `main`.
+ * Regex fields stay strings here; each script compiles its own.
  */
 function loadConfig(args = {}, cwd = process.cwd()) {
   const root = repoRoot(cwd) || cwd;
+  let remote = null;
+  try { remote = repoNameFromUrl(run('git', ['remote', 'get-url', 'origin'], { cwd: root })); } catch { /* no remote */ }
+  const home = (name) => path.join(os.homedir(), '.claude', 'ci-audit', name, 'config.json');
   const candidates = args.config ? [path.resolve(String(args.config))] : [
     path.join(root, '.ci-audit', 'config.json'),
-    path.join(os.homedir(), '.claude', 'ci-audit', path.basename(commonRepoDir(root) || root), 'config.json'),
+    ...(remote ? [home(remote)] : []),
+    home(path.basename(commonRepoDir(root) || root)),
   ];
   for (const file of candidates) {
     if (fs.existsSync(file)) return { ...JSON.parse(fs.readFileSync(file, 'utf8')), _file: file };
@@ -280,5 +292,5 @@ function redact(s) {
 
 module.exports = {
   parseArgs, windowFrom, parseDay, localDay, ms, median, p90, round, sum, countBy, run, repoRoot, commonRepoDir,
-  loadConfig, parseYaml, globToRegex, redact,
+  loadConfig, repoNameFromUrl, parseYaml, globToRegex, redact,
 };

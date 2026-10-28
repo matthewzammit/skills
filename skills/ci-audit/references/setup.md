@@ -32,7 +32,8 @@ Ask only what is left, with the question tool if you have one (at most 4 questio
 recommendation first:
 
 1. **Where records go:** `.ci-audit/` in the repo, git-ignored (recommended: it stays beside the code), or
-   `~/.claude/ci-audit/<repo>/` (outside the repo: nothing to ignore, and a scheduled run never dirties the checkout).
+   `~/.claude/ci-audit/<repo>/`, where `<repo>` is the repo's name on GitHub (outside the repo: nothing to ignore,
+   and a scheduled run never dirties the checkout).
 2. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira, ClickUp)? If so, how you file to
    it: a CLI (`gh issue create`, `linear`), an API script the repo already has, or the person files from your list.
 3. **The weekly run:** schedule it now (recommended), later, or never. See [../templates/weekly-routine.md](../templates/weekly-routine.md).
