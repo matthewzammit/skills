@@ -1,19 +1,19 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
-  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams who build with AI agents. figma-from-code, figma-sync, dev-loop-audit." width="100%">
+  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit." width="100%">
 </picture>
 
-# Skills for product teams who build with AI agents
+# Skills for product teams building with AI agents
 
 [![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
 
-My agent skills for the work around the code that nobody has time for: keeping the design in step with the
-product, and finding out where the week went. They come from shipping a real app with AI agents, with the mistakes already
-made for you.
+Agent skills for the jobs around the code that never make it to the top of the list: keeping Figma in line with
+what you actually shipped, and working out where the week went. Each one came out of shipping a real app with AI
+agents, so the mistakes are already made for you.
 
-Each skill is a folder: a `SKILL.md` the agent follows step by step, and a `README.md` for you. They ask before they
-act, check their own work, and say what they measured and what they guessed. They install into Claude Code, Cursor, Codex and
-[other agents](https://skills.sh).
+Each skill is a folder: a `SKILL.md` your agent follows step by step, and a `README.md` for you. They ask before they
+change anything, check their own work, and tell you what they measured and what they guessed. They work in Claude
+Code, Cursor, Codex and [other agents](https://skills.sh).
 
 ## Skills
 
@@ -28,37 +28,31 @@ act, check their own work, and say what they measured and what they guessed. The
 
 | Skill | What it does | When you run it |
 |---|---|---|
-| [dev-loop-audit](skills/dev-loop-audit/) | Audits CI, git hooks and AI agent time together: where the loop lost time, ranked by minutes, with a trend and the fixes to build. | Any time, or weekly |
+| [dev-loop-audit](skills/dev-loop-audit/) | Audits CI, your local checks and your agent's time together: where the week went, ranked by minutes, with a trend and the fixes to build. | Any time, or weekly |
 
-More skills are coming. Watch the repo to hear about them.
+More are on the way. Watch the repo to hear when they land.
 
 ## Install (30 seconds)
 
-<details>
-<summary><strong>Claude Code</strong>, as a plugin</summary>
+**Any agent** (Claude Code, Cursor, Codex and more):
+
+```bash
+npx skills add matthewzammit/skills
+```
+
+It asks which skills and which agents you want. Add `-g` to install them for every project. Run it again to update.
+
+**Or as a Claude Code plugin:**
 
 ```
 /plugin marketplace add matthewzammit/skills
 /plugin install matthewzammit-skills@matthewzammit
 ```
 
-To update: `/plugin marketplace update matthewzammit`.
+Update with `/plugin marketplace update matthewzammit`.
 
-</details>
-
-<details>
-<summary><strong>Any agent</strong> (Claude Code, Cursor, Codex and more), as editable files</summary>
-
-```bash
-npx skills add matthewzammit/skills
-```
-
-It asks which skills and agents to install. Add `-g` to install for every project. To update, run it again.
-
-</details>
-
-Pick one per agent: both together give you every skill twice. There is nothing else to set up: each skill asks what
-it needs the first time you run it.
+Pick one way per agent, or you get every skill twice. That's it: each skill asks for what it needs the first time you
+run it.
 
 ## Why these skills exist
 
@@ -69,12 +63,12 @@ it needs the first time you run it.
 </p>
 
 **The problem.** When AI builds the product with you, nobody draws every screen in Figma first. You grow the product
-in code, screen by screen. Within weeks Figma no longer shows what you shipped, and nobody has the time to redraw it.
+in code, screen by screen. A few weeks in, Figma no longer shows what you shipped, and nobody has time to redraw it.
 But Figma is still where your team reviews, keeps a reference, and makes marketing assets.
 
 **The fix.** [**figma-from-code**](skills/figma-from-code/) rebuilds your mobile or web app in Figma from its real code:
 every screen and state in light and dark, responsive views for the web, on a design system of real components and
-variables. [**figma-sync**](skills/figma-sync/) then keeps it updated after each change, with a weekly drift check
+variables. [**figma-sync**](skills/figma-sync/) then keeps it up to date after each change, with a weekly drift check
 that asks before it redraws anything.
 
 > On the [Binderr](https://binderr.com) Wallet app, Claude rebuilt about **716 screens**, **144 components** and a
@@ -82,23 +76,30 @@ that asks before it redraws anything.
 
 [Read more about Figma from code](skills/figma-from-code/)
 
+<br>
+
 ### #2: Nobody knows where the week went
 
 <p align="center">
   <img src="assets/dev-loop-audit.png" alt="Dev loop audit: GitHub Actions, git hooks and Claude Code transcripts on the left, Claude Code in the middle, and on the right minutes lost per area (agent time, gate, CI) and fixes ranked by minutes saved." width="100%">
 </p>
 
-**The problem.** Most CI audits read your workflow files and your last few runs. When agents write and test the
-code, most of the lost time is outside CI: waits, retries, refused commands, slow checks on a simulator or in a
-browser, a hook that runs the same tests twice. Nobody measures it.
+**The problem.** A slow week rarely has one cause. Some of it is CI: a flaky test, a slow job, code that landed on
+main without a passing run. Some of it is local: hooks that are not installed, or a check before each push that runs
+every test twice. And when agents write and test the code, some of it is the agent: waiting, retrying, or running
+the same simulator check again and again. Most audits look at one of these at most.
 
-**The fix.** [**dev-loop-audit**](skills/dev-loop-audit/) reads GitHub Actions, your git hooks and your agent's own
-transcripts (Claude Code only for now), ranks every problem by minutes lost, checks the top ones again, keeps a trend, and asks which fixes to
-build. Run it any time, or every Monday.
+**The fix.** [**dev-loop-audit**](skills/dev-loop-audit/) checks all three:
 
-> On the Binderr Wallet app, one week: CI cost 0 people-minutes and 60 runner-minutes. Claude's own checks on the
-> simulator cost 190 minutes. The biggest problem was not in CI at all: another agent session cleared a shared build
-> cache during a release, and the release took 44 minutes instead of 24. Nobody had measured any of it.
+- **CI:** your GitHub Actions runs. Failures, flaky tests, slow jobs, billed minutes, and code on main with no
+  passing run.
+- **Local checks:** your git hooks and the tests that run before a push. Installed? The same checks as CI? How long
+  does a push take?
+- **Agent time:** waits, retries, blocked commands, and checks in a simulator or browser, from your agent's own
+  transcripts (Claude Code only for now).
+
+It ranks every problem by minutes lost, double-checks the biggest ones, keeps a trend week to week, and asks which
+fixes to build. Run it any time, or every Monday.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 
@@ -108,4 +109,5 @@ Run reports and pull requests are welcome, above all from web apps. See [CONTRIB
 
 ## License
 
-[MIT](LICENSE). Made by [Matthew Zammit](https://github.com/matthewzammit). If a skill helps, tell me what worked.
+[MIT](LICENSE). Made by [Matthew Zammit](https://github.com/matthewzammit). If a skill helps, open an issue and say
+what worked.
