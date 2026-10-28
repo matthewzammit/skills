@@ -28,7 +28,7 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 
 | Skill | What it does | When you run it |
 |---|---|---|
-| [qol-pass](skills/qol-pass/) | A QoL (quality of life) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none). | Any time, one section per pass |
+| [qol-pass](skills/qol-pass/) | A Quality of Life (QoL) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none). | Any time, one section per pass |
 
 **Engineering**
 
@@ -117,20 +117,20 @@ fixes to build. Run it any time, or every Monday.
 ### #3: Small problems reach your users
 
 <p align="center">
-  <img src="assets/qol-pass.png" alt="QoL (quality of life) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
+  <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
 </p>
 
 **The problem.** Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you
 delete the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest
 text size. And most teams have no written quality bar, so every review is one person's taste.
 
-**The fix.** [**qol-pass**](skills/qol-pass/) (QoL is short for quality of life) walks one section of your running app (a simulator or a browser) and
+**The fix.** [**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, walks one section of your running app (a simulator or a browser) and
 checks eight areas: behaviour, dead ends, wrong or stale data, wording, empty, loading and error states, layout
 edge cases, motion, and accessibility. It judges what it finds against your own standards, or drafts a
 `QUALITY.md` from what your code already does when you have none. You get one numbered list with a fix for each,
 and it builds only what you pick, with before and after shots.
 
-[Read more about the QoL pass](skills/qol-pass/)
+[Read more about the Quality of Life pass](skills/qol-pass/)
 
 ## Contributing
 
