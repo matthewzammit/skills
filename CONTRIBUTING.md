@@ -16,7 +16,7 @@ private first.
 3. Run the checks before you push:
 
    ```bash
-   node --test test/*.test.js skills/figma-sync/scripts/*.test.js
+   node --test test/*.test.js skills/figma-sync/scripts/*.test.js skills/dev-loop-audit/scripts/*.test.js
    node scripts/check-repo.js
    ```
 
