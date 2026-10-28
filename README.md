@@ -7,8 +7,8 @@
 
 [![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
 
-Agent skills for the work around the code: your Figma, your quality standard, your weekly review, your CI and your
-team update. Each one comes from shipping a real app with AI agents.
+Ready-made workflows for design, quality, code review and team updates. Each one comes from shipping a real app with
+AI agents.
 
 Each skill is a folder: a `SKILL.md` your agent follows, and a `README.md` for you. They ask before they change
 anything and check their own work. They work in Claude Code, Cursor, Codex and [other agents](https://skills.sh).
