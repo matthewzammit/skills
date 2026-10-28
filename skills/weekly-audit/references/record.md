@@ -72,12 +72,14 @@ automatically.
 
 ### Carry-over
 
-What moved from the last run's ticket group (each ticket, its link, still open), what was closed since (and
-why), and what the old group's name and state are now. "First run" or "no earlier group" when there is none.
+Every finding of the last record, re-checked against today's code: **fixed** (with the commit), **still open**, or
+**dropped** (with why). This runs with tickets on or off. With tickets on, also what moved from the last run's
+ticket group, what was closed since, and the old group's state. "First run" when there is no earlier record.
 
 ### Already right
 
-One line each for what was checked and found fine, so nobody re-checks it next week.
+One line each for what was checked and found fine, so nobody re-checks it next week. Each line is a claim: write
+it only after reading the code or doc that proves it.
 
 ### Not checked
 

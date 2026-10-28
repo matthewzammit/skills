@@ -41,7 +41,9 @@ person before they install it.
 ## Which to install
 
 - **A web app:** `vibe-security`, `web-design-guidelines`, `better-ui`, `better-typography`. Add `better-colors`
-  when the app owns its colour tokens, and `no-ai-slop` when the app has a lot of copy or docs.
+  when the app owns its colour tokens, and `no-ai-slop` when the app has a lot of copy or docs. **Next.js or
+  another React server framework:** add `vercel-react-best-practices` (data fetching, server components, bundle
+  size); it only stops paying on an app with no server.
 - **A mobile app (Expo or React Native):** `vibe-security`, `vercel-react-native-skills`,
   `web-design-guidelines`, `better-ui`, `better-typography`. Add `no-ai-slop` for the copy.
 - **Any repo:** `vibe-security` fits every stack that handles users, secrets or payments. `no-ai-slop` fits any

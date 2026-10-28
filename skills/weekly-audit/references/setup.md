@@ -17,6 +17,10 @@ Find out, without asking:
   rules, in `AGENTS.md`, `CLAUDE.md` or `CONTRIBUTING.md`. Any written review standards (a security or
   accessibility doc): those become `extraChecks`.
 - **The checks already automated:** lint, type checks, tests, CI. A finding a lint rule already catches is noise.
+- **An audit the repo already runs:** a records folder of past audits, a routine or script that reviews each week.
+  Use its records and its ticket group naming rather than starting a second history.
+- **Product analytics:** an analytics library in the code, and a CLI or connector that can read events. Note it
+  for `analytics.check`.
 
 Say in two lines what you found ("A Next.js app with an API; 3 of the 5 review skills that fit are installed;
 lint and tests run in CI").
@@ -40,7 +44,8 @@ Done when: every question is answered.
 
 ## 3. Write the config
 
-`<records>/config.json`. Keys:
+`.weekly-audit/config.json` in the repo, or `~/.claude/weekly-audit/<repo>/config.json`, wherever the records go.
+Keys:
 
 ```json
 {
@@ -50,7 +55,9 @@ Done when: every question is answered.
   "commitRecords": false,
   "stack": ["web", "api"],
   "skills": ["vibe-security", "web-design-guidelines", "better-ui", "no-ai-slop"],
+  "aids": ["better-colors"],
   "skipped": { "vercel-react-best-practices": "no server components; the React Compiler handles memoisation" },
+  "analytics": { "check": null },
   "extraChecks": ["docs/security.md#Review checklist"],
   "tickets": { "tool": "github", "how": "gh issue create --label weekly-audit" },
   "fixes": false,
@@ -61,6 +68,9 @@ Done when: every question is answered.
 
 - `skills`: the review skills each run uses, by name. A skill in `skipped` stays installed and is not run; its
   reason goes in every record.
+- `aids`: skills that run only when the range touches what they cover (colour tokens for `better-colors`).
+- `analytics.check`: how to read whether new events arrive (a read-only query or CLI, and the project), or `null`
+  to skip it. Never a write.
 - `commitRecords`: `false` (recommended) leaves each record for a person to review and commit; `true` lets the run
   commit it to the main branch itself, only where the repo's rules allow that.
 - `extraChecks`: the repo's own review rules, as files or `file#heading`.

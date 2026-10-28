@@ -16,7 +16,11 @@ is flag a new attackable surface so a person scopes it before the next release. 
   (`POST`, `PUT`, `PATCH`, `DELETE`);
 - adds a **public or anonymous route**, which should expose no per-user data and take no caller-bound id;
 - adds a **deep link, URL scheme or universal link** destination, which anyone can open from outside the app;
-- adds an **inbound webhook or push payload** handler.
+- adds an **inbound webhook or push payload** handler;
+- adds a **server action** or form handler that writes, or a client call to a new endpoint;
+- widens an **exemption** in middleware, a proxy or an auth gate (a path pattern that skips the check);
+- changes **agent or CI permissions**: an allowlist in an agent settings file, a workflow's `permissions:`, a token
+  scope. A command allowed to run with no prompt that reads any file path and sends it out is a finding.
 
 Each finding says: "new attackable surface, needs a scoping check", with the file and line, and the guard a person
 should confirm (the ownership check, the permission check, the allowlist). It is a pointer for a human pass.
@@ -30,6 +34,10 @@ For each feature the range changed or added:
 - Does the doc still describe what the code does? A doc that is missing, thin (a heading with little under it) or
   stale against the change is a finding.
 - Does the doc written for users describe the flow a normal person follows, end to end, with no code knowledge?
+
+How to check: for each behaviour the range changed, grep the docs for its name and its old wording, and read the
+Status or "last updated" lines of the guides the range touched. A guide whose code changed while the guide did
+not is the first place to look.
 
 Skip a check the repo already automates, for example an unindexed doc caught by a script.
 
@@ -50,7 +58,8 @@ Skip this section when the repo has no product analytics. Otherwise report a fin
 - an event whose properties could carry personal data;
 - an event name that breaks the repo's naming pattern, or that duplicates an existing event.
 
-Do not query the analytics tool to check arrival unless the config says to and gives the project. Never write to it.
+Check that new events arrive only when the config's `analytics.check` says how (a read-only query, a CLI, a
+connector) and which project. Never write to the analytics tool.
 
 ## Only when no review skill is installed
 

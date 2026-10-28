@@ -36,10 +36,14 @@ End commit: `<end commit, full hash>`
 
 - <A candidate you disproved, and the code that disproved it. Delete the section when empty.>
 
+## Already tracked
+
+- <A real problem the repo already tracks (ticket, plan, TODO with an owner), and where. Delete when empty.>
+
 ## Carry-over
 
-- Moved from <last group name> to this run's group: <ticket, link>
-- Closed since last run: <ticket, link, why>
+- Last record's findings, re-checked: <title>: fixed in <commit> | still open | dropped, <why>
+- With tickets: moved from <last group name> to this run's group: <ticket, link>; closed since: <ticket, why>
 - <"First run, nothing to carry over" when there is none.>
 
 ## Already right
@@ -48,7 +52,11 @@ End commit: `<end commit, full hash>`
 
 ## Not checked
 
-- <What you could not or did not check, and why.>
+- <What you could not or did not check, and why. In a large range: the files left out.>
+
+## Summary
+
+<The summary from templates/summary.md, as shown to the person.>
 
 ---
 
