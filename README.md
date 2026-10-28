@@ -69,22 +69,22 @@ under Marketplaces.
 Pick one way per agent, or you get every skill twice. That's it: each skill asks for what it needs the first time you
 run it.
 
-## Why these skills exist
+## What they do for you
 
-### #1: Figma falls behind the code
+### #1: Figma stays in step with your code
 
 <p align="center">
   <img src="assets/figma-from-code.png" alt="Figma from code: your app's code on the left, Claude Code in the middle, and on the right a Figma file with screens in light and dark, an empty state, and a design system of colours, buttons and components." width="100%">
 </p>
 
-**The problem.** When AI builds the product with you, nobody draws every screen in Figma first. You grow the product
-in code, screen by screen. A few weeks in, Figma no longer shows what you shipped, and nobody has time to redraw it.
-But Figma is still where your team reviews, keeps a reference, and makes marketing assets.
-
-**The fix.** [**figma-from-code**](skills/figma-from-code/) rebuilds your mobile or web app in Figma from its real code:
+**What it does.** [**figma-from-code**](skills/figma-from-code/) rebuilds your mobile or web app in Figma from its real code:
 every screen and state in light and dark, responsive views for the web, on a design system of real components and
 variables. [**figma-sync**](skills/figma-sync/) then keeps it up to date after each change, with a weekly drift check
 that asks before it redraws anything.
+
+**Why it helps.** When AI builds the product with you, nobody draws every screen in Figma first. You grow the product
+in code, screen by screen. A few weeks in, Figma no longer shows what you shipped, and nobody has time to redraw it.
+But Figma is still where your team reviews, keeps a reference, and makes marketing assets.
 
 > On the [Binderr](https://binderr.com) Wallet app, Claude rebuilt about **716 screens**, **144 components** and a
 > **28-slide brand deck** in two days, much of it overnight.
@@ -93,18 +93,13 @@ that asks before it redraws anything.
 
 <br>
 
-### #2: Nobody knows where the week went
+### #2: See where your week went
 
 <p align="center">
   <img src="assets/dev-loop-audit.png" alt="Dev loop audit: GitHub Actions, git hooks and Claude Code transcripts on the left, Claude Code in the middle, and on the right minutes lost per area (agent time, gate, CI) and fixes ranked by minutes saved." width="100%">
 </p>
 
-**The problem.** A slow week rarely has one cause. Some of it is CI: a flaky test, a slow job, code that landed on
-main without a passing run. Some of it is local: hooks that are not installed, or a check before each push that runs
-every test twice. And when agents write and test the code, some of it is the agent: waiting, retrying, or running
-the same simulator check again and again. Most audits look at one of these at most.
-
-**The fix.** [**dev-loop-audit**](skills/dev-loop-audit/) checks all three:
+**What it does.** [**dev-loop-audit**](skills/dev-loop-audit/) checks the three places a week loses time:
 
 - **CI:** your GitHub Actions runs. Failures, flaky tests, slow jobs, billed minutes, and code on main with no
   passing run.
@@ -116,64 +111,69 @@ the same simulator check again and again. Most audits look at one of these at mo
 It ranks every problem by minutes lost, double-checks the biggest ones, keeps a trend week to week, and asks which
 fixes to build. Run it any time, or every Monday.
 
+**Why it helps.** A slow week rarely has one cause. Some of it is CI: a flaky test, a slow job, code that landed on
+main without a passing run. Some of it is local: hooks that are not installed, or a check before each push that runs
+every test twice. And when agents write and test the code, some of it is the agent: waiting, retrying, or running
+the same simulator check again and again. Most audits look at one of these at most.
+
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 
 <br>
 
-### #3: Small problems reach your users
+### #3: Catch the small problems before your users do
 
 <p align="center">
   <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
 </p>
 
-**The problem.** Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you
-delete the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest
-text size. And most teams have no written quality bar, so every review is one person's taste.
-
-**The fix.** [**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, walks one section of your running app (a simulator or a browser) and
+**What it does.** [**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, walks one section of your running app (a simulator or a browser) and
 checks eight areas: behaviour, dead ends, wrong or stale data, wording, empty, loading and error states, layout
 edge cases, motion, and accessibility. It judges what it finds against your own standards, or drafts a
 `QUALITY.md` from what your code already does when you have none. You get one numbered list with a fix for each,
 and it builds only what you pick, with before and after shots.
 
+**Why it helps.** Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you
+delete the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest
+text size. And most teams have no written quality bar, so every review is one person's taste.
+
 [Read more about the Quality of Life pass](skills/qol-pass/)
 
 <br>
 
-### #4: Nobody reviews last week's code
+### #4: Every week's code gets reviewed
 
 <p align="center">
   <img src="assets/weekly-audit.png" alt="Weekly audit: last week's commits and your installed review skills on the left, your agent in the middle, and on the right one checked list of findings with severity, a decision with options, and what carried over." width="100%">
 </p>
 
-**The problem.** When agents write a lot of the code, a week brings more changes than anyone reads closely. Good
-review skills exist for security, accessibility, design and writing, but someone has to run them, check what they
-say, and keep track. Without a routine, findings get lost or never get looked for.
-
-**The fix.** [**weekly-audit**](skills/weekly-audit/) runs the review skills you install on everything that changed
+**What it does.** [**weekly-audit**](skills/weekly-audit/) runs the review skills you install on everything that changed
 since the last run, all at once. It removes duplicates, checks each finding against the code, writes a dated
 record, and carries last week's open tickets over. A finding that needs your choice comes with options and a pick.
 If you turn fixes on, it opens a draft pull request for each simple one. It tells you which review skills to
 install for your stack.
 
+**Why it helps.** When agents write a lot of the code, a week brings more changes than anyone reads closely. Good
+review skills exist for security, accessibility, design and writing, but someone has to run them, check what they
+say, and keep track. Without a routine, findings get lost or never get looked for.
+
 [Read more about the weekly audit](skills/weekly-audit/)
 
 <br>
 
-### #5: Nobody has time to write the weekly update
+### #5: Your weekly update, drafted for you
 
 <p align="center">
   <img src="assets/weekly-progress-note.png" alt="Weekly progress note: merged pull requests, releases and the changelog on the left, your agent in the middle, and on the right a short draft note with what shipped last week and a suggested plan for this week." width="100%">
 </p>
 
-**The problem.** A founder, a PM or a client wants to know what happened this week. The changelog has every
-change, but nobody reads it, and writing the short version takes time nobody has. So the update is late, too
-technical, or never sent.
-
-**The fix.** [**weekly-progress-note**](skills/weekly-progress-note/) reads what was merged and released, checks
+**What it does.** [**weekly-progress-note**](skills/weekly-progress-note/) reads what was merged and released, checks
 last week's plan, and drafts a short note in plain words: 5 to 8 lines on what shipped and a suggested plan for
 this week. Every line comes from something merged or released. It never posts: you edit it and send it yourself.
 Run it any time, for any dates, or every Monday.
+
+**Why it helps.** A founder, a PM or a client wants to know what happened this week. The changelog has every
+change, but nobody reads it, and writing the short version takes time nobody has. So the update is late, too
+technical, or never sent.
 
 [Read more about the weekly progress note](skills/weekly-progress-note/)
 
