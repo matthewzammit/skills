@@ -63,7 +63,8 @@ Done when: every item of last week's plan has a mark, or this is the first note.
 
 ## 5. Draft
 
-Write the note in the shape of [references/note-shape.md](references/note-shape.md):
+Write the note in the shape the config's `shape` points to (a team's own format, with its headings and numbering),
+else in the shape of [references/note-shape.md](references/note-shape.md):
 
 - A title, and one or two sentences of context: a big or a slow week and why, the biggest piece still in progress.
   The reason a week was slow is often not in git. With the person there, ask for it; in a scheduled run, write
@@ -94,7 +95,8 @@ Done when: the person has the note.
 
 ## 7. Save what was sent (only when pasted back)
 
-When the person pastes back the text they sent, save it exactly as sent: to `<log>/<YYYY-MM-DD>.md` (the date the
+When the person pastes back the text they sent, follow the config's `save` when it says how (a team's own log
+format or commit rules). Else save it exactly as sent: to `<log>/<YYYY-MM-DD>.md` (the date the
 period ended) when `log` is a folder, or at the top of the file when `log` is one file. If the log is in the repo,
 commit only that file, following the repo's rules for commits; never other changes.
 

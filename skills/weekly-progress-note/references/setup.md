@@ -47,12 +47,15 @@ Ask only what is left, with the question tool if you have one, each with your re
   "plans": "docs/roadmap.md",
   "tickets": { "tool": "github", "how": "gh issue list --state closed --search \"closed:<start>..<end>\"" },
   "audience": "the whole team, not only engineers",
+  "shape": null,
+  "save": null,
   "routine": "weekly, Monday 09:00, this computer"
 }
 ```
 
 `log` is a folder (one file per note) or, with `logIsFile`, one file with the newest note on top. Leave out a key
-the repo has no source for. `audience` sets the words: for a founder or a client, even plainer.
+the repo has no source for. `audience` sets the words: for a founder or a client, even plainer. `shape` and `save` point to a team's own
+format and logging steps when they have one (`docs/weekly.md#Shape of the note`); `null` uses this skill's.
 
 ## 4. The weekly run
 
