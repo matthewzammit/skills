@@ -14,7 +14,7 @@
   <rect width="1280" height="640" fill="#0a0a0a"/>
 
   <!-- Title -->
-  <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Quality of Life <tspan fill="#737373">(QoL)</tspan> pass</text>
+  <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Quality of Life pass</text>
   <text x="64" y="140" fill="#a3a3a3" font-size="21">Keeps your product to a quality standard, one section at a time.</text>
 
   <!-- Bar card -->
