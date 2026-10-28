@@ -1,6 +1,6 @@
 ---
 name: qol-pass
-description: Quality pass on one section of a mobile or web app - walks the running product and checks behaviour, dead ends, wrong or stale data, wording, empty, loading and error states, layout edge cases (largest text, small screens, long names), motion and accessibility against the team's written standards, and drafts a QUALITY.md when the repo has none; lists findings with a recommended fix each and builds only what the person picks. Use when someone asks for a QoL, polish or UX pass, a quality review of a screen, flow or page, a check of a section before release, or wants the product's quality standards written down.
+description: QoL (quality of life) pass on one section of a mobile or web app - walks the running product and checks behaviour, dead ends, wrong or stale data, wording, empty, loading and error states, layout edge cases (largest text, small screens, long names), motion and accessibility against the team's written standards, and drafts a QUALITY.md when the repo has none; lists findings with a recommended fix each and builds only what the person picks. Use when someone asks for a QoL or quality of life pass, a polish or UX pass, a quality review of a screen, flow or page, a check of a section before release, or wants the product's quality standards written down.
 argument-hint: "[setup | next | <section name>]"
 ---
 
