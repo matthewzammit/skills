@@ -1,6 +1,6 @@
 {
   "name": "matthewzammit-skills",
-  "description": "Matthew Zammit's agent skills: figma-from-code (rebuild an app in Figma from its code), figma-sync (keep it updated), dev-loop-audit (CI, git hooks and AI agent time), qol-pass (a quality pass on one section of an app) and weekly-audit (a weekly review of what changed).",
+  "description": "Matthew Zammit's agent skills: figma-from-code (rebuild an app in Figma from its code), figma-sync (keep it updated), dev-loop-audit (CI, git hooks and AI agent time), qol-pass (a quality pass on one section of an app), weekly-audit (a weekly review of what changed) and weekly-progress-note (a plain-words weekly update).",
   "author": {
     "name": "Matthew Zammit",
     "url": "https://github.com/matthewzammit"
@@ -19,6 +19,7 @@
     "ux",
     "accessibility",
     "quality",
-    "code-review"
+    "code-review",
+    "progress-report"
   ]
 }

@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
-  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit." width="100%">
+  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -30,6 +30,7 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
 <tr><td><a href="skills/qol-pass/">qol-pass</a></td><td>A Quality of Life (QoL) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none).</td><td>Any time, one section per pass</td></tr>
+<tr><td><a href="skills/weekly-progress-note/">weekly-progress-note</a></td><td>Drafts a short weekly note in plain words for the team: what shipped last week and a suggested plan for this week, checked against last week's plan. For last week, the last 7 days or any dates. Never posts.</td><td>Every Monday, or any time</td></tr>
 </table>
 
 **Engineering**
@@ -156,6 +157,25 @@ If you turn fixes on, it opens a draft pull request for each simple one. It tell
 install for your stack.
 
 [Read more about the weekly audit](skills/weekly-audit/)
+
+<br>
+
+### #5: Nobody has time to write the weekly update
+
+<p align="center">
+  <img src="assets/weekly-progress-note.png" alt="Weekly progress note: merged pull requests, releases and the changelog on the left, your agent in the middle, and on the right a short draft note with what shipped last week and a suggested plan for this week." width="100%">
+</p>
+
+**The problem.** A founder, a PM or a client wants to know what happened this week. The changelog has every
+change, but nobody reads it, and writing the short version takes time nobody has. So the update is late, too
+technical, or never sent.
+
+**The fix.** [**weekly-progress-note**](skills/weekly-progress-note/) reads what was merged and released, checks
+last week's plan, and drafts a short note in plain words: 5 to 8 lines on what shipped and a suggested plan for
+this week. Every line comes from something merged or released. It never posts: you edit it and send it yourself.
+Run it any time, for any dates, or every Monday.
+
+[Read more about the weekly progress note](skills/weekly-progress-note/)
 
 ## Contributing
 
