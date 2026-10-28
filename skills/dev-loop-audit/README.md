@@ -4,21 +4,22 @@
 
 # Dev loop audit
 
-**CI, git hooks and AI agent time, in one audit you run any time or weekly.** Claude measures where your development loop lost time
-last week, ranks every problem by minutes lost, proves the top ones, keeps a trend, and asks which fixes to build.
+**Your whole development loop, in one audit you run any time or every Monday.** Your agent measures where last
+week's time went, ranks every problem by minutes lost, double-checks the biggest ones, keeps a trend, and asks
+which fixes to build.
 
-Most CI audits read your workflow files or your last few runs. This one also looks at:
+It checks three areas:
 
-- **Holes on your main branch:** code that landed with no passing CI run, and for how long.
-- **Your local gate:** whether the hooks are installed, whether they run what CI runs, and how long a push takes,
-  week on week.
-- **Your agent's own time:** from its transcripts on your machine. Claude Code only for now: in another agent the
-  audit still covers CI and hooks, and says it skipped agent time. Sleeps and unbounded waits, retries of the same
-  failing command, hook refusals, commands typed by hand fifty times, and, for mobile and web apps, how long each
-  check on the simulator or in the browser takes.
+1. **CI (GitHub Actions).** Failed and flaky runs, slow jobs, billed minutes, and code that landed on main with no
+   passing run, and for how long.
+2. **Local checks (git hooks and the tests before a push).** Are the hooks installed? Do they run the same checks
+   as CI? How long does a push take, and how many pushes failed for no good reason?
+3. **Agent time.** Where your agent waited, retried or got blocked, commands it typed by hand fifty times, and how
+   long each check in a simulator or browser took. This part reads Claude Code transcripts on your machine, so it is
+   Claude Code only for now. In other agents the audit covers areas 1 and 2, and says it skipped agent time.
 
-On the app we built it for, the agent's checking loop cost more than CI and the gate together in every week we measured. Nobody
-had measured it.
+Most audits look at one of these. Time lost in one area often shows up in another, so this one ranks them all on
+one list.
 
 ## Run it
 
@@ -51,7 +52,7 @@ Fixes, ranked by minutes saved a week
 Which should I build? Numbers, 'all' or 'none'.
 ```
 
-## What it checks
+## Every check, in detail
 
 - **CI:** failures and their cause, flakes, cancelled runs, holes (from every real push, so a push no workflow ran
   on still counts), jobs with no timeout, failures that cannot block (`continue-on-error`, `|| true`, a summary job
