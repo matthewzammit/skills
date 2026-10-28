@@ -85,7 +85,8 @@ Done when: each of the five is "holds", "downgraded" (with the new number) or "d
 1. Write the report from [templates/report.md](templates/report.md) to `<records>/<YYYY-MM-DD>.md` (the run's date),
    following [references/report.md](references/report.md).
 2. Append the trend row: `node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --append-trend <records>/trend.csv`.
-3. If the config files tickets: one parent named "Dev loop audit, YYYY-MM-DD" and one ticket per proposed fix under it.
+3. If the config files tickets: follow its `tickets.how` exactly (its naming, its commands, which fixes get a ticket).
+   Where it is silent: one parent named "Dev loop audit, YYYY-MM-DD" and one ticket per proposed fix under it.
    Never reuse an earlier run's parent.
 
 Done when: the report and the row exist, and tickets are filed if the config asks for them.

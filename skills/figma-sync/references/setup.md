@@ -13,7 +13,7 @@ main branch name. Say in two lines what you found. Then ask only what is left, w
    frames) and propose which pages mirror the app: screens, design system, deck. Ask the person to confirm.
 2. **Is Figma up to date today?** If yes, the current commit becomes the first sync. If not, ask from which commit or date
    it was drawn, or record today and let the first check list everything since.
-3. **Tickets**: does the team track work in a ticket tool (Jira, Linear, GitHub Issues, ClickUp...)? If so, how you
+3. **Tickets**: does the team track work in a ticket tool (Jira, Linear, GitHub Issues...)? If so, how you
    file to it (a CLI, an API script, or the person files them from your list).
 4. **The weekly drift check**: schedule it now (recommended), later, or never.
 

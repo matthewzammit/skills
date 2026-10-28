@@ -15,7 +15,8 @@ give 2 or 3 options with your pick first.
 
 ## 0. The bar (first run, or `setup`)
 
-If the repo has no qol-pass config (`.qol-pass/config.json`, or `~/.claude/qol-pass/<repo>/config.json`), or
+If the repo has no qol-pass config (`.qol-pass/config.json`, or `~/.claude/qol-pass/<repo>/config.json`, where `<repo>` is the
+repo's name on GitHub, not its folder name), or
 `$ARGUMENTS` is `setup`, follow [references/setup.md](references/setup.md). It finds the team's own standards or
 drafts a `QUALITY.md` from what the code already does, and the person approves it. Stop there if the argument was
 `setup`.

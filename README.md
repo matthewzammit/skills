@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
-  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass." width="100%">
+  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -37,6 +37,7 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
 <tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Audits CI, your local checks and your agent's time together: where the week went, ranked by minutes, with a trend and the fixes to build.</td><td>Any time, or weekly</td></tr>
+<tr><td><a href="skills/weekly-audit/">weekly-audit</a></td><td>Reviews the code that changed since the last run with the review skills you install (security, accessibility, design, writing), checks each finding against the code, and keeps one record and ticket list a week. Recommends which review skills to install.</td><td>Every Monday, or any time</td></tr>
 </table>
 
 More are on the way. Watch the repo to hear when they land.
@@ -135,6 +136,26 @@ edge cases, motion, and accessibility. It judges what it finds against your own 
 and it builds only what you pick, with before and after shots.
 
 [Read more about the Quality of Life pass](skills/qol-pass/)
+
+<br>
+
+### #4: Nobody reviews last week's code
+
+<p align="center">
+  <img src="assets/weekly-audit.png" alt="Weekly audit: last week's commits and your installed review skills on the left, your agent in the middle, and on the right one checked list of findings with severity, a decision with options, and what carried over." width="100%">
+</p>
+
+**The problem.** When agents write a lot of the code, a week brings more changes than anyone reads closely. Good
+review skills exist for security, accessibility, design and writing, but someone has to run them, check what they
+say, and keep track. Without a routine, findings get lost or never get looked for.
+
+**The fix.** [**weekly-audit**](skills/weekly-audit/) runs the review skills you install on everything that changed
+since the last run, all at once. It removes duplicates, checks each finding against the code, writes a dated
+record, and carries last week's open tickets over. A finding that needs your choice comes with options and a pick.
+If you turn fixes on, it opens a draft pull request for each simple one. It tells you which review skills to
+install for your stack.
+
+[Read more about the weekly audit](skills/weekly-audit/)
 
 ## Contributing
 

@@ -57,7 +57,7 @@ recommendation first:
 
 1. **Where records go:** `.qol-pass/` in the repo, git-ignored (recommended: it stays beside the code), or
    `~/.claude/qol-pass/<repo>/` (outside the repo: nothing to ignore).
-2. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira, ClickUp)? If so, how you file to
+2. **Tickets:** does the team track work in a tool (GitHub Issues, Linear, Jira)? If so, how you file to
    it: a CLI (`gh issue create`, `linear`), an API script the repo already has, or the person files from your list.
 3. **Test accounts:** which account or data to sign in with, if the product needs one. Look first for a demo or
    sample-data mode, a seed script or fixtures: they need no sign-in. Never the person's own real account unless
