@@ -12,7 +12,7 @@ Find out, without asking:
 - **Release tags:** `git tag --sort=-creatordate | head`. Note the pattern (`v1.2.3`, `release-*`).
 - **A changelog:** `CHANGELOG.md`, `changelog.json`, release notes in `docs/`.
 - **Plans or a roadmap:** a `plans/` or `roadmap` file the team keeps open work in.
-- **A ticket tool:** a CLI or script the repo uses (`gh issue`, `linear`, Jira, ClickUp).
+- **A ticket tool:** a CLI or script the repo uses (`gh issue`, `linear`, Jira).
 - **An existing note or routine:** a file of past notes (`docs/*progress*`, `*weekly*`), or a scheduled task
   that already drafts one. Use its log and its shape rather than starting a second one.
 
