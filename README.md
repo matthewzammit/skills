@@ -40,7 +40,9 @@ More are on the way. Watch the repo to hear when they land.
 npx skills add matthewzammit/skills
 ```
 
-It asks which skills and which agents you want. Add `-g` to install them for every project. Run it again to update.
+It asks which skills and which agents you want. Add `-g` to install them for every project.
+
+**Updates:** run the same command again.
 
 **Or as a Claude Code plugin:**
 
@@ -49,7 +51,8 @@ It asks which skills and which agents you want. Add `-g` to install them for eve
 /plugin install matthewzammit-skills@matthewzammit
 ```
 
-Update with `/plugin marketplace update matthewzammit`.
+**Updates:** run `/plugin marketplace update matthewzammit`, or turn on auto-update for this marketplace in `/plugin`,
+under Marketplaces.
 
 Pick one way per agent, or you get every skill twice. That's it: each skill asks for what it needs the first time you
 run it.
