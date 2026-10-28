@@ -4,11 +4,12 @@
 
 # Weekly audit
 
-**Reviews last week's code changes with the review skills you install, and gives you one checked list.**
+**Review every change for security, accessibility, design and code quality, every week.** It runs the review skills
+you install on everything that changed since the last run, checks each finding against the code, and gives you one
+list.
 
-Good review skills already exist: for security, accessibility, design, React and React Native, and writing. What
-is missing is the routine around them: which code to look at, a record of each run, tickets that do not get lost,
-and someone checking that each finding is real. This skill is that routine.
+Good review skills already exist. What is missing is the routine around them: which code to review, a record of each
+run, findings that do not get lost, and a check that each one is real. This skill is that routine.
 
 ## Install
 

@@ -7,13 +7,11 @@
 
 [![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
 
-Agent skills for the jobs around the code that never make it to the top of the list: keeping Figma in line with
-what you actually shipped, finding the small problems users notice, and working out where the week went. Each one came out of shipping a real app with AI
-agents, so the mistakes are already made for you.
+Agent skills for the work around the code: your Figma, your quality standard, your weekly review, your CI and your
+team update. Each one comes from shipping a real app with AI agents.
 
-Each skill is a folder: a `SKILL.md` your agent follows step by step, and a `README.md` for you. They ask before they
-change anything, check their own work, and tell you what they measured and what they guessed. They work in Claude
-Code, Cursor, Codex and [other agents](https://skills.sh).
+Each skill is a folder: a `SKILL.md` your agent follows, and a `README.md` for you. They ask before they change
+anything and check their own work. They work in Claude Code, Cursor, Codex and [other agents](https://skills.sh).
 
 ## Skills
 
@@ -21,24 +19,24 @@ Code, Cursor, Codex and [other agents](https://skills.sh).
 
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
-<tr><td><a href="skills/figma-from-code/">figma-from-code</a></td><td>Rebuilds your mobile or web app in Figma from its code: every screen and state in light and dark, responsive web views, a real design system.</td><td>Once, for the first build</td></tr>
-<tr><td><a href="skills/figma-sync/">figma-sync</a></td><td>Keeps that Figma file in step with the code: finds what changed, asks, redraws, records the sync. Works on any Figma file that mirrors your app.</td><td>After a change, each release, weekly</td></tr>
+<tr><td><a href="skills/figma-from-code/">figma-from-code</a></td><td>Builds your Figma from your codebase: every screen and state, in light and dark, on a real design system.</td><td>Once, to start</td></tr>
+<tr><td><a href="skills/figma-sync/">figma-sync</a></td><td>Keeps your Figma updated as the code changes. Works with any Figma file that mirrors your app.</td><td>After a change or a release, or weekly</td></tr>
 </table>
 
 **Product**
 
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
-<tr><td><a href="skills/qol-pass/">qol-pass</a></td><td>A Quality of Life (QoL) pass: checks one section of your running app for the small problems users notice: dead ends, stale data, wording, empty and error states, layout at the largest text size, accessibility. Judges it against your QUALITY.md (and writes one if you have none).</td><td>Any time, one section per pass</td></tr>
-<tr><td><a href="skills/weekly-progress-note/">weekly-progress-note</a></td><td>Drafts a short weekly note in plain words for the team: what shipped last week and a suggested plan for this week, checked against last week's plan. For last week, the last 7 days or any dates. Never posts.</td><td>Every Monday, or any time</td></tr>
+<tr><td><a href="skills/qol-pass/">qol-pass</a></td><td>Checks your app against a quality standard, one section at a time: dead ends, wrong data, wording, empty and error states, text size, accessibility. Writes the standard if you have none.</td><td>Any time, one section at a time</td></tr>
+<tr><td><a href="skills/weekly-progress-note/">weekly-progress-note</a></td><td>Prepares a summary of what was built and what is next, in plain words. Ready for your PM update.</td><td>Every Monday, or any time</td></tr>
 </table>
 
 **Engineering**
 
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
-<tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Audits CI, your local checks and your agent's time together: where the week went, ranked by minutes, with a trend and the fixes to build.</td><td>Any time, or weekly</td></tr>
-<tr><td><a href="skills/weekly-audit/">weekly-audit</a></td><td>Reviews the code that changed since the last run with the review skills you install (security, accessibility, design, writing), checks each finding against the code, and keeps one record and ticket list a week. Recommends which review skills to install.</td><td>Every Monday, or any time</td></tr>
+<tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Finds what slows down your CI, git hooks and agents, ranked by minutes lost, with the fixes.</td><td>Every Monday, or any time</td></tr>
+<tr><td><a href="skills/weekly-audit/">weekly-audit</a></td><td>Reviews every change of the week for security, accessibility, design and code quality, with the review skills you install. Every finding is checked against the code.</td><td>Every Monday, or any time</td></tr>
 </table>
 
 More are on the way. Watch the repo to hear when they land.
@@ -71,20 +69,18 @@ run it.
 
 ## What they do for you
 
-### #1: Figma stays in step with your code
+### #1: Build your Figma from your codebase
 
 <p align="center">
   <img src="assets/figma-from-code.png" alt="Figma from code: your app's code on the left, Claude Code in the middle, and on the right a Figma file with screens in light and dark, an empty state, and a design system of colours, buttons and components." width="100%">
 </p>
 
-**What it does.** [**figma-from-code**](skills/figma-from-code/) rebuilds your mobile or web app in Figma from its real code:
-every screen and state in light and dark, responsive views for the web, on a design system of real components and
-variables. [**figma-sync**](skills/figma-sync/) then keeps it up to date after each change, with a weekly drift check
-that asks before it redraws anything.
+[**figma-from-code**](skills/figma-from-code/) builds your app in Figma from its code: every screen and state, in light
+and dark, with responsive web views, on a design system of real components. [**figma-sync**](skills/figma-sync/) keeps
+it updated after each change, and checks it every week.
 
-**Why it helps.** When AI builds the product with you, nobody draws every screen in Figma first. You grow the product
-in code, screen by screen. A few weeks in, Figma no longer shows what you shipped, and nobody has time to redraw it.
-But Figma is still where your team reviews, keeps a reference, and makes marketing assets.
+When AI builds the product with you, nobody draws every screen in Figma first. But Figma is still where your team
+reviews, finds a screen, and makes marketing assets.
 
 > On the [Binderr](https://binderr.com) Wallet app, Claude rebuilt about **716 screens**, **144 components** and a
 > **28-slide brand deck** in two days, much of it overnight.
@@ -93,87 +89,72 @@ But Figma is still where your team reviews, keeps a reference, and makes marketi
 
 <br>
 
-### #2: See where your week went
+### #2: Find what slows down your CI and agents
 
 <p align="center">
   <img src="assets/dev-loop-audit.png" alt="Dev loop audit: GitHub Actions, git hooks and Claude Code transcripts on the left, Claude Code in the middle, and on the right minutes lost per area (agent time, gate, CI) and fixes ranked by minutes saved." width="100%">
 </p>
 
-**What it does.** [**dev-loop-audit**](skills/dev-loop-audit/) checks the three places a week loses time:
+[**dev-loop-audit**](skills/dev-loop-audit/) finds what slowed your team down, ranked by minutes lost:
 
-- **CI:** your GitHub Actions runs. Failures, flaky tests, slow jobs, billed minutes, and code on main with no
-  passing run.
-- **Local checks:** your git hooks and the tests that run before a push. Installed? The same checks as CI? How long
-  does a push take?
-- **Agent time:** waits, retries, blocked commands, and checks in a simulator or browser, from your agent's own
-  transcripts (Claude Code only for now).
+- **CI:** failed and flaky runs, slow jobs, billed minutes, and code on main with no passing run.
+- **Git hooks:** missing hooks, checks that differ from CI, and slow pushes.
+- **Agents:** waits, retries, blocked commands, and slow simulator or browser checks (Claude Code only for now).
 
-It ranks every problem by minutes lost, double-checks the biggest ones, keeps a trend week to week, and asks which
-fixes to build. Run it any time, or every Monday.
-
-**Why it helps.** A slow week rarely has one cause. Some of it is CI: a flaky test, a slow job, code that landed on
-main without a passing run. Some of it is local: hooks that are not installed, or a check before each push that runs
-every test twice. And when agents write and test the code, some of it is the agent: waiting, retrying, or running
-the same simulator check again and again. Most audits look at one of these at most.
+It double-checks the biggest problems, keeps a trend week to week, and builds the fixes you pick. Most audits look
+only at CI.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 
 <br>
 
-### #3: Catch the small problems before your users do
+### #3: Keep your product to a quality standard
 
 <p align="center">
   <img src="assets/qol-pass.png" alt="Quality of Life (QoL) pass: a QUALITY.md on the left, your agent in the middle, and on the right a numbered list of findings for one section, each with its area and a fix, and the question which to build." width="100%">
 </p>
 
-**What it does.** [**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, walks one section of your running app (a simulator or a browser) and
-checks eight areas: behaviour, dead ends, wrong or stale data, wording, empty, loading and error states, layout
-edge cases, motion, and accessibility. It judges what it finds against your own standards, or drafts a
-`QUALITY.md` from what your code already does when you have none. You get one numbered list with a fix for each,
-and it builds only what you pick, with before and after shots.
+[**qol-pass**](skills/qol-pass/), a Quality of Life (QoL) pass, checks one section of your running app against your
+quality standard: behaviour, dead ends, wrong data, wording, empty and error states, layout at the largest text
+size, motion and accessibility. No written standard yet? It writes a `QUALITY.md` from what your code already does.
+You get a list of fixes, and it builds the ones you pick, with before and after screenshots.
 
-**Why it helps.** Code review catches bugs. It rarely catches the small problems users notice: a blank screen after you
-delete the last item, a button that just says "OK", a count that is one behind, a label cut off at the largest
-text size. And most teams have no written quality bar, so every review is one person's taste.
+Code review catches bugs, not a blank screen, a vague button or a cut-off label. A written standard holds every
+section to the same bar, not one person's taste.
 
 [Read more about the Quality of Life pass](skills/qol-pass/)
 
 <br>
 
-### #4: Every week's code gets reviewed
+### #4: Review every change for security, accessibility and quality
 
 <p align="center">
   <img src="assets/weekly-audit.png" alt="Weekly audit: last week's commits and your installed review skills on the left, your agent in the middle, and on the right one checked list of findings with severity, a decision with options, and what carried over." width="100%">
 </p>
 
-**What it does.** [**weekly-audit**](skills/weekly-audit/) runs the review skills you install on everything that changed
-since the last run, all at once. It removes duplicates, checks each finding against the code, writes a dated
-record, and carries last week's open tickets over. A finding that needs your choice comes with options and a pick.
-If you turn fixes on, it opens a draft pull request for each simple one. It tells you which review skills to
-install for your stack.
+[**weekly-audit**](skills/weekly-audit/) reviews every change since the last run for security, accessibility, design
+and code quality, with the review skills you install. It checks each finding against the code, drops the false
+ones, and keeps a record every week. Choices come with options and a pick, and open findings carry over to next
+week. Turn on fixes, and it opens a draft pull request for each simple one.
 
-**Why it helps.** When agents write a lot of the code, a week brings more changes than anyone reads closely. Good
-review skills exist for security, accessibility, design and writing, but someone has to run them, check what they
-say, and keep track. Without a routine, findings get lost or never get looked for.
+When agents write much of the code, a week brings more changes than anyone can read closely. This gives every one of
+them a proper review. It also tells you which review skills to install for your stack.
 
 [Read more about the weekly audit](skills/weekly-audit/)
 
 <br>
 
-### #5: Your weekly update, drafted for you
+### #5: Prepare a summary of what was built
 
 <p align="center">
   <img src="assets/weekly-progress-note.png" alt="Weekly progress note: merged pull requests, releases and the changelog on the left, your agent in the middle, and on the right a short draft note with what shipped last week and a suggested plan for this week." width="100%">
 </p>
 
-**What it does.** [**weekly-progress-note**](skills/weekly-progress-note/) reads what was merged and released, checks
-last week's plan, and drafts a short note in plain words: 5 to 8 lines on what shipped and a suggested plan for
-this week. Every line comes from something merged or released. It never posts: you edit it and send it yourself.
-Run it any time, for any dates, or every Monday.
+[**weekly-progress-note**](skills/weekly-progress-note/) prepares a short summary of what was built and what is next,
+in plain words: perfect for a PM, founder or client update. Every line comes from something merged or released. Use
+it for last week, the last 7 days or any dates. It never posts: you edit it and send it.
 
-**Why it helps.** A founder, a PM or a client wants to know what happened this week. The changelog has every
-change, but nobody reads it, and writing the short version takes time nobody has. So the update is late, too
-technical, or never sent.
+The changelog lists every change, but nobody reads it. This is the short version, ready in a minute.
 
 [Read more about the weekly progress note](skills/weekly-progress-note/)
 

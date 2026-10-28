@@ -4,17 +4,16 @@
 
 # Figma from code
 
-Rebuild your **mobile app or web app** in Figma **from its code**, with Claude Code: every screen in light and dark
-with its loading, empty and error states, responsive desktop, tablet and mobile views for the web, a design system of
-real components and variables, and (if you want) a brand deck. Then keep it updated as the code changes, with a sync
-you run by hand and a weekly drift check.
+**Build your Figma from your codebase.** Your agent rebuilds your mobile or web app in Figma from its code: every
+screen in light and dark with its loading, empty and error states, responsive web views, a design system of real
+components and variables, and a brand deck if you want one. [figma-sync](../figma-sync/) then keeps it updated as
+the code changes.
 
-**Build in code, review in Figma.** With AI building the product, nobody needs to draw every screen in Figma first.
-But Figma is still the best place to review the product with your team, keep a reference of every screen and state,
-and make marketing assets from real screens. This skill gives you that Figma file, from the code you already have.
+With AI building the product, nobody draws every screen in Figma first. But Figma is still the best place to review
+with your team, find any screen, and make marketing assets. This gives you that file, from the code you already have.
 
-This is not a screenshot import. Every screen is made of editable components, colour variables with Light and Dark
-modes, and text styles, so designers can comment, change a component and see every screen update.
+Every screen is built from editable components, colour variables and text styles, not screenshots. Change a
+component, and every screen updates.
 
 > Made by [Matthew Zammit](https://github.com/matthewzammit) while building the [Binderr](https://binderr.com) Wallet
 > app. We rebuilt the app this way in two days: about 716 screens in light and dark, 144 components (391 variants),

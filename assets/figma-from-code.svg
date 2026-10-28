@@ -19,7 +19,7 @@
 
   <!-- Title -->
   <text x="62" y="94" fill="#ffffff" font-size="50" font-weight="300" letter-spacing="-1">Figma from code</text>
-  <text x="64" y="140" fill="#a3a3a3" font-size="21">Your whole app, rebuilt in Figma from its code by Claude Code. And kept updated.</text>
+  <text x="64" y="140" fill="#a3a3a3" font-size="21">Builds your Figma from your codebase, and keeps it updated.</text>
 
   <!-- Code card -->
   <g filter="url(#shadow)">
