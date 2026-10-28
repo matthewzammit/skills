@@ -12,7 +12,8 @@ Most CI audits read your workflow files or your last few runs. This one also loo
 - **Holes on your main branch:** code that landed with no passing CI run, and for how long.
 - **Your local gate:** whether the hooks are installed, whether they run what CI runs, and how long a push takes,
   week on week.
-- **Claude Code's own time:** from its transcripts on your machine. Sleeps and unbounded waits, retries of the same
+- **Your agent's own time:** from its transcripts on your machine. Claude Code only for now: in another agent the
+  audit still covers CI and hooks, and says it skipped agent time. Sleeps and unbounded waits, retries of the same
   failing command, hook refusals, commands typed by hand fifty times, and, for mobile and web apps, how long each
   check on the simulator or in the browser takes.
 
@@ -72,7 +73,8 @@ be checked.
 
 ## What it needs
 
-- Claude Code, in the repo, on the machine where you and Claude work (the transcripts live there).
+- An agent that runs skills, in the repo. For the agent time part: Claude Code, on the machine where you work (its
+  transcripts live there). Other agents get CI and hooks only.
 - `gh` signed in, for GitHub Actions. GitLab CI and other CI systems are not covered yet. Code review in another
   tool (Linear Diffs, say) is fine: the pull requests and their runs stay on GitHub.
 - Node 18 or newer. The scripts have no dependencies and do not install anything.

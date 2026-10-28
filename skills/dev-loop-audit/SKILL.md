@@ -51,6 +51,10 @@ never write a second parser. Cross-check the busiest session: `transcripts.js <w
 counts its calls with a plain reader; the number equals its `calls` under Sessions in `metrics.txt`. (A grep of
 the whole transcript counts other weeks, replays and subagents, so it is always higher.)
 
+Agent time reads Claude Code transcripts only. When `transcripts.js` says "No transcript folders matched" (another
+agent, or another machine), its zeros are not measurements: report agent time under "not checked", say why, and
+audit CI and the gate as usual.
+
 Done when: all four outputs exist, and the cross-check holds or you know why it differs.
 
 ## 4. Two loops, in parallel

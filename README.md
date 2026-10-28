@@ -1,14 +1,36 @@
-# Skills for product teams who build with Claude Code
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
+  <img src="assets/banner-light.png" alt="matthewzammit/skills: skills for product teams who build with AI agents. figma-from-code, figma-sync, dev-loop-audit." width="100%">
+</picture>
+
+# Skills for product teams who build with AI agents
 
 [![skills.sh](https://skills.sh/b/matthewzammit/skills)](https://skills.sh/matthewzammit/skills)
 
 My agent skills for the work around the code that nobody has time for: keeping the design in step with the
-product, and finding out where the week went. They come from shipping a real app with Claude Code, with the mistakes
-already made for you.
+product, and finding out where the week went. They come from shipping a real app with AI agents, with the mistakes already
+made for you.
 
 Each skill is a folder: a `SKILL.md` the agent follows step by step, and a `README.md` for you. They ask before they
-act, check their own work, and say what they measured and what they guessed. Built and tested with Claude Code; they
-install into Cursor, Codex and [other agents](https://skills.sh) too.
+act, check their own work, and say what they measured and what they guessed. They install into Claude Code, Cursor, Codex and
+[other agents](https://skills.sh).
+
+## Skills
+
+**Design**
+
+| Skill | What it does | When you run it |
+|---|---|---|
+| [figma-from-code](skills/figma-from-code/) | Rebuilds your mobile or web app in Figma from its code: every screen and state in light and dark, responsive web views, a real design system. | Once, for the first build |
+| [figma-sync](skills/figma-sync/) | Keeps that Figma file in step with the code: finds what changed, asks, redraws, records the sync. Works on any Figma file that mirrors your app. | After a change, each release, weekly |
+
+**Engineering**
+
+| Skill | What it does | When you run it |
+|---|---|---|
+| [dev-loop-audit](skills/dev-loop-audit/) | Audits CI, git hooks and AI agent time together: where the loop lost time, ranked by minutes, with a trend and the fixes to build. | Any time, or weekly |
+
+More skills are coming. Watch the repo to hear about them.
 
 ## Install (30 seconds)
 
@@ -70,8 +92,8 @@ that asks before it redraws anything.
 code, most of the lost time is outside CI: waits, retries, refused commands, slow checks on a simulator or in a
 browser, a hook that runs the same tests twice. Nobody measures it.
 
-**The fix.** [**dev-loop-audit**](skills/dev-loop-audit/) reads GitHub Actions, your git hooks and Claude Code's own
-transcripts, ranks every problem by minutes lost, checks the top ones again, keeps a trend, and asks which fixes to
+**The fix.** [**dev-loop-audit**](skills/dev-loop-audit/) reads GitHub Actions, your git hooks and your agent's own
+transcripts (Claude Code only for now), ranks every problem by minutes lost, checks the top ones again, keeps a trend, and asks which fixes to
 build. Run it any time, or every Monday.
 
 > On the Binderr Wallet app, one week: CI cost 0 people-minutes and 60 runner-minutes. Claude's own checks on the
@@ -79,23 +101,6 @@ build. Run it any time, or every Monday.
 > cache during a release, and the release took 44 minutes instead of 24. Nobody had measured any of it.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
-
-## Reference
-
-**Design**
-
-| Skill | What it does | When you run it |
-|---|---|---|
-| [figma-from-code](skills/figma-from-code/) | Rebuilds your mobile or web app in Figma from its code: every screen and state in light and dark, responsive web views, a real design system. | Once, for the first build |
-| [figma-sync](skills/figma-sync/) | Keeps that Figma file in step with the code: finds what changed, asks, redraws, records the sync. Works on any Figma file that mirrors your app. | After a change, each release, weekly |
-
-**Engineering**
-
-| Skill | What it does | When you run it |
-|---|---|---|
-| [dev-loop-audit](skills/dev-loop-audit/) | Audits CI, git hooks and AI agent time together: where the loop lost time, ranked by minutes, with a trend and the fixes to build. | Any time, or weekly |
-
-More skills are coming. Watch the repo to hear about them.
 
 ## Contributing
 
