@@ -104,6 +104,9 @@ store or print a command, and the report quotes commands, not your conversations
 
 ## Credits
 
+Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
+details.
+
 Checks borrowed from other public skills, with thanks:
 
 - [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix): job time from successful runs
