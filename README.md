@@ -144,6 +144,9 @@ The changelog lists every change, but nobody reads it. This is the short version
 It double-checks the biggest problems, keeps a trend week to week, and builds the fixes you pick. Most audits look
 only at CI.
 
+Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
+details.
+
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 
 <br>
