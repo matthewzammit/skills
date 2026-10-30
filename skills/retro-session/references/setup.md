@@ -2,7 +2,7 @@
 
 Ask these, one message, short options with a default:
 
-1. **Where do records go?** Default: `~/.claude/session-retro/<repo>/`, outside the repo. Choose `.session-retro/`
+1. **Where do records go?** Default: `~/.claude/retro-session/<repo>/`, outside the repo. Choose `.retro-session/`
    in the repo when the team should see them.
 2. **How do fixes ship?** Default: one branch and one pull request per retro, with the fixes and their tests.
    Ask whether the repo also wants a plan file or a ticket, and the exact commands for them.
@@ -14,7 +14,7 @@ Write the config:
 ```json
 {
   "repo": "owner/name",
-  "records": "/Users/me/.claude/session-retro/name",
+  "records": "/Users/me/.claude/retro-session/name",
   "ship": "One branch and one pull request per retro. Each fix with a test.",
   "patterns": []
 }

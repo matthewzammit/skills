@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v2.png">
-  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, session-retro." width="100%">
+  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -36,7 +36,7 @@ anything and check their own work. They work in Claude Code, Cursor, Codex and [
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
 <tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Finds what slows down your CI, git hooks and agents, ranked by minutes lost, with the fixes.</td><td>Every Monday, or any time</td></tr>
-<tr><td><a href="skills/session-retro/">session-retro</a></td><td>Finds what went wrong in an agent session, including failures a quick read misses, and fixes them with checks, hooks and scripts. Keeps a record, so a problem that comes back is fixed at its cause.</td><td>After a long session</td></tr>
+<tr><td><a href="skills/retro-session/">retro-session</a></td><td>Finds what went wrong in an agent session, including failures a quick read misses, and fixes them with checks, hooks and scripts. Keeps a record, so a problem that comes back is fixed at its cause.</td><td>After a long session</td></tr>
 <tr><td><a href="skills/weekly-audit/">weekly-audit</a></td><td>Reviews every change of the week for security, accessibility, design and code quality, with the review skills you install. Every finding is checked against the code.</td><td>Every Monday, or any time</td></tr>
 </table>
 

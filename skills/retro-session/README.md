@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../../assets/session-retro.png" alt="Session retro: an agent session's transcript on the left, your agent in the middle, and on the right findings ranked by cost, a repeat traced to its cause, and the fix with a pull request." width="100%">
+  <img src="../../assets/retro-session.png" alt="Session retro: an agent session's transcript on the left, your agent in the middle, and on the right findings ranked by cost, a repeat traced to its cause, and the fix with a pull request." width="100%">
 </p>
 
 # Session retro
@@ -22,7 +22,7 @@ Every finding comes with its cost (how many times, about how many turns) and one
 ## Install
 
 ```bash
-npx skills add matthewzammit/skills --skill session-retro
+npx skills add matthewzammit/skills --skill retro-session
 ```
 
 It works in agents that run skills. The scan reads Claude Code transcripts, so the full retro is Claude Code only for
@@ -40,10 +40,10 @@ Or as a Claude Code plugin, which installs all the skills in this repo:
 
 | You type | When | What happens |
 |---|---|---|
-| `/session-retro setup` | Once per repo | Asks where records go and how fixes ship (pull request, plan, ticket). |
-| `/session-retro` | At the end of a long session, or when it went badly | Reviews this session since the last retro. Or name another session by its id. |
+| `/retro-session setup` | Once per repo | Asks where records go and how fixes ship (pull request, plan, ticket). |
+| `/retro-session` | At the end of a long session, or when it went badly | Reviews this session since the last retro. Or name another session by its id. |
 
-When installed as a Claude Code plugin, the command is `/matthewzammit-skills:session-retro`.
+When installed as a Claude Code plugin, the command is `/matthewzammit-skills:retro-session`.
 
 It is **read-only until you pick**: it lists the findings and changes nothing. When you pick fixes, it builds them
 with tests, the way your setup says, and writes a record of the run. It never merges.

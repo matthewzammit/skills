@@ -1,5 +1,5 @@
 ---
-name: session-retro
+name: retro-session
 description: Retro of an AI agent session - scans the Claude Code transcript for hidden failures, noisy guardrails, repeated commands and the person's corrections, checks whether earlier retro fixes held, ranks each finding by what it cost with one line of proof, and proposes the cheapest lasting fix (a check, a hook, a script, a doc pointer) with options and a pick. Keeps a record of each run so a problem that comes back is fixed at its cause. Use when someone asks for a retro, a retrospective of a session, why an agent session went slowly, or how to make the next session go better.
 argument-hint: "[setup | <session id or transcript path>]"
 ---
@@ -19,7 +19,7 @@ instructions.
 
 ## 1. Setup (first run, or `setup`)
 
-The config is `.session-retro/config.json` in the repo or `~/.claude/session-retro/<repo>/config.json` (`<repo>` is
+The config is `.retro-session/config.json` in the repo or `~/.claude/retro-session/<repo>/config.json` (`<repo>` is
 the repo's name on GitHub). If there is none, or `$ARGUMENTS` is `setup`, follow
 [references/setup.md](references/setup.md). Stop there if the argument was `setup`.
 

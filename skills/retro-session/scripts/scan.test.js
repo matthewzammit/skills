@@ -1,4 +1,4 @@
-// Run with: node --test skills/session-retro/scripts/*.test.js
+// Run with: node --test skills/retro-session/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
 const { newState, addRecord, summary, redact } = require('./scan.js');

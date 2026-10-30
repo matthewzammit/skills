@@ -39,7 +39,7 @@ const SILENT = [
 ];
 const HOOK = /hook (error|blocked|feedback)|PreToolUse|PostToolUse|blocked by .*hook/i;
 const DENIED = /Permission for this action was denied|doesn't want to proceed|was rejected by the user|user denied/i;
-const RETRO_COMMAND = /<command-name>\/?(retro|session-retro)[^<]*<\/command-name>/;
+const RETRO_COMMAND = /<command-name>\/?(retro|retro-session)[^<]*<\/command-name>/;
 const COMPACT = /<command-name>\/compact<\/command-name>|"subtype":"compact_boundary"/;
 const HEAVY = 30000;
 
