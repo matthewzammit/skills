@@ -6,7 +6,7 @@
     {
       "name": "matthewzammit-skills",
       "source": "./",
-      "description": "figma-from-code (rebuild an app in Figma from its code), figma-sync (keep it updated), dev-loop-audit (CI, git hooks and AI agent time), qol-pass (a quality pass on one section of an app), weekly-audit (a weekly review of what changed) and weekly-progress-note (a plain-words weekly update)."
+      "description": "figma-from-code (rebuild an app in Figma from its code), figma-sync (keep it updated), dev-loop-audit (CI, git hooks and AI agent time), qol-pass (a quality pass on one section of an app), session-retro (fix what went wrong in an agent session), weekly-audit (a weekly review of what changed) and weekly-progress-note (a plain-words weekly update)."
     }
   ]
 }

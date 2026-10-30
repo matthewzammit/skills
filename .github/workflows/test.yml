@@ -14,6 +14,6 @@ jobs:
         with:
           node-version: 22
       - name: Tests (diff script, shared copies, dev-loop-audit scripts)
-        run: node --test test/*.test.js skills/figma-sync/scripts/*.test.js skills/dev-loop-audit/scripts/*.test.js
+        run: node --test test/*.test.js skills/figma-sync/scripts/*.test.js skills/dev-loop-audit/scripts/*.test.js skills/session-retro/scripts/*.test.js
       - name: Plugin and marketplace files
         run: node scripts/check-repo.js
