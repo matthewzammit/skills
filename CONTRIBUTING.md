@@ -26,6 +26,8 @@ private first.
 
 - **One folder per skill** in `skills/`: `SKILL.md` (what the agent follows) and `README.md` (what a person reads).
   The folder name and the `name` in `SKILL.md` match, lowercase with hyphens.
+- **The name starts with the word people search for**: `retro-session`, not `session-retro`. Type the first
+  word of the job ("retro", "figma", "weekly") and the skill shows up beside the others for it.
 - **SKILL.md is steps**, each ending with a "Done when" line the agent can check. Longer reference goes in
   `references/` and is linked from the step that needs it.
 - **Learned the hard way?** Add it to `references/build-rules.md` as one short rule, with the mistake it prevents.

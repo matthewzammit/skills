@@ -28,16 +28,21 @@ const os = require('node:os');
 const path = require('node:path');
 const readline = require('node:readline');
 
+// Each pattern matches only at the start of a line, in the exact form the shell or tool prints. A command that
+// prints a log or a file which quotes such a line (a retro reading a transcript, say) is not a failure itself.
 const SILENT = [
-  { name: 'zsh: unmatched glob, the command did not run', re: /no matches found: /i },
-  { name: 'command not found', re: /command not found/i },
-  { name: 'Python traceback', re: /Traceback \(most recent call last\)/ },
-  { name: 'missing file or folder', re: /No such file or directory/ },
-  { name: 'permission denied (file system)', re: /Permission denied(?! by)/ },
-  { name: 'npm error', re: /npm (ERR!|error) / },
-  { name: 'git fatal', re: /(^|\n)fatal: / },
+  { name: 'zsh: unmatched glob, the command did not run', re: /^(\(eval\)|zsh):\d+: no matches found: /m },
+  { name: 'command not found', re: /^(\(eval\)|zsh|bash|sh)(:\d+)?: (command not found: \S+|(line \d+: )?\S+: command not found)/m },
+  { name: 'Python traceback', re: /^Traceback \(most recent call last\):$/m },
+  { name: 'missing file or folder', re: /^[^\n]{1,160}: No such file or directory$/m },
+  { name: 'permission denied (file system)', re: /^[^\n]{1,160}: Permission denied$/m },
+  { name: 'npm error', re: /^npm (ERR!|error) /m },
+  { name: 'git fatal', re: /^fatal: /m },
 ];
-const HOOK = /hook (error|blocked|feedback)|PreToolUse|PostToolUse|blocked by .*hook/i;
+// A hook's own message starts the result ("PreToolUse:Bash hook error: ..."); output that only mentions hooks does not.
+const HOOK = /^(Pre|Post)ToolUse:\S* ?hook (error|blocked)|^[^\n]{0,80}blocked by [^\n]{0,40}hook/i;
+// Text the harness adds to the person's turn: pictures, a loaded skill's body, a resumed session's summary.
+const NOT_TYPED = /^(\[Image|Base directory for this skill:|This session is being continued from a previous conversation)/;
 const DENIED = /Permission for this action was denied|doesn't want to proceed|was rejected by the user|user denied/i;
 const RETRO_COMMAND = /<command-name>\/?(retro|retro-session)[^<]*<\/command-name>/;
 const COMPACT = /<command-name>\/compact<\/command-name>|"subtype":"compact_boundary"/;
@@ -76,7 +81,7 @@ function resolveTranscript(arg, projectsDir) {
 function newState(opts = {}) {
   return {
     since: opts.since ?? null,
-    silent: [...SILENT, ...(opts.patterns ?? []).map((p) => ({ name: `pattern ${p}`, re: new RegExp(p, 'i') }))],
+    silent: [...SILENT, ...(opts.patterns ?? []).map((p) => ({ name: `pattern ${p}`, re: new RegExp(p, 'im') }))],
     uses: new Map(),
     seenResults: new Set(),
     runs: [],
@@ -121,19 +126,20 @@ function addRecord(st, d) {
   }
   if (d.type === 'user' && typeof content === 'string' && !content.startsWith('<')) {
     if (/^Stop hook feedback:/.test(content)) bump(st.guardrails, groupKey(`stop hook: ${short(content.split('\n')[1] ?? '', 90)}`), ts);
-    else st.humans.push({ at: ts, text: short(content, 240) });
+    else if (!NOT_TYPED.test(content)) st.humans.push({ at: ts, text: short(content, 240) });
   }
   if (!Array.isArray(content)) return;
   for (const b of content) {
     if (b?.type === 'text' && d.type === 'user' && b.text && !b.text.startsWith('<')) {
       if (/^Stop hook feedback:/.test(b.text)) bump(st.guardrails, groupKey(`stop hook: ${short(b.text.split('\n')[1] ?? '', 90)}`), ts);
-      else st.humans.push({ at: ts, text: short(b.text, 240) });
+      else if (!NOT_TYPED.test(b.text)) st.humans.push({ at: ts, text: short(b.text, 240) });
     }
     if (b?.type === 'tool_use' && !st.uses.has(b.id)) {
       const input = b.input ?? {};
       st.uses.set(b.id, { tool: b.name, input: input.command ?? JSON.stringify(input) });
       st.tools.set(b.name, (st.tools.get(b.name) ?? 0) + 1);
-      if (typeof input.command === 'string') bump(st.commands, short(input.command, 160));
+      // The whole command is the key: many different commands share a long first line (a cd, a path).
+      if (typeof input.command === 'string') bump(st.commands, redact(input.command).replace(/\s+/g, ' ').trim());
     }
     if (b?.type === 'tool_result' && !st.seenResults.has(b.tool_use_id)) {
       st.seenResults.add(b.tool_use_id);
@@ -148,7 +154,7 @@ function addRecord(st, d) {
       else if (HOOK.test(text.slice(0, 200))) bump(st.guardrails, groupKey(`hook: ${short(text, 110)}`), call);
       else if (b.is_error) bump(st.flagged, `${tool}: ${short(text.split('\n').find((l) => l.trim() && !/^Exit code/.test(l)) ?? text, 110)}`, call);
       for (const p of st.silent) {
-        if (p.re.test(text)) bump(st.silentHits, p.name, `${call} -> ${short(text.match(new RegExp(`.{0,40}${p.re.source}.{0,60}`, 'i'))?.[0] ?? '', 120)}`, !b.is_error);
+        if (p.re.test(text)) bump(st.silentHits, p.name, `${call} -> ${short(text.match(new RegExp(`.{0,40}${p.re.source}.{0,60}`, 'im'))?.[0] ?? '', 120)}`, !b.is_error);
       }
     }
   }
@@ -163,7 +169,7 @@ function summary(st) {
     silentFailures: sorted(st.silentHits).map(([k, v]) => ({ what: k, ...v })),
     flaggedErrors: sorted(st.flagged).map(([k, v]) => ({ what: k, ...v })),
     guardrails: sorted(st.guardrails).map(([k, v]) => ({ what: k, ...v })),
-    repeats: sorted(st.commands, 3).map(([k, v]) => ({ command: k, count: v.count })),
+    repeats: sorted(st.commands, 3).map(([k, v]) => ({ command: short(k, 160), count: v.count })),
     heavyResults: sorted(st.heavy).map(([k, v]) => ({ tool: k, ...v })),
     humans: st.humans,
   };

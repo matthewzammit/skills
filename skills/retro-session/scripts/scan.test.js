@@ -60,3 +60,43 @@ test('secrets are masked', () => {
   assert.strictEqual(redact('token=abcdefgh12345678'), 'token=<secret>');
   assert.strictEqual(redact(`key ghp_${'a'.repeat(30)}`), 'key <secret>');
 });
+
+test('failure text that a command only printed, inside a quoted log line, is not counted', () => {
+  const quoted = "('Python traceback', 25, 19), ('command not found', 10, 9)\n\"Exit code 1\\n(eval):1: no matches found: --include=*.ts\"";
+  const s = scan([use('a', 'python3 read-log.py'), result('a', quoted)]);
+  assert.strictEqual(s.silentFailures.length, 0);
+});
+
+test('real shell failures are counted, each in the form the shell prints', () => {
+  const out = 'zsh: command not found: foo\nTraceback (most recent call last):\nls: x.md: No such file or directory\nfatal: not a git repository';
+  const s = scan([use('a', 'foo; python3 x.py; ls x.md; git status'), result('a', out)]);
+  assert.deepStrictEqual(s.silentFailures.map((f) => f.what).sort(), ['Python traceback', 'command not found', 'git fatal', 'missing file or folder']);
+});
+
+test('a hook counts when its own message starts the result, not when output mentions hooks', () => {
+  const s = scan([
+    use('a', 'git push | tail'),
+    result('a', 'PreToolUse:Bash hook error: A piped git push hides a failed pre-push gate', true),
+    use('b', 'grep -n Stop scan.js'),
+    result('b', '124: if (/^Stop hook feedback:/.test(content)) bump(st.guardrails)'),
+  ]);
+  assert.strictEqual(s.guardrails.length, 1);
+  assert.match(s.guardrails[0].what, /^hook: PreToolUse/);
+});
+
+test('commands that only share a long first part are not repeats', () => {
+  const head = `cd /a/very/long/path/that/every/command/starts/with; S=${'x'.repeat(150)};`;
+  const s = scan([use('a', `${head} npm test`), use('b', `${head} git push`), use('c', `${head} ls`)]);
+  assert.deepStrictEqual(s.repeats, []);
+});
+
+test("pictures, a loaded skill's text and a resumed session's summary are not the person's messages", () => {
+  const typed = (text) => ({ type: 'user', timestamp: '2026-10-30T10:00:00Z', message: { content: [{ type: 'text', text }] } });
+  const s = scan([
+    typed('[Image: original 2560x880]'),
+    typed('Base directory for this skill: /x\n# Session retro'),
+    typed('This session is being continued from a previous conversation that ran out of context.'),
+    typed('go ahead and merge'),
+  ]);
+  assert.deepStrictEqual(s.humans.map((h) => h.text), ['go ahead and merge']);
+});
