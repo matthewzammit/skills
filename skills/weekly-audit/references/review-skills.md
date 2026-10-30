@@ -4,25 +4,25 @@ A recommended set of review skills written by other authors. This repo does not 
 from its own author, so it stays current and stays theirs. The weekly audit runs whichever of them are installed
 and fit the repo (the config's `skills`).
 
-Install one with the command in its row, only after reading it: each is another author's open source skill, and
-its skills.sh page shows its security checks. The weekly audit never installs a skill by itself.
+The person installs each one from its page on skills.sh (search its name), after reading it there: each is another
+author's open source skill, and its page shows its security checks. The weekly audit never installs a skill.
 
 ## The set
 
-| Skill | What it checks | Applies to | Author | Install |
-|---|---|---|---|---|
-| `vibe-security` | Security holes common in AI-written apps: exposed keys and secrets, broken access control, missing auth checks, client-side trust, payment flows, rate limiting, mobile storage and deep links | any | `raroque/vibe-security-skill` | `npx skills add raroque/vibe-security-skill --skill vibe-security` |
-| `web-design-guidelines` | UI code against the Web Interface Guidelines: accessibility, focus, forms, animation, touch targets, text handling | web (the accessibility rules carry to mobile) | `vercel-labs/agent-skills` | `npx skills add vercel-labs/agent-skills --skill web-design-guidelines` |
-| `vercel-react-native-skills` | React Native and Expo practice: list performance, animation, navigation, images, pressables, safe areas, state and render cost | mobile | `vercel-labs/agent-skills` | `npx skills add vercel-labs/agent-skills --skill vercel-react-native-skills` |
-| `better-ui` | Interface polish: concentric radii, optical alignment, shadows over borders, press feedback, hit areas, enter and exit animation | web (most rules carry to mobile) | `jakubkrehel/skills` | `npx skills add jakubkrehel/skills --skill better-ui` |
-| `better-typography` | Type scale, line height by role, font weights, tabular numbers, truncation, wrapping, text contrast | web (the principles carry to mobile) | `jakubkrehel/skills` | `npx skills add jakubkrehel/skills --skill better-typography` |
-| `better-colors` | Colour in OKLCH: palettes, contrast checks, gamut limits, theming | web (a design aid on mobile) | `jakubkrehel/skills` | `npx skills add jakubkrehel/skills --skill better-colors` |
-| `no-ai-slop` | Copy and docs: wording that reads as machine-written, padding, vague claims | any | `petergyang/no-ai-slop` | `npx skills add petergyang/no-ai-slop --skill no-ai-slop` |
+| Skill | What it checks | Applies to | Author |
+|---|---|---|---|
+| `vibe-security` | Security holes common in AI-written apps: exposed keys and secrets, broken access control, missing auth checks, client-side trust, payment flows, rate limiting, mobile storage and deep links | any | `raroque/vibe-security-skill` |
+| `web-design-guidelines` | UI code against the Web Interface Guidelines: accessibility, focus, forms, animation, touch targets, text handling | web (the accessibility rules carry to mobile) | `vercel-labs/agent-skills` |
+| `vercel-react-native-skills` | React Native and Expo practice: list performance, animation, navigation, images, pressables, safe areas, state and render cost | mobile | `vercel-labs/agent-skills` |
+| `better-ui` | Interface polish: concentric radii, optical alignment, shadows over borders, press feedback, hit areas, enter and exit animation | web (most rules carry to mobile) | `jakubkrehel/skills` |
+| `better-typography` | Type scale, line height by role, font weights, tabular numbers, truncation, wrapping, text contrast | web (the principles carry to mobile) | `jakubkrehel/skills` |
+| `better-colors` | Colour in OKLCH: palettes, contrast checks, gamut limits, theming | web (a design aid on mobile) | `jakubkrehel/skills` |
+| `no-ai-slop` | Copy and docs: wording that reads as machine-written, padding, vague claims | any | `petergyang/no-ai-slop` |
 
 ## Where each source was checked
 
 Each author and repo below was read from the local skills lock file (`~/.agents/.skill-lock.json`), and each skill
-page on skills.sh was opened and listed its install command, on 2026-10-28.
+page on skills.sh was opened, on 2026-10-28.
 
 | Skill | Lock file source | Listed on skills.sh |
 |---|---|---|
@@ -34,7 +34,7 @@ page on skills.sh was opened and listed its install command, on 2026-10-28.
 | `better-colors` | `jakubkrehel/skills` | yes |
 | `no-ai-slop` | not in the lock file; the installed copy names `petergyang/no-ai-slop` as its origin | yes, under `petergyang/no-ai-slop` |
 
-If a skill moves or its author renames the repo, run `npx skills find <name>` or search skills.sh, and trust the
+If a skill moves or its author renames the repo, search skills.sh for its name, and trust the
 page over this table. When you cannot confirm a source, write "source not confirmed" beside the skill and tell the
 person before they install it.
 
