@@ -18,7 +18,8 @@ Scope from `$ARGUMENTS`:
 - **a PR number or a branch**: only that change.
 - **check**: the weekly drift check. Steps 1 to 3 only. Nothing changes until the person picks.
 
-If the repo has no sync record (`figma-sync.json`) or no `figma-sync.config.js`, run setup first.
+If there is no sync record (`figma-sync.json`) and config for this product, in this repo or in the record repo setup
+chose for a read-only product, run setup first.
 
 Read once: [references/build-rules.md](references/build-rules.md). Load Figma's `figma-use` skill before any
 `use_figma` call.
@@ -27,6 +28,9 @@ Read once: [references/build-rules.md](references/build-rules.md). Load Figma's 
 
 1. `git fetch`, then from the repo root: `node <the repo's figma-diff.js> --to origin/<main branch>` (add `--json` for
    the routine). For a PR, keep only the files in `gh pr diff <n> --name-only`; for a branch, use `--to origin/<branch>`.
+   **Read-only product:** refresh the snapshot first, the way setup recorded (a `git fetch`, or the archive for the
+   latest commit committed into the snapshot repo), then run the diff from inside the snapshot with
+   `--config <the record repo's config>` (drop `--to` for a snapshot repo).
 2. For each listed section, read the commits on its files (`git log`, `git show`) and write one line: what a person now
    sees differently. A change with nothing to see (motion only, analytics, a rename, a refactor) is **not a gap**:
    name it and say why.
@@ -76,7 +80,8 @@ Done when: every picked gap is drawn and reviewed, and no text is left in the st
 ## 5. Record the sync
 
 - **Every gap drawn:** on a branch, `node <figma-diff.js> --to origin/<main branch> --mark`, commit `figma-sync.json`,
-  open a pull request.
+  open a pull request. Read-only product: the same flags as the diff, plus `--note "snapshot of <product commit>"`
+  for a snapshot repo; the branch and pull request are in the record repo.
 - **A gap left open:** leave the record alone. A mark would hide the gap from the next check. List what is left.
 
 Report: what changed in Figma, what was up to date or not a gap, and whether the sync is marked.

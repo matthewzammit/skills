@@ -1,13 +1,13 @@
 # Registry (whole file: append after every create; on resume, check every id still exists)
 
-Pages: Screens <id>, Design System <id>
+Pages: <screens page name> <id>, ..., Design System <id>
 Collections: <name> <id> (modes: <name> <id>, ...)
 Components: <name> <id>, ...
 Sections: <name> <id>, ...
 
 # Batch <N> state
 
-Sections start at x=<x>, y=<y>. Helper nodes to delete at the end: <ids>.
+Page <name> <id>. Sections start at x=<x>, y=<y>, as the page plan sets. Helper nodes to delete at the end: <ids>.
 
 ## Section A "<name>" <id>: DONE | IN PROGRESS
 

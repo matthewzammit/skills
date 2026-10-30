@@ -1,7 +1,7 @@
 # Contributing
 
 Thanks for helping. Reports from real runs are the most useful thing you can give, above all on **web apps**, where
-these skills have not been run end to end yet.
+these skills have had only one full run so far.
 
 ## Report a run
 

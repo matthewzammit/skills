@@ -4,7 +4,8 @@ Run these before you call the build done.
 
 - [ ] Every **full screen with no route** (offline, update required, lock, splash, intro) is drawn.
 - [ ] **Every state in every theme.** No state drawn in one theme only, unless the person said so.
-- [ ] Screens the code **always** shows in one theme are named "(always dark)" or "(always light)" and fix that mode.
+- [ ] Screens and parts the code **always** shows in one theme are named "(always dark)" or "(always light)" and fix
+      that mode.
 - [ ] **No real customer data**, and no tokens, keys or private URLs in any frame or screenshot.
 - [ ] **Text contrast** holds on every surface. Notes say where the layout changes at the largest text size (mobile)
       or 200% zoom (web).
@@ -13,7 +14,8 @@ Run these before you call the build done.
 - [ ] **Web: every control's hover, focus and disabled states** are variants on the design system page, and every
       chosen width is drawn.
 - [ ] **Motion and haptics** are described in the notes.
-- [ ] **Nothing at the origin**, no `__` helper nodes, no overlaps, no layers named "Frame 123".
+- [ ] **Each page matches its plan**: only the Contents frame at the origin, nothing past about 60,000 px, no `__`
+      helper nodes, no overlaps, no layers named "Frame 123".
 - [ ] **No text left in the Inter stand-in** once the brand font swap is done.
 - [ ] **Every variable's value read back** and matched with the code tokens, in every mode.
 - [ ] **No unbound colour** that matches a token (the rebind sweep found nothing left).

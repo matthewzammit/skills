@@ -18,8 +18,12 @@ always, `figma-generate-design` for screens, `figma-generate-library` for the de
 
 ## 1. Ask what you cannot find out
 
-Start here, before reading any Figma file. Look first: the product type, tokens, routes, fonts and themes are in the
-code. Say in two lines what you found (for example "An Expo app, 84 screens, light and dark, one local font"). Then ask
+Start here, before reading any Figma file. Look first, starting with the repo's own docs: a design or Figma guide
+often names file keys nobody mentioned. The product type, tokens, routes, fonts and themes are in the code. If the
+shell cannot reach the code by git, ask the person's OK to download the code host's archive for one commit through
+their signed-in browser; unzip it outside every repo, read it only, and write its commit in the folder.
+
+Say in two lines what you found (for example "An Expo app, 84 screens, light and dark, one local font"). Then ask
 only what is left, with the question tool if you have one (at most 4 questions a round, two rounds at most), each with
 your recommendation first:
 
@@ -27,14 +31,17 @@ your recommendation first:
    product. Never write over a page with content.
 2. **What to build**: screens, design system, brand deck, or all. Recommend the design system plus a few key screens
    first.
-3. **Themes**: light, dark or both, and which is the brand default (the page's default mode).
+3. **Themes**: light, dark or both, and which is the brand default (the page's default mode). Recommend each state
+   drawn once, following the page's mode, so one switch flips the whole page; a side-by-side Light and Dark pair only
+   for a few key screens. Drawing every state in both themes doubles the build.
 4. **Which version**: if the code has feature flags or an old and a new design, which one Figma shows.
 5. **Existing designs**: an older Figma file or library. Mirror the code, keep the old pages, say where they differ.
 6. **Web only**: the responsive views. Read the breakpoints from the code first (Tailwind screens, CSS media
    queries, the component library's theme). Recommend every screen and state at desktop (1440) and mobile (390), and
    tablet (768) for each screen whose layout changes there. Also a test account on a local or staging server, never a
    real customer account.
-7. **Who reviews**, and whether work is tracked in a ticket tool.
+7. **Who reviews**, whether work is tracked in a ticket tool, and whether to file the product bugs you find on the
+   way (where, and with which conventions).
 8. **Fonts**: run the font check from step 2 now. For any font the Figma tool cannot load, tell the person what they
    must set up, so a long run does not stop halfway.
 
@@ -90,15 +97,25 @@ Read the code and write a map. Draw nothing yet.
 - **Areas and flows**: every route, grouped by area, in the order a person meets them.
 - **Full screens with no route**: offline, update required, lock, splash, a first-run intro. These are easy to miss.
 - **States per screen**: loaded, loading, empty, error, every variant the code renders differently, every sheet,
-  dialog and sub-page.
+  dialog and sub-page. A state repeated across many dialogs (a validation error, saving) is drawn once per kind, on one
+  dialog.
 - **Not drawn**: developer and debug screens, unreachable routes, flags the person did not choose. List each with why.
 - **Foundations**: token files (colours per theme, spacing, radius, type, shadows), the icon source, the shared
   components folder.
 
-Show the person the counts (areas, flows, screens, states, components) and a batch order. Save the map to a file
-outside the repo so a later session can resume.
+**The page plan**, from the frame estimate (states x widths, plus the Light and Dark pairs):
 
-Done when: the person has approved the map and the batch order.
+- Nothing goes past about 60,000 px from a page's origin: Figma's canvas misbehaves beyond that. Work out each
+  page's size from the frame count and frame sizes; when one Screens page would pass that, give each area its own
+  page. Full-height web frames usually need it; phone frames often fit one page.
+- Inside a page, group sections in columns, each within about 15,000 px, with a Contents frame of links at 0, 0.
+- Each batch gets its exact page and place (x, y). Place or remove any placeholder frame (a "How to use this page"
+  card) before the first batch, or the first section buries it.
+
+Show the person the counts (areas, flows, screens, states, components, frames), the page plan and a batch order. Save
+the map to a file outside the repo so a later session can resume.
+
+Done when: the person has approved the map, the page plan and the batch order.
 
 ## 4. Build in batches
 
@@ -123,8 +140,10 @@ Done when: the person has approved the map and the batch order.
   before writing. A missing id means stop and ask, never recreate it silently.
 - **One batch at a time, one writer per file.** Never run two agents against one Figma file.
 - **Each batch gets a brief** ([templates/batch-brief.md](templates/batch-brief.md)) and **a progress file**
-  ([templates/progress-file.md](templates/progress-file.md)). The build agent gets the brief, not the chat history.
-  Paste [scripts/prelude.js](scripts/prelude.js) into its scripts.
+  ([templates/progress-file.md](templates/progress-file.md)). The build agent gets the brief as its first prompt, not
+  the chat history. Paste [scripts/prelude.js](scripts/prelude.js) into its scripts.
+- **Permissions go in the first prompt.** A helper (a batch or a walk) ignores permissions relayed mid-run, so quote
+  the person's own words granting any test-account action in its first prompt.
 - **Batch size**: 80 to 150 frames. Bigger batches time out or lose track.
 
 **Review each batch** before the next one starts, in this order:
@@ -138,11 +157,16 @@ Done when: the person has approved the map and the batch order.
 5. **Components, not drawings:** count the instances in each screen against the components the code uses there. A
    piece drawn as plain shapes or text where the code uses a component fails.
 6. **Notes and themes:** check one or two note claims per section against the code; switch the page theme and back.
+7. **Shared components:** re-check the earlier frames that use each shared component the report says it changed.
 
 Fix what is off, then tell the person what was built, what was compared, and what was not drawn and why.
 
-Done when: every screen and state on the approved map is drawn in every theme and reviewed, and the checklist in
-[references/checklist.md](references/checklist.md) passes.
+**Product bugs (if the person wants them filed):** the walk and the code reading find real bugs. Keep a list as you
+go. Verify each in the code or a picture before filing, then file it where and how the person said in step 1, with
+their ticket conventions. Figma still shows the product as it ships, bugs included.
+
+Done when: every screen and state on the approved map is drawn in every theme and reviewed, the checklist in
+[references/checklist.md](references/checklist.md) passes, and each verified bug is filed if the person asked.
 
 ## 5. Set up keeping it updated
 
@@ -152,7 +176,8 @@ then:
 1. **Install figma-sync** if it is missing. Tell the person the command:
    `npx skills add matthewzammit/skills --skill figma-sync` (or the Claude Code plugin). Wait until it is installed.
 2. **Run figma-sync with `setup`.** It adds the sync record and the diff script with a config written from the map,
-   and records the build commit as the first sync. The repo parts go on a branch and a pull request.
+   and records the build commit as the first sync. The repo parts go on a branch and a pull request, in another repo
+   the person names when the product repo is read only for you.
 3. **Offer the weekly drift check** and recommend it: it finds what changed each week, asks which to update, and
    changes nothing until the person picks. If they agree, walk them through scheduling it
    (figma-sync's `templates/drift-check-routine.md`: the steps, and the prompt filled in for this repo).

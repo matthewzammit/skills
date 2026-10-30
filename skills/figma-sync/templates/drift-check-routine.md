@@ -25,6 +25,8 @@ Fill the `<...>` and paste it as the task's prompt.
 Run the weekly Figma drift check for <product>: use the figma-sync skill with the argument "check".
 
 - Repo: <path or repo name>. Main branch: <main>. Figma file: <URL>.
+- <If the product repo is read only for us: the record is in <record repo>; refresh the product snapshot at <path>
+  first (<git fetch, or the archive for the latest commit>), then diff it with --config <config path>.>
 - Read-only until I pick: do not edit the Figma file, change code, commit or push in steps 1 to 3.
 - Write the record to <~/.claude/figma-drift/YYYY-MM-DD.md> (use the real date): the range checked, each check with
   its result, and the numbered plan.

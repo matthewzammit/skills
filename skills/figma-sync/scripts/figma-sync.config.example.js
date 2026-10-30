@@ -1,11 +1,12 @@
 // Example config for figma-diff.js. Copy it to figma-sync.config.js in your repo root and edit it.
-// Every path below is relative to the repo root. The names here belong to an invented app: replace them.
+// Every path below except `record` is relative to the root of the repo being diffed. The names here belong to an invented app: replace them.
 //
 // A rule maps a changed file to the Figma section that draws it. Section names must match the section
 // (or frame group) names on your Figma "Screens" page, so the weekly drift check can find each one.
 
 module.exports = {
-  // Where the record of the last synced commit lives (JSON). Created by `figma-diff.js --mark`.
+  // Where the record of the last synced commit lives (JSON), relative to this config's folder.
+  // Created by `figma-diff.js --mark`.
   record: 'figma-sync.json',
 
   // Git pathspecs (plain folders) to diff. Anything outside them is never reported.

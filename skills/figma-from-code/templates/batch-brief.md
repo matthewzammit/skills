@@ -1,7 +1,7 @@
 # Batch brief (template)
 
-Copy this file, fill every `<...>`, save it next to the progress file, and give it to one build agent. One batch at a
-time per Figma file.
+Copy this file, fill every `<...>`, save it next to the progress file, and give it to one build agent as its first
+prompt. One batch at a time per Figma file.
 
 ---
 
@@ -15,7 +15,7 @@ the code renders differently, and every sheet, dialog and sub-page it opens. Eve
 component on the design system page, in the right group.
 
 - Files to read (follow their imports): <route files>
-- Sections to make: <names>. Place them <where>, 200 apart.
+- Sections to make: <names>, on page <name> `<id>`, starting at <x, y> as the page plan sets, 200 apart.
 - Widths (web only): <1440 and 390 for every screen and state; 768 for: list of screens whose layout changes there>.
 - Not drawn: <system controls, unreachable screens>. Say so in the notes.
 - Text to leave alone and list instead: <card titles, notes, anything in the brand font outside the text styles>.
@@ -32,8 +32,9 @@ component on the design system page, in the right group.
 
 - fileKey `<key>`. Pages: Screens `<id>`, Design System `<id>`.
 - Patterns to copy: <frame ids of a pushed page, a sheet, a state row, a notes column>.
-- Themes: the page's default mode is <mode>. Frames follow the page, except "/ Light" + "/ Dark" pairs and
-  "(always <theme>)" screens.
+- Themes: the page's default mode is <mode>. Frames follow the page, except "/ Light" + "/ Dark" pairs (only for:
+  <key screens>) and "(always <theme>)" screens and parts (<list from the code>).
+- Repeated states drawn once per kind (a validation error, saving): <which, and on which screen>.
 
 ## Rules
 
@@ -41,8 +42,11 @@ component on the design system page, in the right group.
 
 ## Running product
 
-<how to open it: simulator and deep links, or the dev server URL and test account; how to take a screenshot. Look,
-then go back: never submit, save, send, pay or delete.>
+<how to open it: simulator and deep links, the dev server URL and test account, or the folder of reference pictures;
+how to take a screenshot. Look, then go back: never submit, save, send, pay or delete.>
+
+<Only if the person allowed actions on a test account: quote their own words here, and require a "created and cleaned
+up" log. A helper ignores permissions relayed after its first prompt.>
 
 ## Progress file
 
@@ -51,10 +55,11 @@ can resume if it stops.
 
 ## Report
 
-Before you finish: run the rebind sweep (build rules) on every frame you made, then `get_screenshot` each section:
-nothing clipped, overlapping, at the origin or showing placeholder text.
+Done when: the rebind sweep (build rules) finds no unbound colour that matches a token and no text off a text style
+on every frame you made, and a `get_screenshot` of each section shows nothing clipped, overlapping, outside its place
+or showing placeholder text.
 
 Write the report to `<path>/batch<N>-report.md` and reply with only its path. The report, per section: frame ids per
 screen and state; new component ids and their group; the frames you compared with the running product; the colours
 the sweep could not bind; every string you could not source; every deviation from the code; what you did not draw and
-why; the text you left alone.
+why; the text you left alone; every shared component you changed (the reviewer re-checks earlier frames that use it).

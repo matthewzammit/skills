@@ -27,7 +27,7 @@ Or as a Claude Code plugin, which installs all the skills in this repo:
 
 | You type | When | What happens |
 |---|---|---|
-| `/figma-sync setup` | Once per repo | Asks for your Figma link and a few choices, checks your fonts, then adds a sync record (`figma-sync.json`), a diff script (`figma-diff.js`) and its config to your repo, matched to your Figma sections. |
+| `/figma-sync setup` | Once per repo | Asks for your Figma link and a few choices, checks your fonts, then adds a sync record (`figma-sync.json`), a diff script (`figma-diff.js`) and its config to your repo, matched to your Figma sections. If the product repo is read only for you, they go in another repo you own, and each check refreshes a snapshot of the product first. |
 | `/figma-sync` (or a PR number, or a branch) | After a change, or at each release | Lists what changed since the last sync, redraws it in every theme, reviews it, and records the new sync on a branch with a pull request. |
 | `/figma-sync check` | Weekly, on a schedule | Finds the gaps, plans each one with a size, asks which to update, and waits. It changes nothing until you pick. |
 
