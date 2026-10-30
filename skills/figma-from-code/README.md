@@ -53,7 +53,7 @@ Up to four Figma pages, built from your code:
 
 | Page | What it holds |
 |---|---|
-| **Screens** | Every screen a person can reach, in light and dark, with its states, sheets and dialogs. One row per area of the product, one section per flow, notes beside each flow. |
+| **Screens** | Every screen a person can reach, in light and dark, with its states, sheets and dialogs. One row per area of the product (or a page per area for a large build), one section per flow, notes beside each flow. |
 | **Design System** | Your colours, sizes and type as Figma variables and styles, your icons, and every shared component with its variants. |
 | **Brand Guideline** | A short deck (20 to 30 slides) to present the product's design. Optional. |
 | **Proposals** | An empty page where designers try ideas. The other pages mirror the shipped product. |
@@ -63,8 +63,8 @@ Start with the design system and a few screens. Add the rest after you have revi
 Works for **mobile apps** (React Native, Swift, Kotlin, Flutter) and **web apps** (React, Next.js, Vue and so on).
 The skill sees which one you have and changes the steps. For the web it reads your breakpoints and draws responsive
 views: desktop and mobile for every screen, and tablet where the layout changes. We used it on a React Native app,
-and a second team used an earlier version on a web platform; the web steps in this form are newer, so tell me what you
-find.
+then on a web app (about 470 frames over five area pages), and a second team used an earlier version on a web
+platform. Tell me what you find.
 
 ## Why you need it
 

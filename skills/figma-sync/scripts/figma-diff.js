@@ -8,10 +8,14 @@
  *   node figma-diff.js --to origin/main
  *   node figma-diff.js --json           the same, as JSON (for a scheduled drift check)
  *   node figma-diff.js --mark           after a sync: record HEAD (or --to) as the last synced commit
+ *   node figma-diff.js --mark --note "snapshot of <product commit>"
+ *   node figma-diff.js --config ../other-repo/figma-sync.web.config.js
+ *                                       a config (and record) kept outside this repo, for a read-only product
  *
  * Setup: copy figma-sync.config.example.js to figma-sync.config.js in the repo root and edit it. The record
- * of the last synced commit lives at the path the config names (default figma-sync.json). The script may
- * live anywhere: it finds the repo root with `git rev-parse --show-toplevel` from the working directory.
+ * of the last synced commit lives at the path the config names (default figma-sync.json), relative to the
+ * config's folder. The script may live anywhere: it diffs the repo it is run in (found with
+ * `git rev-parse --show-toplevel` from the working directory).
  */
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -106,6 +110,18 @@ function parseSyncRecord(text) {
   return rec;
 }
 
+/**
+ * Where the config and the record live. The config defaults to the repo root; the record sits beside the config.
+ * @param {string|undefined} configArg the --config value, if any
+ * @param {object} cfg the config (for its record path); may be omitted to get only the config path
+ * @param {{ root: string, cwd: string }} where the repo root and the working directory
+ */
+function locate(configArg, cfg, { root, cwd }) {
+  const configPath = configArg ? path.resolve(cwd, configArg) : path.join(root, CONFIG_NAME);
+  const recordPath = cfg ? path.resolve(path.dirname(configPath), withDefaults(cfg).record) : null;
+  return { configPath, recordPath };
+}
+
 function checkConfig(c) {
   if (!Array.isArray(c.rules) || !c.rules.every((r) => Array.isArray(r) && r[0] instanceof RegExp && Array.isArray(r[1]))) {
     throw new Error(`${CONFIG_NAME}: rules must be an array of [regex, [section names]]`);
@@ -127,34 +143,40 @@ function main() {
   const git = (...args) => run(root, ...args).trim();
   const lines = (...args) => run(root, ...args).split('\n').filter(Boolean);
 
-  const configPath = path.join(root, CONFIG_NAME);
+  const argv = process.argv.slice(2);
+  const has = (name) => argv.includes(name);
+  const value = (name, example) => {
+    const i = argv.indexOf(name);
+    if (i < 0) return undefined;
+    if (!argv[i + 1] || argv[i + 1].startsWith('--')) fail(`${name} needs a value, for example ${name} ${example}.`);
+    return argv[i + 1];
+  };
+  const to = value('--to', 'origin/main') ?? 'HEAD';
+  const configArg = value('--config', '../other-repo/figma-sync.config.js');
+  const note = value('--note', '"snapshot of 0b0ff041"');
+
+  const { configPath } = locate(configArg, null, { root, cwd: process.cwd() });
   if (!fs.existsSync(configPath)) {
-    fail(`no ${CONFIG_NAME} in ${root}. Copy figma-sync.config.example.js (next to this script) there and edit it.`);
+    fail(`no config at ${configPath}. Copy figma-sync.config.example.js (next to this script) there and edit it.`);
   }
   const cfg = withDefaults(require(configPath));
   checkConfig(cfg);
-  const recordPath = path.resolve(root, cfg.record);
-
-  const argv = process.argv.slice(2);
-  const has = (name) => argv.includes(name);
-  const toIdx = argv.indexOf('--to');
-  if (toIdx >= 0 && !argv[toIdx + 1]) fail('--to needs a ref, for example --to origin/main.');
-  const to = toIdx >= 0 ? argv[toIdx + 1] : 'HEAD';
+  const { recordPath } = locate(configArg, cfg, { root, cwd: process.cwd() });
   const toSha = git('rev-parse', '--verify', `${to}^{commit}`);
 
   if (has('--mark')) {
     let base = {};
     if (fs.existsSync(recordPath)) base = parseSyncRecord(fs.readFileSync(recordPath, 'utf8'));
     const today = new Date().toISOString().slice(0, 10);
-    const next = { ...base, lastSyncedCommit: toSha, syncedAt: today };
+    const next = { ...base, lastSyncedCommit: toSha, syncedAt: today, ...(note ? { note } : {}) };
     fs.mkdirSync(path.dirname(recordPath), { recursive: true });
     fs.writeFileSync(recordPath, JSON.stringify(next, null, 2) + '\n');
-    console.log(`figma-sync: recorded ${toSha.slice(0, 8)} (${today}) as the last synced commit in ${path.relative(root, recordPath)}.`);
+    console.log(`figma-sync: recorded ${toSha.slice(0, 8)} (${today}) as the last synced commit in ${recordPath}.`);
     return;
   }
 
   if (!fs.existsSync(recordPath)) {
-    fail(`no record at ${path.relative(root, recordPath)}. Once Figma matches the code, run this script with --mark to create it.`);
+    fail(`no record at ${recordPath}. Once Figma matches the code, run this script with --mark to create it.`);
   }
   const record = parseSyncRecord(fs.readFileSync(recordPath, 'utf8'));
   const range = `${record.lastSyncedCommit}..${toSha}`;
@@ -198,7 +220,7 @@ function main() {
   }
 }
 
-module.exports = { sectionsFor, sectionsForFiles, routesWithoutSection, parseSyncRecord, allSections, withDefaults };
+module.exports = { sectionsFor, sectionsForFiles, routesWithoutSection, parseSyncRecord, allSections, withDefaults, locate };
 
 if (require.main === module) {
   try { main(); } catch (e) { fail(String(e.message || e).split('\n')[0]); }

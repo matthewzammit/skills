@@ -2,7 +2,7 @@
 // the Figma tool can load (references/font-problem.md). Set the three names below, and fill ID from your first
 // read-only listing of the design system page.
 
-// Set these three: the Screens page id, the colour collection name, and its two theme mode names.
+// Set these three: this batch's screens page id, the colour collection name, and its two theme mode names.
 const SCREENS_PAGE_ID = '<page id>';
 const COLOUR_COLLECTION = '<colour collection name>';
 const MODES = { light: 'Light', dark: 'Dark' };
@@ -44,5 +44,6 @@ const body = (f, y = 126) => { const c = al('VERTICAL', 'Content'); c.resize(370
 const chrome = (f, o = {}) => { const s = mk('status'); f.appendChild(s); s.x = 0; s.y = 0; let b = null; if (o.back !== false) { b = mk('back'); f.appendChild(b); b.x = 16; b.y = 62; } return { s, b }; };
 const fin = (f, c, min = 874) => { const h = Math.max(min, Math.round(c.y + c.height)); f.resize(402, h); const hi = mk('home'); f.appendChild(hi); hi.x = 0; hi.y = h - 34; return f; };
 // Only for the two halves of a "/ Light" + "/ Dark" pair. Every other frame follows the page's mode.
-const darkOf = (f, name) => { const d = f.clone(); d.name = name; d.setExplicitVariableModeForCollection(colour, DM); return d; };
+// clone() lands on the current page, so put the copy back in the original's section.
+const darkOf = (f, name) => { const d = f.clone(); f.parent.appendChild(d); d.name = name; d.setExplicitVariableModeForCollection(colour, DM); return d; };
 const place = (fs, y) => { fs.forEach((f, i) => { f.x = 80 + i * 482; f.y = y; }); return Math.max(...fs.map((f) => f.height)); };

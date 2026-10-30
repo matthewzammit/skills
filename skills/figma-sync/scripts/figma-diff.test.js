@@ -2,7 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const cfg = require('./figma-sync.config.example.js');
-const { sectionsFor, sectionsForFiles, routesWithoutSection, parseSyncRecord, allSections } = require('./figma-diff.js');
+const path = require('node:path');
+const { sectionsFor, sectionsForFiles, routesWithoutSection, parseSyncRecord, allSections, locate } = require('./figma-diff.js');
 
 test('maps a screen to the section that draws it', () => {
   assert.deepStrictEqual(sectionsFor('src/app/(auth)/login.tsx', cfg), ['Sign in']);
@@ -66,4 +67,19 @@ test('parseSyncRecord reads a valid record', () => {
 test('parseSyncRecord rejects a bad sha and a bad date', () => {
   assert.throws(() => parseSyncRecord('{"lastSyncedCommit":"main","syncedAt":"2026-10-16"}'), /sha/);
   assert.throws(() => parseSyncRecord('{"lastSyncedCommit":"09efeb58","syncedAt":"16/10"}'), /YYYY-MM-DD/);
+});
+
+test('locate: the config defaults to the repo root, with the record beside it', () => {
+  const where = { root: '/work/product', cwd: '/work/product/src' };
+  assert.deepStrictEqual(locate(undefined, {}, where), {
+    configPath: path.join('/work/product', 'figma-sync.config.js'),
+    recordPath: path.join('/work/product', 'figma-sync.json'),
+  });
+});
+
+test('locate: a --config outside the repo keeps its record beside it (a read-only product)', () => {
+  const where = { root: '/work/product', cwd: '/work/product' };
+  const { configPath, recordPath } = locate('../tracker/figma-sync.web.config.js', { record: 'figma-sync.web.json' }, where);
+  assert.strictEqual(configPath, path.resolve('/work/tracker/figma-sync.web.config.js'));
+  assert.strictEqual(recordPath, path.resolve('/work/tracker/figma-sync.web.json'));
 });

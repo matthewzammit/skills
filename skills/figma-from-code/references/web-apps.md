@@ -30,9 +30,30 @@ Everything in SKILL.md still applies. These parts differ for a web app.
   results), form validation, toasts, the side navigation open and collapsed, a session timeout or permission error.
 - **Not drawn:** browser chrome, the system file picker and print dialog, third-party iframes (payment forms, identity
   checks). List them in the notes.
-- **Pre-capture the references once.** Before the batches, capture every screen and state at each width (headless
-  browser, at scale 1, saved as files with a name per screen, state and width, and the clicks that reach each state).
-  Build agents then compare against the files and never open a browser. Opening a dialog to capture it is fine;
-  confirming it is not.
 - **Checking with the product:** a browser at each width. Never submit a form, send an email, pay or delete anything.
 - **Accessibility:** note where the layout changes at 200% browser zoom.
+
+## The walk: pre-capture the references once
+
+Before the batches, capture every screen and state at each width, saved as files named per screen, state, width and
+theme, with the clicks that reach each one in a walk log. Build agents then compare against the files and never open a
+browser. Opening a dialog to capture it is fine; confirming it is not.
+
+1. **Ask up front** which test-account actions are allowed: saving an edit, uploading a file, sharing. Look-only is
+   the default. A helper doing the walk gets the person's own words in its first prompt (SKILL.md step 4).
+2. **Ask the person to set the site to always allow clicks** in the agent's browser, or each click waits for them.
+3. **Capture the sign-in screens first**, before the person signs in; afterwards they are out of reach without signing
+   out. The person signs in; the agent never types a password. A magic-link sign-in opens their normal browser: they
+   copy the link and paste it into the agent's browser.
+4. **Before each screenshot**, stop fade-ins and load lazy images: inject a style that sets every animation and
+   transition to zero, and scroll the page once. Otherwise the first capture comes out washed out or blank.
+5. **Check the picture's size.** Desktop screenshots can come back downscaled (800 wide for 1440); phone shots often at
+   2x. Record the real width, or capture at scale 1 from a headless browser.
+6. **Change only what the person allowed**, and log each change in a "created and cleaned up" list: what, where, and
+   how it was put back. Set a file only on the input inside the row you mean, never on a generic hidden file input:
+   one walk hit the input of a verified document.
+7. **When live data lacks a state** (an empty list, a rare status), edit one test record into it if edits are allowed,
+   and say so in the walk log, so the frame's note says it too.
+
+Done when: every screen and state on the map has its pictures, or a line in the walk log saying why not, and every
+change in the "created and cleaned up" list is put back.
