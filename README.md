@@ -152,7 +152,30 @@ details.
 
 <br>
 
-#### #5: Review every change for security, accessibility and quality
+#### #5: Make your agent's next session go better
+
+<p align="center">
+  <img src="assets/retro-session.png" alt="Session retro: an agent session's transcript on the left, your agent in the middle, and on the right findings ranked by cost, a repeat traced to its cause, and the fix with a pull request." width="100%">
+</p>
+
+[**retro-session**](skills/retro-session/) reviews an agent session and fixes what went wrong where it starts: a
+check, a hook, a script or a pointer in a doc. It looks for what a quick read misses:
+
+- **Hidden failures:** a command that failed while its result looked fine.
+- **Noisy guardrails:** a hook or check that fires when the work is already right.
+- **Repeats:** a problem that came back after an earlier fix.
+- **Your corrections:** every "no, I said" is a rule the agent did not have.
+
+Each finding comes with its cost and one line of proof. It keeps a record of every retro, so a repeat is fixed at
+its cause, not patched again. Claude Code only for now.
+
+A rule in a doc is easy to forget. A fix the agent runs into works without anyone remembering it.
+
+[Read more about the session retro](skills/retro-session/)
+
+<br>
+
+#### #6: Review every change for security, accessibility and quality
 
 <p align="center">
   <img src="assets/weekly-audit.png" alt="Weekly audit: last week's commits and your installed review skills on the left, your agent in the middle, and on the right one checked list of findings with severity, a decision with options, and what carried over." width="100%">
