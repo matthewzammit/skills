@@ -83,7 +83,7 @@ Build what the person picked, the way the config's `ship` says (plan, ticket, br
 test when it is code. When a fix replaces a note the agent kept in memory, change the note to point at the fix, or
 delete it.
 
-Write the record in `<records>/YYYY-MM-DD.md` from [templates/record.md](templates/record.md), with the window's
+Write the record in `<records>/YYYY-MM-DD.md` (a second run that day: `YYYY-MM-DD-2.md`) from [templates/record.md](templates/record.md), with the window's
 `End:` time.
 
 Done when: the fixes are shipped or handed over, and the record is written.
