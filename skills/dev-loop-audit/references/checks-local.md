@@ -41,3 +41,14 @@ transcripts; say so under "Not checked".
 5. **Skippable work:** a tag-only or branch-delete push that runs the full gate, a docs-only push that runs the
    test suite (ci.txt counts the pushes that changed only paths CI ignores), or a push right after the same checks
    passed by hand on the same tree.
+6. **One after another:** lint and typecheck each use about one core, and a test runner set to half the cores leaves
+   the rest free. When the hook runs them in a row, propose running them beside the tests, so the push takes as long
+   as its slowest step. The failing step must still be named on the last line. One repo: a cold push went from
+   57 s to 27 s, a warm one from 12 s to 10 s.
+7. **What lint spends its time on:** when lint is a top step, profile it once (`TIMING=20 npx eslint <src> --no-cache`).
+   One or two rules are often most of it. A rule the typechecker already enforces can go (in TypeScript:
+   `import/namespace`, `import/named`, `import/default`); a rule that catches real bugs stays, however slow.
+8. **A faster tool shipped:** when a check is a top step, look for a faster successor or major version (TypeScript 7,
+   Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
+   this repo, cold and warm, before proposing it: a warm incremental cache often already beats it (one repo's warm
+   `tsc --incremental` took 1.4 s, TypeScript 7 1 s, not worth a second compiler).
