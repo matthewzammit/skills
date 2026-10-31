@@ -1,7 +1,7 @@
 // Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');
+const { SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');
 const { windowFrom } = require('./common.js');
 
 const at = (min) => new Date(Date.UTC(2026, 9, 20, 10, 0) + min * 60000).toISOString().replace('.000', '');
@@ -47,6 +47,18 @@ test('summarizeJobs numbers steps that share a name', () => {
   const s = summarizeJobs([{ ...runOf(1, 'a'), jobs: [job('test', 0, 2, { steps })] }]).CI.jobs.test.steps;
   assert.strictEqual(s['Run actions/cache@v5'].median_s, 30);
   assert.strictEqual(s['Run actions/cache@v5 #2'].median_s, 3);
+});
+
+test('summarizeJobs splits setup from the checks', () => {
+  const step = (name, a, b) => ({ name, conclusion: 'success', started_at: at(a), completed_at: at(b) });
+  const steps = [
+    step('Set up job', 0, 0.05), step('Run actions/checkout@v5', 0.05, 0.1), step('Run actions/cache@v5', 0.1, 0.5),
+    step('Run npm ci', 0.5, 1), step('Run npm run lint', 1, 1.5), step('Run npm test', 1.5, 3), step('Post Run actions/cache@v5', 3, 3.1),
+  ];
+  const s = summarizeJobs([{ ...runOf(1, 'a'), jobs: [job('test', 0, 3.1, { steps })] }]).CI.jobs.test;
+  assert.strictEqual(s.setup_median_s, 66);
+  assert.ok(!SETUP_STEP.test('Run npm run lint') && !SETUP_STEP.test('Run npm test'));
+  assert.ok(SETUP_STEP.test('Run pnpm/action-setup@v4') && SETUP_STEP.test('Install dependencies'));
 });
 
 test('flakes: green on a re-run, or a later run on the same commit', () => {

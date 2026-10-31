@@ -81,6 +81,12 @@ function criticalPath(jobs) {
   return chain.map((j) => j.name);
 }
 
+/**
+ * A step that gets the machine ready rather than checking the code: checkout, toolchain setup, cache restore and
+ * save, dependency install. Setup is the part of a job nobody looks at, and where a missed cache hides.
+ */
+const SETUP_STEP = /^(Set up job|Complete job|Post |Run actions\/(checkout|cache|setup-[\w-]+)\b|Run [\w.-]+\/[\w-]*setup[\w-]*@|Install\b)|\b(npm ci|npm install|pnpm install|yarn install|bun install|pip install|bundle install|pod install)\b/i;
+
 /** Speed per workflow and job, from successful runs only. */
 function summarizeJobs(runs) {
   const out = {};
@@ -94,12 +100,13 @@ function summarizeJobs(runs) {
     if (chain) w.chains[chain] = (w.chains[chain] || 0) + 1;
     for (const j of r.jobs) {
       if (j.conclusion !== 'success') continue;
-      const e = w.jobs[j.name] || (w.jobs[j.name] = { n: 0, durs: [], queues: [], steps: {} });
+      const e = w.jobs[j.name] || (w.jobs[j.name] = { n: 0, durs: [], queues: [], setups: [], steps: {} });
       e.n++;
       e.durs.push(dur(j.started_at, j.completed_at));
       const q = dur(j.created_at, j.started_at);
       if (q != null && q >= 0) e.queues.push(q);
       const named = {};
+      let setup = 0;
       for (const st of j.steps || []) {
         // Two steps can share a name (two cache restores); number the second so their times stay apart.
         named[st.name] = (named[st.name] || 0) + 1;
@@ -108,7 +115,9 @@ function summarizeJobs(runs) {
         const d = dur(st.started_at, st.completed_at);
         if (d == null) continue;
         (e.steps[key] || (e.steps[key] = [])).push(d);
+        if (SETUP_STEP.test(st.name)) setup += d;
       }
+      if ((j.steps || []).length) e.setups.push(setup);
     }
   }
   const result = {};
@@ -120,7 +129,8 @@ function summarizeJobs(runs) {
       longest_chain: Object.entries(w.chains).sort((a, b) => b[1] - a[1])[0]?.[0] || null,
       jobs: Object.fromEntries(Object.entries(w.jobs).map(([jn, e]) => [jn, {
         n: e.n, median_s: median(e.durs), p90_s: p90(e.durs), max_s: round(Math.max(...e.durs), 1), queue_median_s: median(e.queues),
-        steps: Object.fromEntries(Object.entries(e.steps).map(([sn, xs]) => [sn, { median_s: median(xs), p90_s: p90(xs) }])
+        setup_median_s: median(e.setups), setup_p90_s: p90(e.setups),
+        steps: Object.fromEntries(Object.entries(e.steps).map(([sn, xs]) => [sn, { n: xs.length, median_s: median(xs), p90_s: p90(xs) }])
           .sort((a, b) => b[1].median_s - a[1].median_s).slice(0, 8)),
       }])),
     };
@@ -431,4 +441,4 @@ if (require.main === module) {
   try { main(); } catch (e) { console.error(e.message); process.exit(1); }
 }
 
-module.exports = { fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };
+module.exports = { SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };

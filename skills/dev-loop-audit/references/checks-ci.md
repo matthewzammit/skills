@@ -47,7 +47,15 @@ re-ran) rank above runner-minutes (only money).
    almost nothing (only meaningful when pushes come from the activity API).
    Steps that share a name in one job are numbered (`#2`) in `speed`. Missing filters: a docs-only push that ran the full suite.
 6. **Cache:** a warm run that took as long as a cold one (dependency install or lint step at its cold time) means
-   a cache was missed or rejected; look at the step's log for the restore line.
+   a cache was missed or rejected; look at the step's log for the restore line. Each step in `speed` has `n`, the
+   runs it ran in: an install step guarded by a cache hit should run about as often as the lockfile changed. Far
+   more means the cache misses. On pull requests GitHub reads only the branch's own caches and the default
+   branch's, so a cache that is never saved on the default branch leaves every PR cold.
+7. **Setup against checks** (`setup_median_s` per job: checkout, toolchain, cache restore and save, install):
+   setup is the part nobody reads, and agents retry past it. Over a third of a warm job's time is worth a look.
+8. **Workers against cores:** a test runner set to a share of the cores (Jest `maxWorkers: '50%'`) gets one worker
+   on a 2-vCPU runner (GitHub's standard runner for a private repo). Before proposing more, time it both ways in
+   one run on the same runner. One repo's 2-vCPU runner gained nothing from 2 workers (33 s against 31 s).
 
 ## Already right
 
