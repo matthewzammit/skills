@@ -38,7 +38,8 @@ Done when: every question is answered and the font check has a result.
    - `routeFiles`: how to list screen files, so a new screen with no Figma section is caught.
    - `ignore`: developer labs, tests, layout files.
    - `rules`: one per Figma section, `[regex, [section names]]`, using the **section names that exist in the file**.
-     The first match wins, so put narrow rules above broad ones.
+     The first match wins, so put narrow rules above broad ones. When the file has one page per area, name the pages
+     instead: tidy passes rename group sections, but page names stay.
    - `designSystem`: the name of the design system section or page, with a rule that sends shared components and token
      files to it.
    - `overlays`: full screens with no route (offline, update required, lock, splash) and a regex for each one's frame
@@ -71,7 +72,7 @@ the commit and the date. For a read-only product, add `--config`; for a snapshot
 
 ## 5. Write it down
 
-A short guide in the record repo's docs: where the Figma pages are, where the product snapshot lives and how it
-refreshes, which fonts need the Chrome swap, how the pages stay in step, and the rule for designers (the mirror shows
+A short guide in the record repo's docs: where the Figma pages are, where the build notes (the registry of Figma ids,
+the map) live, where the product snapshot lives and how it refreshes, which fonts need the Chrome swap, how the pages stay in step, and the rule for designers (the mirror shows
 the product as shipped; comment freely; try ideas on a Proposals page; an idea reaches the mirror only after it ships
 in code). One line in the team's principles points to it.
