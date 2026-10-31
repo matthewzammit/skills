@@ -101,7 +101,8 @@ app with Claude, then rebuilt Figma from the code with every new page and compon
         |
   5. Batches, one area at a time, each reviewed against the running app
         |
-  6. figma-sync: a sync record, a diff, and a weekly drift check
+  6. figma-sync: a sync record, a diff, a weekly drift check,
+     and the build notes saved in your repo
 ```
 
 **It asks before it builds.** Claude looks at your code first, says what it found ("an Expo app, 84 screens, light and
@@ -153,7 +154,8 @@ mistakes included.
 **One writer at a time.** Two agents writing to one Figma file at once corrupt each other's work.
 
 **Write a brief and a progress file per batch.** The build agent gets the brief, not the chat. If the laptop sleeps,
-the next run reads the progress file and carries on.
+the next run reads the progress file and carries on. At the end, the build notes (every Figma id, the screen map, the
+helper code) are copied into your repo, so later updates can find what to change.
 
 ## Keeping it updated
 
