@@ -182,9 +182,12 @@ then:
    changes nothing until the person picks. If they agree, walk them through scheduling it
    (figma-sync's `templates/drift-check-routine.md`: the steps, and the prompt filled in for this repo).
 4. **Add a release step** to the team's release checklist: run figma-sync, redraw what changed, mark the sync.
+5. **Keep the build notes in the repo.** The progress files usually sit in a temporary folder that is deleted, and
+   every later redraw needs their ids. Copy the Registry (every page, section, component and frame id), the map and
+   the prelude into a folder of the record repo (for example `tools/figma/`), on the same branch as the sync setup.
 
-Done when: the diff reports Figma up to date at the build commit, and the person has said yes or no to the weekly check
-(and it is scheduled if yes).
+Done when: the diff reports Figma up to date at the build commit, the build notes are in the repo, and the person has
+said yes or no to the weekly check (and it is scheduled if yes).
 
 ## 6. Hand over
 
