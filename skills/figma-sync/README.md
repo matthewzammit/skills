@@ -40,6 +40,11 @@ When installed as a Claude Code plugin, the command is `/matthewzammit-skills:fi
 - **The file itself:** every expected section and full-screen overlay exists, themes are set only where allowed, no
   helper layers are left behind, no text is left in the font stand-in, nothing overlaps.
 
+## Moving onto a design team's library
+
+If the design team has its own component library and the mirror should use it instead of the mirror's own design
+system, [references/adopt-a-library.md](references/adopt-a-library.md) has the steps.
+
 ## The weekly drift check
 
 Schedule `/figma-sync check` once a week in the Claude desktop app (Code tab, Scheduled) or in the cloud. The prompt
