@@ -36,6 +36,12 @@ your recommendation first:
    for a few key screens. Drawing every state in both themes doubles the build.
 4. **Which version**: if the code has feature flags or an old and a new design, which one Figma shows.
 5. **Existing designs**: an older Figma file or library. Mirror the code, keep the old pages, say where they differ.
+   When the design team already has a component library the product's code was built from or checked against (the
+   code's own docs often name it), link it and build the screens from its components and variables instead of a new
+   design system; build only the parts it lacks. Check access to it before the build starts, and ask for access if it
+   is missing rather than building around it. The Figma tool's library list can miss a library published in the same
+   team, so test one import by key before calling it unavailable. To move an existing mirror onto a library, see
+   figma-sync's `references/adopt-a-library.md`.
 6. **Web only**: the responsive views. Read the breakpoints from the code first (Tailwind screens, CSS media
    queries, the component library's theme). Recommend every screen and state at desktop (1440) and mobile (390), and
    tablet (768) for each screen whose layout changes there. Also a test account on a local or staging server, never a
@@ -145,6 +151,9 @@ Done when: the person has approved the map, the page plan and the batch order.
 - **Permissions go in the first prompt.** A helper (a batch or a walk) ignores permissions relayed mid-run, so quote
   the person's own words granting any test-account action in its first prompt.
 - **Batch size**: 80 to 150 frames. Bigger batches time out or lose track.
+- **Save the script that worked.** Once a script works on the pilot, save it to a file in the repo and give helpers
+  that file with the rules learned. The batches then run on a cheaper model, and you only review counts and
+  screenshots.
 
 **Review each batch** before the next one starts, in this order:
 

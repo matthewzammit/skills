@@ -11,6 +11,9 @@ asks what to update, redraws it, and records the sync.
 
 Talk to the person in short, plain sentences, with a recommendation. Never ask what the repo or Figma can answer.
 
+To move a mirror off its own design system onto the design team's component library, follow
+[references/adopt-a-library.md](references/adopt-a-library.md) instead of the steps below.
+
 Scope from `$ARGUMENTS`:
 - **setup**: first time in this repo. Follow [references/setup.md](references/setup.md), which asks the person a few
   questions, then stop.
