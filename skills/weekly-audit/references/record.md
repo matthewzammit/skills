@@ -9,6 +9,8 @@ first and use today's real date. The next run reads this file to find where to s
   and commits it.
 - **The range and its end commit.** Name the range audited and its end commit by full hash. The next run's scope
   starts at that commit. A record without it breaks the next run.
+- **The docs re-read.** One line, `Docs re-read: a.md, b.md, c.md`, names the docs the rotation read in full, even
+  when all were clean. The next run's rotation reads it. Never list a doc you did not read end to end.
 - **A clean week still writes a record.** Write the one-line form below, so the next scope starts in the right
   place. A week with zero commits writes nothing and ends with "Nothing changed since <date>."
 - **Verified, or not.** Each finding says whether you read the code that proves it and tried to prove it wrong.
@@ -92,6 +94,7 @@ What you could not or did not check, and why.
 
 Range: `abc1234` to `def5678` (12 commits, 9 files). Clean: no verified findings. Skills run: vibe-security,
 better-ui. End commit: `def5678`.
+Docs re-read: docs/setup.md, docs/billing.md, README.md
 ```
 
-Keep the header's range and end commit. Everything else is optional.
+Keep the header's range, end commit and docs re-read line. Everything else is optional.

@@ -32,13 +32,29 @@ For each finding that qualifies, up to the cap:
    doc change in the **same commit**, when the change alters documented behaviour.
 4. Run the repo's own checks (lint, type check, tests, whatever its guide says before a push). All must pass. If a
    check fails and the fix is not obvious, drop the branch and leave the finding as it was, with the reason.
-5. Commit with the repo's commit rules, and push the branch.
+5. Commit with the repo's commit rules. Before you push, check the commit happened: a new commit hash on the
+   branch and a clean working tree. A blocked commit followed by a push sends an empty branch. Then push.
 6. Open a **draft pull request** with `gh pr create --draft`. The description holds the finding (with its ticket
    link), what changed, and a **How to check it** note: the steps a person takes to see the old problem and the
    fix, in plain words.
 7. Update the finding's ticket and the record with the pull request link.
 
 Return to the main branch before the next finding, so each branch starts clean.
+
+## Device and browser checks
+
+A fix to something a person sees or taps needs a check on a simulator, a device or a browser. In a scheduled run:
+
+- **Your usual tool may refuse.** Some agent tools for a simulator or a browser refuse scheduled sessions, even in
+  later turns a person types. A command-line driver can work instead.
+- **Prove the driver works first.** A driver can report success while nothing happens. Do one tap, take a
+  screenshot, and confirm the screen really changed before you trust it.
+- **Prove the bug, then the fix.** Run the same steps on the main branch first and see the bug. Then run them on the
+  fix branch and see it gone. A check that passes on both proves nothing.
+- **For a timing bug**, take raw screenshots at fixed moments. A screenshot helper that waits for the screen to
+  settle can wait longer than the bug lasts, and then both runs pass.
+- **When you cannot run it**, the pull request still opens. Write the exact check into its **How to check it** note:
+  the screens, the taps, the expected result, light and dark, and any temporary edit needed to see the bug.
 
 ## Never
 

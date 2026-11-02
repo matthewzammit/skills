@@ -43,7 +43,7 @@ open source. The starter set:
 | `better-colors` | Contrast and palettes | Any |
 | `no-ai-slop` | Wording that sounds machine-written | Any |
 
-Authors, install commands and two we dropped (and why) are in
+Authors and two we dropped (and why) are in
 [references/review-skills.md](references/review-skills.md).
 
 ## Run it
@@ -60,13 +60,16 @@ When installed as a Claude Code plugin, the command is `/matthewzammit-skills:we
 1. **Scope:** only the commits since the last run. A week with no commits ends in one line.
 2. **Review:** one agent per review skill, all at once, on the changed files. A few checks always run, because no
    skill covers them: new routes or endpoints that need an access check, docs for the features that changed, and
-   errors that never reach crash reporting.
+   errors that never reach crash reporting. Each run also re-reads a few docs that nothing changed, the longest unread
+   first, so a guide nobody edits does not drift.
 3. **Check:** it removes duplicates and tries to prove each finding wrong against the code. What does not hold is
    dropped, and the record says why.
 4. **Decide:** a finding that needs your choice comes with 2 or 3 options and a pick.
 5. **Record and tickets:** a dated record in your repo. If you use a tracker, one ticket per finding under a new
    group for the week, and last week's open tickets move into it.
-6. **Fixes, only if you turn them on:** a draft pull request for each finding with one clear fix. It never merges.
+6. **Fixes, only if you turn them on:** a draft pull request for each finding with one clear fix. It checks a
+   visible fix on a simulator or in a browser, the bug on the main branch first, then gone on the fix branch. When
+   it cannot, the pull request says exactly how to check it. It never merges.
 7. **Summary:** progress first, then what needs your decision.
 
 ## Why fixes are off by default
@@ -80,6 +83,10 @@ them at any time.
 
 Schedule it every Monday in the Claude desktop app (Code tab, Scheduled, "Only on this computer"). The prompt and
 the steps are in [templates/weekly-routine.md](templates/weekly-routine.md).
+
+## What it needs
+
+- Node 18 or newer, for the docs rotation script. It has no dependencies and only reads.
 
 ## Credits
 

@@ -3,6 +3,7 @@
 Range: `<last end commit>` (last record <date>) to `<end commit, full hash>`. <N> commits, <N> changed files.
 Stack: <web | mobile | api | library>. Tickets: <group name and link, or "none filed">.
 End commit: `<end commit, full hash>`
+Docs re-read: <the docs from the rotation, comma-separated, or none>
 
 ## Skills run
 
@@ -61,4 +62,4 @@ End commit: `<end commit, full hash>`
 ---
 
 <One-line form for a clean week: keep only the title, the Range line and "Clean: no verified findings. Skills
-run: <list>." Keep the End commit line.>
+run: <list>." Keep the End commit and Docs re-read lines.>

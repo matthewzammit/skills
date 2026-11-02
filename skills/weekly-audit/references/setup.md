@@ -61,6 +61,7 @@ Keys:
   "skipped": { "vercel-react-best-practices": "no server components; the React Compiler handles memoisation" },
   "analytics": { "check": null },
   "extraChecks": ["docs/security.md#Review checklist"],
+  "docsRotation": { "count": 3, "docs": ["docs", "README.md"] },
   "tickets": { "tool": "github", "how": "gh issue create --label weekly-audit" },
   "fixes": false,
   "summary": { "postTo": null },
@@ -76,6 +77,8 @@ Keys:
 - `commitRecords`: `false` (recommended) leaves each record for a person to review and commit; `true` lets the run
   commit it to the main branch itself, only where the repo's rules allow that.
 - `extraChecks`: the repo's own review rules, as files or `file#heading`.
+- `docsRotation`: how many unchanged docs each run re-reads in full (`count`, default 3; `0` turns it off), and
+  where its docs live (`docs`, folders or files; default every tracked Markdown file outside the records folder).
 - `summary.postTo`: where the summary goes besides the chat (a Slack channel, an issue). `null` keeps it in the
   chat. Even when set, the person approves the exact text before it is sent.
 

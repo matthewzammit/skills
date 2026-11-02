@@ -41,6 +41,23 @@ not is the first place to look.
 
 Skip a check the repo already automates, for example an unindexed doc caught by a script.
 
+### Docs rotation
+
+The check above reads only docs next to changed code. A doc nobody edits is never read again, and it drifts as the
+code around it moves. So each run also re-reads a few docs the range did not change:
+
+- **Which:** run `scripts/pick-docs.js` (see SKILL.md step 3). It takes the config's `docsRotation.count`
+  (default 3) from `docsRotation.docs` (default every tracked Markdown file outside the records folder): docs
+  never re-read first, oldest last commit first, then the ones re-read longest ago. A doc's last commit is not a
+  re-read: a one-line edit is not a review.
+- **How:** read each one end to end against today's code. Check both parts: the flow a person follows, and the
+  developer details (file names, functions, switches, defaults, status lines). Each line that no longer matches
+  the code is a finding.
+- **The repo's process docs count**, and so do this audit's own config and routine. A limit they state ("the run
+  cannot do X") that no longer holds is a finding.
+- **Record it** on one fixed line, even when all were clean: `Docs re-read: a.md, b.md, c.md`. The next run reads
+  these lines from past records to move on to the next docs.
+
 ### Errors reach crash reporting
 
 Skip this section when the repo has no crash reporting (Sentry, Bugsnag, Crashlytics or similar). Otherwise report
