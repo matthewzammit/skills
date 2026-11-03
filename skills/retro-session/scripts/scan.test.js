@@ -90,12 +90,13 @@ test('commands that only share a long first part are not repeats', () => {
   assert.deepStrictEqual(s.repeats, []);
 });
 
-test("pictures, a loaded skill's text and a resumed session's summary are not the person's messages", () => {
+test("pictures, a loaded skill's text, a resumed session's summary and a subagent's report are not the person's messages", () => {
   const typed = (text) => ({ type: 'user', timestamp: '2026-10-30T10:00:00Z', message: { content: [{ type: 'text', text }] } });
   const s = scan([
     typed('[Image: original 2560x880]'),
     typed('Base directory for this skill: /x\n# Session retro'),
     typed('This session is being continued from a previous conversation that ran out of context.'),
+    typed('Another Claude session sent a message: <agent-message from="a3e0"> [Subagent hand-back] The text below'),
     typed('go ahead and merge'),
   ]);
   assert.deepStrictEqual(s.humans.map((h) => h.text), ['go ahead and merge']);
