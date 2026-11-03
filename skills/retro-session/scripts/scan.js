@@ -41,8 +41,10 @@ const SILENT = [
 ];
 // A hook's own message starts the result ("PreToolUse:Bash hook error: ..."); output that only mentions hooks does not.
 const HOOK = /^(Pre|Post)ToolUse:\S* ?hook (error|blocked)|^[^\n]{0,80}blocked by [^\n]{0,40}hook/i;
-// Text the harness adds to the person's turn: pictures, a loaded skill's body, a resumed session's summary.
-const NOT_TYPED = /^(\[Image|Base directory for this skill:|This session is being continued from a previous conversation)/;
+// Text the harness adds to the person's turn: pictures, a loaded skill's body, a resumed session's summary, and a
+// subagent's or another session's report handed back to this one.
+const NOT_TYPED =
+  /^(\[Image|Base directory for this skill:|This session is being continued from a previous conversation|Another Claude session sent a message:)/;
 const DENIED = /Permission for this action was denied|doesn't want to proceed|was rejected by the user|user denied/i;
 const RETRO_COMMAND = /<command-name>\/?(retro|retro-session)[^<]*<\/command-name>/;
 const COMPACT = /<command-name>\/compact<\/command-name>|"subtype":"compact_boundary"/;
