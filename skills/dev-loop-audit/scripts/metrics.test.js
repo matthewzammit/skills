@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { compute, trendRow, appendTrend, unionMin, shape, TREND_COLUMNS } = require('./metrics.js');
+const { compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS } = require('./metrics.js');
 
 const t = (sec) => new Date(Date.UTC(2026, 9, 20, 10, 0, 0) + sec * 1000).toISOString();
 let n = 0;
@@ -114,4 +114,48 @@ test('the trend row has one value per column, and appending replaces the same we
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
   assert.strictEqual(lines.length, 2);
   assert.strictEqual(lines[0], TREND_COLUMNS.join(','));
+});
+
+test('inputs: a call with several taps counts each, and a screen read in the message batches them', () => {
+  const M = compute(data([
+    call(0, 2, { msg: 'A', tags: ['input', 'axe', 'qa'], inputs: 3 }),
+    call(2, 3, { msg: 'A', tags: ['screen_read', 'screen_seen', 'qa'] }),
+    call(20, 22, { msg: 'B', tags: ['input', 'qa'] }),
+  ]));
+  assert.strictEqual(M.qa.inputs, 4);
+  assert.strictEqual(M.qa.batched_step_share, 0.75);
+  assert.strictEqual(M.qa.unbatched_inputs, 1);
+  assert.strictEqual(M.per_session['sess-000'].inputs, 4);
+});
+
+test('time up to a subagent hand-back is agent wait, not model time', () => {
+  const d = data([call(0, 10), call(400, 410), call(430, 440)]);
+  d.agent_events = [{ session: 'sess-0001', ts: t(390) }]; // the gap 10 to 400 s ends in a hand-back at 390 s
+  const M = compute(d);
+  assert.strictEqual(M.agent.agent_wait_min, 6.3); // 380 s
+  assert.strictEqual(M.agent.model_min, 0.5); // 10 s after the hand-back + 20 s
+  const none = compute(data([call(0, 10), call(400, 410)]));
+  assert.strictEqual(none.agent.agent_wait_min, 0);
+});
+
+test('a call that opens with a heredoc takes the shape of the slow command it chains', () => {
+  assert.strictEqual(timeShape("python3 - <<'EOF'\nprint(1)\nEOF\nnpm run validate"), 'npm run validate');
+  assert.strictEqual(timeShape("python3 - <<'EOF' && git push origin feat/x\nprint(1)\nEOF"), 'git push origin feat/x');
+  assert.strictEqual(timeShape("python3 - <<'EOF'\nprint(1)\nEOF"), "pythonN - <<'EOF'"); // nothing slow chained: unchanged
+  assert.strictEqual(timeShape('npm run lint'), 'npm run lint');
+  const M = compute(data([call(0, 100, { cmd: "node - <<'EOF'\nx\nEOF\nnpm run validate", tags: [] })]));
+  assert.strictEqual(M.agent.top_bash_shapes_by_min[0][0], 'npm run validate');
+});
+
+test('the trend file gains agent_wait_min at the end; an older file keeps its rows', () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-')), 'trend.csv');
+  const old = TREND_COLUMNS.slice(0, -1);
+  assert.strictEqual(TREND_COLUMNS[TREND_COLUMNS.length - 1], 'agent_wait_min');
+  fs.writeFileSync(file, `${old.join(',')}\n2026-10-12,${old.slice(1).map(() => '1').join(',')}\n`);
+  appendTrend(file, trendRow(compute(data([call(0, 10)]))));
+  const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
+  assert.strictEqual(lines[0], TREND_COLUMNS.join(','));
+  assert.strictEqual(lines.length, 3);
+  assert.strictEqual(lines[1].split(',').length, TREND_COLUMNS.length);
+  assert.strictEqual(lines[2].split(',').length, TREND_COLUMNS.length);
 });

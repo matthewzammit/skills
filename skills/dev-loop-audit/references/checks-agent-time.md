@@ -43,7 +43,7 @@ when a script changed: a new rule moves the numbers a few percent.
    it computed. `top_bash_shapes_by_min` ranks the same shapes by time: a slow lookup run in a loop (a whole task
    list fetched once per name) shows there.
 6. **Model time after errors** (`model_after_error_min`): the thinking an error cost.
-7. **QA, per input** (`qa.per_input_s` = (QA wall + QA model) / inputs): the one number that compares weeks with
+7. **QA, per input** (`qa.per_input_s` = (QA wall + QA model) / inputs; a call that chains several taps counts each, and `axe touch` is a tap): the one number that compares weeks with
    different amounts of testing. Then: setup warm and cold, the check step median, the batched share, screenshots
    per input, and consecutive screens with no input between (looking twice at the same screen).
 

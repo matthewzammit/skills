@@ -18,7 +18,7 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseArgs, run, repoRoot, parseYaml, loadConfig, windowFrom } = require('./common.js');
+const { parseArgs, run, repoRoot, parseYaml, loadConfig, windowFrom, printElapsed } = require('./common.js');
 
 const HOOK_NAMES = ['pre-commit', 'commit-msg', 'pre-push', 'prepare-commit-msg', 'post-checkout', 'post-merge', 'pre-rebase'];
 
@@ -254,7 +254,7 @@ function main() {
 }
 
 if (require.main === module) {
-  try { main(); } catch (e) { console.error(e.message); process.exit(1); }
+  try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
 module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn };

@@ -20,7 +20,7 @@
  */
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseArgs, windowFrom, loadConfig, run, repoRoot, median, p90, round, sum, ms, parseYaml, globToRegex } = require('./common.js');
+const { parseArgs, windowFrom, loadConfig, run, repoRoot, median, p90, round, sum, ms, parseYaml, globToRegex, printElapsed } = require('./common.js');
 
 const RUN_FIELDS = '{id, name, path, event, head_branch, head_sha, status, conclusion, run_attempt, created_at, run_started_at, updated_at, display_title, html_url}';
 const JOB_FIELDS = '{id, name, status, conclusion, created_at, started_at, completed_at, labels, run_attempt, steps: [.steps[]? | {name, conclusion, started_at, completed_at}]}';
@@ -240,9 +240,9 @@ function findHoles(commits, runs, ciNames, filters = {}, pushes = null) {
     g.hole = false;
     // A skip is the workflow's own `if:` choosing not to check; it is listed apart, and the agent reads the condition.
     if (['passed', 'running', 'skipped'].includes(g.status) || g.watched_files === 0) return;
-    const next = groups.slice(i + 1).find((n) => n.status !== 'skipped' && n.status !== 'no_run');
-    const covered = next && next.status === 'passed' && ms(next.passed_at) - ms(g.pushed_at) <= 3600000;
-    if (covered) g.covered_by = next.tip.slice(0, 8);
+    // Covered when any later push had a successful CI run within 60 minutes; a later push whose run was cancelled does not hide it.
+    const next = groups.slice(i + 1).find((n) => n.passed_at && ms(n.passed_at) - ms(g.pushed_at) <= 3600000);
+    if (next) g.covered_by = next.tip.slice(0, 8);
     else g.hole = true;
   });
   return groups.map((g) => ({
@@ -352,7 +352,7 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
   const commits = log1.split('\n').filter(Boolean).map((l) => {
     const [sha, date, ...rest] = l.split('\t');
     let files = [];
-    try { files = git(['diff-tree', '--no-commit-id', '--name-only', '-r', '-m', '--first-parent', sha]).split('\n').filter(Boolean); } catch { /* root commit */ }
+    try { files = git(['diff-tree', '--no-commit-id', '--name-only', '-r', '--diff-merges=first-parent', sha]).split('\n').filter(Boolean); } catch { /* root commit */ }
     return { sha, date, subject: rest.join('\t'), files };
   });
   const filters = {};
@@ -438,7 +438,7 @@ function main() {
 }
 
 if (require.main === module) {
-  try { main(); } catch (e) { console.error(e.message); process.exit(1); }
+  try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
 module.exports = { SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };

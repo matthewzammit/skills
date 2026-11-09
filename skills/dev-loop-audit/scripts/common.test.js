@@ -99,3 +99,23 @@ test('repoNameFromUrl reads ssh and https remotes', () => {
   assert.strictEqual(repoNameFromUrl('https://github.com/owner/my-app'), 'my-app');
   assert.strictEqual(repoNameFromUrl(''), null);
 });
+
+test('run kills a call that outlasts the timeout and names the command', () => {
+  const { run } = require('./common.js');
+  assert.throws(() => run('node', ['-e', 'setTimeout(()=>{},5000)'], { timeout: 200 }), /timed out after 0.2 s: node -e/);
+  assert.strictEqual(run('node', ['-e', 'process.stdout.write("ok")']), 'ok');
+});
+
+test('DEV_LOOP_AUDIT_TIMEOUT_MS overrides the 120 s default', () => {
+  const { timeoutMs } = require('./common.js');
+  assert.strictEqual(timeoutMs({}), 120000);
+  assert.strictEqual(timeoutMs({ DEV_LOOP_AUDIT_TIMEOUT_MS: '5000' }), 5000);
+  assert.strictEqual(timeoutMs({ DEV_LOOP_AUDIT_TIMEOUT_MS: 'soon' }), 120000);
+});
+
+test('printElapsed writes one elapsed line', () => {
+  const { printElapsed } = require('./common.js');
+  let out = '';
+  printElapsed({ write: (x) => { out += x; } });
+  assert.match(out, /^elapsed \d+ s\n$/);
+});
