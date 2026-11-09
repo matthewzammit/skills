@@ -88,9 +88,39 @@ function countBy(xs, fn) {
   return out;
 }
 
-/** Run a command and return its stdout, or throw with its stderr. */
+/** Milliseconds a gh or git call may take: DEV_LOOP_AUDIT_TIMEOUT_MS, else 120000. */
+function timeoutMs(env = process.env) {
+  const n = Number(env.DEV_LOOP_AUDIT_TIMEOUT_MS);
+  return Number.isFinite(n) && n > 0 ? n : 120000;
+}
+
+/** Run a command and return its stdout, or throw with its stderr. A call that outlasts the timeout is killed and named. */
 function run(cmd, args, opts = {}) {
-  return execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 512 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'], ...opts });
+  const timeout = opts.timeout || timeoutMs();
+  try {
+    return execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 512 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'], timeout, ...opts });
+  } catch (e) {
+    if (e && (e.code === 'ETIMEDOUT' || (e.killed && e.signal))) {
+      const shown = `${cmd} ${args.join(' ')}`.slice(0, 120);
+      throw new Error(`timed out after ${timeout / 1000} s: ${shown} (raise DEV_LOOP_AUDIT_TIMEOUT_MS to wait longer)`);
+    }
+    throw e;
+  }
+}
+
+/** The last line of every script: how long it ran, on stderr. */
+function printElapsed(stream = process.stderr) {
+  stream.write(`elapsed ${Math.round(process.uptime())} s\n`);
+}
+
+/** A shell command without its heredoc bodies and terminators; the opener line (and what it chains) stays. */
+function stripHeredocBodies(cmd) {
+  return String(cmd).replace(/(<<-?[ \t]*(['"]?)(\w+)\2[^\n]*)\n[\s\S]*?\n[ \t]*\3[ \t]*(?=\n|$)/g, '$1');
+}
+
+/** A shell command with its heredoc bodies and quoted strings emptied, so only real commands are left to match. */
+function stripLiterals(cmd) {
+  return stripHeredocBodies(cmd).replace(/'[^']*'/g, "''").replace(/"(?:[^"\\]|\\.)*"/g, '""');
 }
 
 function repoRoot(cwd = process.cwd()) {
@@ -291,6 +321,6 @@ function redact(s) {
 }
 
 module.exports = {
-  parseArgs, windowFrom, parseDay, localDay, ms, median, p90, round, sum, countBy, run, repoRoot, commonRepoDir,
+  parseArgs, windowFrom, parseDay, localDay, ms, median, p90, round, sum, countBy, run, timeoutMs, stripHeredocBodies, stripLiterals, printElapsed, repoRoot, commonRepoDir,
   loadConfig, repoNameFromUrl, parseYaml, globToRegex, redact,
 };

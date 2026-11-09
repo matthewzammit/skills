@@ -29,7 +29,7 @@ replaced, so a re-run does not double it. Empty means not measurable that week; 
 | `ci_queue_median_s` | Job queue wait in successful CI runs |
 | `ci_billed_min` | Estimated billed minutes, all workflows |
 | `agent_sessions`, `agent_calls` | Main-thread sessions and tool calls |
-| `agent_wall_min`, `agent_model_min` | Tool wall time (union) and model time between calls |
+| `agent_wall_min`, `agent_model_min` | Tool wall time (union) and model time between calls (time waiting on a background subagent is not in it) |
 | `calls_over_60s_min` | Minutes in calls over 60 s |
 | `sleep_only_calls`, `sleep_nominal_min` | Calls that only sleep; nominal sleep minutes in all calls |
 | `retries`, `hook_refusals` | Same failed command run again; calls a hook refused |
@@ -37,5 +37,6 @@ replaced, so a re-run does not double it. Empty means not measurable that week; 
 | `gate_median_s` | The config's gate commands run by hand |
 | `qa_inputs`, `qa_wall_min`, `qa_model_min`, `qa_per_input_s` | Taps and clicks; QA time; QA time per input |
 | `check_step_median_s`, `batched_step_share` | Input to screen seen; share of inputs whose look shared the message |
+| `agent_wait_min` | Minutes the main thread waited for a background subagent to hand back. Added last, so a trend file from before has empty cells for older weeks |
 
 Compare weeks per input, not in totals: the amount of testing moves a lot from week to week.

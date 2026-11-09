@@ -127,3 +127,45 @@ test('rawCount, the cross-check, counts main-thread calls in the window once eac
   const w = { start: new Date(win.startIso), end: new Date(win.endIso) };
   assert.strictEqual(await rawCount(file, w), 2);
 });
+
+const mobile = { addons: ['mobile'] };
+const tagsOf = (cmd, config = mobile) => parse([use('x', '2026-10-20T10:00:00.000Z', 'Bash', { command: cmd }), result('x', '2026-10-20T10:00:01.000Z', 'ok')], config).calls[0];
+
+test('axe touch is an input, and every input command in one call counts', () => {
+  const touch = tagsOf('axe touch -x 10 -y 20 --down --up --udid ABC');
+  assert.ok(touch.tags.includes('input') && touch.tags.includes('axe'));
+  assert.strictEqual(touch.inputs, 1);
+  const two = tagsOf('axe tap -x 1 -y 2 --udid A && axe tap -x 3 -y 4 --udid A');
+  assert.strictEqual(two.inputs, 2);
+  const mixed = tagsOf('axe tap -x 1 -y 2 --udid A; axe describe-ui --udid A');
+  assert.strictEqual(mixed.inputs, 1);
+  assert.ok(mixed.tags.includes('ax_read'));
+});
+
+test('a subagent hand-back is recorded apart from the person', () => {
+  const { state } = parse([
+    human('2026-10-20T09:00:00.000Z', 'go'),
+    { type: 'user', sessionId: 's1', timestamp: '2026-10-20T09:05:00.000Z', origin: { kind: 'task-notification' }, message: { content: '<task-notification>done</task-notification>' } },
+    { type: 'user', sessionId: 's1', timestamp: '2026-10-20T09:06:00.000Z', message: { content: '<task-notification>old shape, no origin</task-notification>' } },
+  ]);
+  assert.strictEqual(state.humans.length, 1);
+  assert.strictEqual(state.agentEvents.length, 2);
+});
+
+test('git push inside a heredoc body or a quoted string is not a push', () => {
+  assert.ok(tagsOf('git push origin main').tags.includes('git_push'));
+  assert.ok(!tagsOf("python3 - <<'EOF'\nprint('run git push later')\nEOF").tags.includes('git_push'));
+  assert.ok(!tagsOf('git commit -m "docs: say git push first"').tags.includes('git_push'));
+  assert.ok(!tagsOf('echo \'git push | tail\'').tags.includes('piped_push'));
+  // the opener line and what follows the heredoc are still real
+  assert.ok(tagsOf("python3 - <<'EOF' && git push\nprint(1)\nEOF").tags.includes('git_push'));
+  assert.ok(tagsOf("python3 - <<'EOF'\ntext\nEOF\ngit push origin main | tail -3").tags.includes('piped_push'));
+});
+
+test('a while-read loop fed by a file is bounded; a bare while is not', () => {
+  const bounded = tagsOf('while read -r l; do echo "$l"; done < list.txt');
+  assert.ok(bounded.tags.includes('loop') && !bounded.tags.includes('loop_unbounded'));
+  assert.ok(!tagsOf('cat list | while IFS= read -r l; do echo "$l"; done').tags.includes('loop_unbounded'));
+  assert.ok(tagsOf('while ! curl -s localhost:3000; do sleep 2; done').tags.includes('loop_unbounded'));
+  assert.ok(tagsOf('while read x; do y; done < f; until ok; do sleep 1; done').tags.includes('loop_unbounded'));
+});

@@ -11,6 +11,8 @@
  *   double-counts.
  * - Model time is the gap from a result to the next tool call in the same session, kept only when it is under
  *   10 minutes and no human message falls in between.
+ * - When a background subagent hands back inside such a gap, the time up to the hand-back is `agent_wait_min`
+ *   (waiting on an agent), not model time.
  * - A call that waits on the person (a question, a plan to approve) or runs over 30 minutes (a permission prompt
  *   left open) is person time: it is left out of tool and wall time and listed apart.
  * - A QA episode starts after 20 minutes with no QA call; setup is its start to its first input.
@@ -18,20 +20,23 @@
  *   It is batched when the input's own message also took a screenshot or read the screen.
  */
 const fs = require('node:fs');
-const { parseArgs, median, p90, round, sum, countBy, ms } = require('./common.js');
+const { parseArgs, median, p90, round, sum, countBy, ms, printElapsed, stripHeredocBodies } = require('./common.js');
 
 const TREND_COLUMNS = [
   'week', 'days', 'ci_runs', 'ci_failed', 'ci_flaky', 'ci_holes', 'ci_run_median_s', 'ci_run_p90_s', 'ci_queue_median_s',
   'ci_billed_min', 'agent_sessions', 'agent_calls', 'agent_wall_min', 'agent_model_min', 'calls_over_60s_min',
   'sleep_only_calls', 'sleep_nominal_min', 'retries', 'hook_refusals', 'push_median_s', 'push_p90_s', 'push_failed',
   'gate_median_s', 'qa_inputs', 'qa_wall_min', 'qa_model_min', 'qa_per_input_s', 'check_step_median_s', 'batched_step_share',
+  'agent_wait_min',
 ];
 
 const has = (r, t) => r.tags.includes(t);
 const WAITS_ON_PERSON = new Set(['AskUserQuestion', 'ExitPlanMode']);
 const STALLED_S = 1800;
 const SEEN = (r) => has(r, 'screen_seen');
-const LOOK_IN_MESSAGE = ['screenshot', 'ax_read', 'page_read'];
+const LOOK_IN_MESSAGE = ['screenshot', 'ax_read', 'page_read', 'screen_read'];
+/** How many inputs one call made: a Bash call that chains several taps counts each one. */
+const nInputs = (r) => (has(r, 'input') ? r.inputs || 1 : 0);
 
 /** Minutes covered by the union of [t0, t1] intervals. */
 function unionMin(rs) {
@@ -55,6 +60,21 @@ function shape(cmd) {
   return c.slice(0, 60);
 }
 
+// The commands most likely to be the slow part of a chained call.
+const SLOW_CMD = /\bgit push\b|\bnpm (run )?(validate|test|build|lint|typecheck|ci)\b|\b(pnpm|yarn) (run )?(validate|test|build|lint|typecheck)\b|\b(jest|vitest|pytest|tsc|xcodebuild|gradlew|make)\b|\bcargo (build|test)\b|\bgo test\b|\bnode --test\b/;
+
+/**
+ * The shape to charge a call's time to. A call that opens with a heredoc (a script fed to python or node) and then chains
+ * a gate, a push, a test or a build spent its time on the chained command, so it takes that command's shape.
+ */
+function timeShape(cmd) {
+  const first = String(cmd).trim().split('\n')[0];
+  if (!/<<-?\s*['"]?\w+/.test(first)) return shape(cmd);
+  const rest = stripHeredocBodies(cmd).split(/&&|\|\||;|\n|\|/).map((x) => x.trim()).filter(Boolean);
+  const slow = rest.slice(1).find((x) => SLOW_CMD.test(x));
+  return slow ? shape(slow) : shape(cmd);
+}
+
 function compute(data, ci) {
   const calls = data.calls.map((r) => ({
     ...r, t0: ms(r.ts_use), t1: r.ts_res ? ms(r.ts_res) : null, wait: WAITS_ON_PERSON.has(r.name) || r.tool_s > STALLED_S,
@@ -71,23 +91,37 @@ function compute(data, ci) {
     humansBy.get(h.session).push(ms(h.ts));
   }
 
+  const agentBy = new Map();
+  for (const e of data.agent_events || []) {
+    if (!agentBy.has(e.session)) agentBy.set(e.session, []);
+    agentBy.get(e.session).push(ms(e.ts));
+  }
+
+  // Model time after the calls `pred` picks. When a subagent hand-back lands in a gap, the time up to it is waiting on
+  // that agent (agent_wait_min), not model time; only the time after it is the model's.
   function modelAfter(pred) {
     let tot = 0;
     let n = 0;
+    let wait = 0;
     for (const [s, rs] of bySession) {
       const hs = humansBy.get(s) || [];
+      const as = agentBy.get(s) || [];
       for (let i = 0; i < rs.length - 1; i++) {
         const r = rs[i];
         if (!pred(r) || r.t1 == null) continue;
         const nxt = rs[i + 1].t0;
-        const gap = nxt - r.t1;
-        if (gap <= 0 || gap > 600000) continue;
+        if (nxt - r.t1 <= 0) continue;
         if (hs.some((h) => r.t1 < h && h <= nxt)) continue;
+        const ev = as.filter((a) => r.t1 < a && a <= nxt);
+        const from = ev.length ? Math.max(...ev) : r.t1;
+        if (ev.length) wait += from - r.t1;
+        const gap = nxt - from;
+        if (gap <= 0 || gap > 600000) continue;
         tot += gap;
         n++;
       }
     }
-    return { min: round(tot / 60000, 1), gaps: n };
+    return { min: round(tot / 60000, 1), gaps: n, agent_wait_min: round(wait / 60000, 1) };
   }
   const toolS = (rs) => rs.filter((r) => !r.wait).map((r) => r.tool_s).filter((x) => x != null);
   const msgTags = (rs) => {
@@ -110,6 +144,7 @@ function compute(data, ci) {
     tool_sum_min: round(sum(toolS(calls)) / 60, 1),
     wall_min: round(sum([...bySession.values()].map(unionMin)), 1),
     model_min: modelAfter(() => true).min,
+    agent_wait_min: modelAfter(() => true).agent_wait_min,
     errors: calls.filter((r) => r.is_error).length,
     person_waits: waits.length,
     person_wait_min: round(sum(waits.map((r) => r.tool_s)) / 60, 1),
@@ -158,7 +193,7 @@ function compute(data, ci) {
   const shapeMin = {};
   for (const r of calls) {
     if (r.name !== 'Bash' || !r.cmd || r.tool_s == null) continue;
-    const k = shape(r.cmd);
+    const k = timeShape(r.cmd);
     const e = shapeMin[k] || (shapeMin[k] = { n: 0, s: 0 });
     e.n++;
     e.s += r.tool_s;
@@ -202,13 +237,14 @@ function compute(data, ci) {
   // QA: driving and watching a device or browser (mobile and web add-ons, and the config's helpers).
   const qaCalls = calls.filter((r) => has(r, 'qa'));
   const inputs = calls.filter((r) => has(r, 'input'));
-  const qa = { addons: data.addons || [], calls: qaCalls.length, inputs: inputs.length };
+  const nIn = sum(inputs.map(nInputs));
+  const qa = { addons: data.addons || [], calls: qaCalls.length, inputs: nIn };
   qa.wall_min = round(sum([...bySession.values()].map((rs) => unionMin(rs.filter((r) => has(r, 'qa'))))), 1);
   qa.tool_sum_min = round(sum(toolS(qaCalls)) / 60, 1);
   const qm = modelAfter((r) => has(r, 'qa'));
   qa.model_min = qm.min;
   qa.model_gaps = qm.gaps;
-  qa.per_input_s = inputs.length ? round(((qa.wall_min + qa.model_min) * 60) / inputs.length, 1) : null;
+  qa.per_input_s = nIn ? round(((qa.wall_min + qa.model_min) * 60) / nIn, 1) : null;
   const steps = [];
   const batchedSteps = [];
   const unbatchedSteps = [];
@@ -223,7 +259,7 @@ function compute(data, ci) {
         if (SEEN(q) && q.t1 != null) { seen = q.t1; break; }
       }
       const b = LOOK_IN_MESSAGE.some((t) => mt.get(r.msg).has(t));
-      if (b) batched++;
+      if (b) batched += nInputs(r);
       if (seen) {
         const dt = (seen - r.t0) / 1000;
         steps.push(dt);
@@ -236,8 +272,8 @@ function compute(data, ci) {
     check_steps_n: steps.length,
     check_step_batched_median_s: median(batchedSteps),
     check_step_unbatched_median_s: median(unbatchedSteps),
-    batched_step_share: inputs.length ? round(batched / inputs.length, 2) : null,
-    unbatched_inputs: inputs.length - batched,
+    batched_step_share: nIn ? round(batched / nIn, 2) : null,
+    unbatched_inputs: nIn - batched,
     screenshots: calls.filter((r) => has(r, 'screenshot')).length,
     screen_reads: calls.filter((r) => has(r, 'screen_read')).length,
     relaunches: calls.filter((r) => has(r, 'relaunch') || has(r, 'hand_relaunch')).length,
@@ -272,7 +308,7 @@ function compute(data, ci) {
         const cold = pre.some((r) => has(r, 'native') || has(r, 'dev_server') || has(r, 'install') || (has(r, 'helper_start') && r.tool_s > 120));
         const dt = unionMin(pre) * 60;
         (cold ? setupCold : setupWarm).push(dt);
-        episodes.push({ session: s.slice(0, 8), at: cur[0].ts_use.slice(5, 16), setup_s: Math.round(dt), span_s: Math.round((first.t0 - cur[0].t0) / 1000), cold, calls: cur.length, inputs: cur.filter((r) => has(r, 'input')).length });
+        episodes.push({ session: s.slice(0, 8), at: cur[0].ts_use.slice(5, 16), setup_s: Math.round(dt), span_s: Math.round((first.t0 - cur[0].t0) / 1000), cold, calls: cur.length, inputs: sum(cur.map(nInputs)) });
       }
       cur = [];
     };
@@ -326,12 +362,13 @@ function compute(data, ci) {
   for (const [s, rs] of bySession) {
     const mt = msgTags(rs);
     const ins = rs.filter((r) => has(r, 'input'));
-    const b = ins.filter((r) => LOOK_IN_MESSAGE.some((t) => mt.get(r.msg).has(t))).length;
+    const nIns = sum(ins.map(nInputs));
+    const b = sum(ins.filter((r) => LOOK_IN_MESSAGE.some((t) => mt.get(r.msg).has(t))).map(nInputs));
     const meta = data.sessions[s] || {};
     perSession[s.slice(0, 8)] = {
       folder: meta.folder, branch: meta.branch, calls: rs.length, humans: meta.n_human,
-      wall_min: round(unionMin(rs), 1), qa_calls: rs.filter((r) => has(r, 'qa')).length, inputs: ins.length,
-      batched_share: ins.length ? round(b / ins.length, 2) : null, qa_wall_min: round(unionMin(rs.filter((r) => has(r, 'qa'))), 1),
+      wall_min: round(unionMin(rs), 1), qa_calls: rs.filter((r) => has(r, 'qa')).length, inputs: nIns,
+      batched_share: nIns ? round(b / nIns, 2) : null, qa_wall_min: round(unionMin(rs.filter((r) => has(r, 'qa'))), 1),
       sleep_only: rs.filter((r) => has(r, 'sleep_only')).length, hook_refusals: rs.filter((r) => has(r, 'hook_refused')).length,
       errors: rs.filter((r) => r.is_error).length, pushes: rs.filter((r) => has(r, 'git_push')).length,
     };
@@ -351,7 +388,7 @@ function trendRow(M) {
     retries: M.agent.retries, hook_refusals: M.agent.hook_refusals, push_median_s: M.gate.push_median_s, push_p90_s: M.gate.push_p90_s,
     push_failed: M.gate.push_failed_n, gate_median_s: M.gate.gate_median_s, qa_inputs: M.qa.inputs, qa_wall_min: M.qa.wall_min,
     qa_model_min: M.qa.model_min, qa_per_input_s: M.qa.per_input_s, check_step_median_s: M.qa.check_step_median_s,
-    batched_step_share: M.qa.batched_step_share,
+    batched_step_share: M.qa.batched_step_share, agent_wait_min: M.agent.agent_wait_min,
   };
   return TREND_COLUMNS.map((c) => (v[c] === null || v[c] === undefined ? '' : v[c])).join(',');
 }
@@ -360,7 +397,13 @@ function trendRow(M) {
 function appendTrend(file, row) {
   const header = TREND_COLUMNS.join(',');
   let lines = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean) : [];
-  if (lines.length && lines[0] !== header) throw new Error(`${file} has other columns; start a new file or add the new columns by hand`);
+  // A file from before a column was added has a header that is a prefix of this one: its rows get empty cells.
+  const old = lines.length ? lines[0].split(',') : null;
+  if (old && lines[0] !== header) {
+    if (old.length >= TREND_COLUMNS.length || old.some((c, i) => c !== TREND_COLUMNS[i])) throw new Error(`${file} has other columns; start a new file or add the new columns by hand`);
+    const pad = ','.repeat(TREND_COLUMNS.length - old.length);
+    lines = [header, ...lines.slice(1).map((l) => l + pad)];
+  }
   if (!lines.length) lines = [header];
   const week = row.split(',')[0];
   lines = lines.filter((l, i) => i === 0 || l.split(',')[0] !== week);
@@ -411,7 +454,7 @@ function main() {
 }
 
 if (require.main === module) {
-  try { main(); } catch (e) { console.error(e.message); process.exit(1); }
+  try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { compute, trendRow, appendTrend, unionMin, shape, TREND_COLUMNS };
+module.exports = { compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS };

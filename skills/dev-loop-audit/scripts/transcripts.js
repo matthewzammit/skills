@@ -25,7 +25,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const readline = require('node:readline');
-const { parseArgs, windowFrom, loadConfig, run, repoRoot, redact, ms } = require('./common.js');
+const { parseArgs, windowFrom, loadConfig, run, repoRoot, redact, ms, printElapsed, stripHeredocBodies, stripLiterals } = require('./common.js');
 
 const short = (s, n) => (s && s.length > n ? s.slice(0, n) : s || '');
 
@@ -63,20 +63,29 @@ function textOf(content) {
   }).join('\n');
 }
 
+/**
+ * A hand-back from a background subagent or task: Claude Code marks it with origin.kind "task-notification", and its
+ * text starts with <task-notification>. It is not the person, and the time before it is waiting on an agent.
+ */
+function isAgentNotification(d, content) {
+  if (d.origin && d.origin.kind === 'task-notification') return true;
+  return /^<task-notification>/.test(textOf(content).trimStart());
+}
+
 /** A human message: Claude Code marks it with origin.kind "human"; older transcripts have no origin field. */
 function isHumanMessage(d, content) {
   if (d.isMeta || d.isCompactSummary) return false;
   if (/^This session is being continued from a previous conversation/.test(textOf(content).trimStart())) return false;
   if (d.origin) return d.origin.kind === 'human';
   const t = textOf(content).trimStart();
-  return t.length > 0 && !/^(<command-|<local-command|<system-reminder>|Caveat:|\[Request interrupted)/.test(t);
+  return t.length > 0 && !/^(<task-notification>|<command-|<local-command|<system-reminder>|Caveat:|\[Request interrupted)/.test(t);
 }
 
 /**
  * Fold transcript records into tool uses, results, human messages and sessions. Pure: give it parsed records.
  * `state` carries over between files.
  */
-function newState() { return { uses: new Map(), results: new Map(), humans: [], sessions: {}, lines: 0 }; }
+function newState() { return { uses: new Map(), results: new Map(), humans: [], agentEvents: [], sessions: {}, lines: 0 }; }
 
 function addRecord(state, d, folder, file, win) {
   if (d.type !== 'assistant' && d.type !== 'user') return;
@@ -123,6 +132,10 @@ function addRecord(state, d, folder, file, win) {
       } else if (typeof tur === 'string' && !txt) txt = tur;
       state.results.set(c.tool_use_id, { ts, txt, isError: Boolean(c.is_error), extra });
     }
+  }
+  if (!isResult && isAgentNotification(d, content)) {
+    state.agentEvents.push({ session: sid, ts });
+    return;
   }
   if (!isResult && isHumanMessage(d, content)) {
     state.humans.push({ session: sid, ts, text: redact(short(textOf(content), 160)) });
@@ -216,10 +229,12 @@ function tagCall(rec, cfg) {
         if (/simctl (terminate|launch|boot|shutdown)/.test(c)) add('hand_relaunch');
         if (/simctl openurl/.test(c)) add('openurl');
       }
-      if (/(^|[;&|]\s*)axe\s+(tap|swipe|type|button|key|describe-ui)/.test(c)) {
+      if (/(^|[;&|\n]\s*)axe\s+(tap|swipe|type|button|key|touch|describe-ui)/.test(c)) {
         add('axe');
         if (/axe\s+describe-ui/.test(c)) add('ax_read', 'screen_seen');
-        if (/axe\s+(tap|swipe|type|button|key)\b/.test(c)) add('input');
+        // Every input command is one input, so `axe tap ... && axe tap ...` is two. `axe touch` is a tap (or its down and up).
+        const n = [...c.matchAll(/(?:^|[;&|\n]\s*)axe\s+(?:tap|swipe|type|button|key|touch)\b/g)].length;
+        if (n) { add('input'); rec.inputs = n; }
       }
       if (/\badb\b/.test(c)) {
         add('adb');
@@ -242,11 +257,13 @@ function tagCall(rec, cfg) {
       if (/\bvercel( deploy)?\b|\bnetlify deploy\b|\bwrangler (pages )?deploy\b|\bfirebase hosting:channel:deploy\b|\bfly deploy\b/.test(c)) add('preview_deploy');
       if (/EADDRINUSE|address already in use|port \d+ is (already )?in use/i.test(body)) add('port_in_use');
     }
-    if (/git push/.test(c) && !/^\s*(cat|grep|sed|rg)\b/.test(c)) {
+    // A push is a real command, not words in a heredoc body or a quoted string (a commit message, an echo).
+    const bare = stripLiterals(c);
+    if (/git push/.test(bare) && !/^\s*(cat|grep|sed|rg)\b/.test(bare)) {
       add('git_push');
-      if (/--no-verify/.test(c)) add('no_verify');
+      if (/--no-verify/.test(bare)) add('no_verify');
       // A pipe inside the push command itself; `> file`, `||` and a pipe after `;` or `&&` do not hide its exit code.
-      if (/git push(?:(?!&&)[^\n|;])*\|(?!\|)/.test(c)) add('piped_push');
+      if (/git push(?:(?!&&)[^\n|;])*\|(?!\|)/.test(bare)) add('piped_push');
     }
     if (/\b(tsc|npm run typecheck|npm run type-check|vue-tsc|mypy|pyright)\b/.test(c)) add('typecheck');
     if (/\b(eslint|npm run lint|biome (check|lint)|ruff|golangci-lint|rubocop|swiftlint|ktlint)\b/.test(c)) add('lint');
@@ -254,10 +271,13 @@ function tagCall(rec, cfg) {
     if (/\b(npm (ci|install|i)|pnpm (i|install)|yarn( install)?|bun install|pip install|bundle install|poetry install)\b/.test(c) && !readonly) add('install');
     if (SLEEP_ONLY.test(c)) add('sleep_only');
     // Loops in the shell only: a heredoc body is a script for another language (a Python `while` is not a wait).
-    const shellOnly = c.replace(/<<-?\s*['"]?(\w+)['"]?[\s\S]*?\n\s*\1\s*(\n|$)/g, '\n');
+    const shellOnly = stripHeredocBodies(c);
     if (/\b(until|while)\b/.test(shellOnly) && !readonly) {
       add('loop');
-      if (!BOUND.test(shellOnly)) add('loop_unbounded');
+      // `while read ...; done < file` (or fed by a pipe) ends with its input, so it is bounded.
+      const fed = /\bdone\s*<|\|\s*while\s+(?:IFS=\S*\s+)?read\b/.test(shellOnly);
+      const rest = fed ? shellOnly.replace(/\bwhile\s+(?:IFS=\S*\s+)?read\b/g, '') : shellOnly;
+      if (!BOUND.test(shellOnly) && /\b(until|while)\b/.test(rest)) add('loop_unbounded');
     }
     if (/(^|\s)timeout\s+\d/.test(c)) add('timeout_cmd');
     let nominal = 0;
@@ -365,6 +385,7 @@ async function main() {
     files: files.map((f) => path.relative(projectsDir, f.p)),
     sessions: state.sessions,
     humans: state.humans.sort((a, b) => (a.ts < b.ts ? -1 : 1)),
+    agent_events: state.agentEvents.sort((a, b) => (a.ts < b.ts ? -1 : 1)),
     calls,
     counts: { lines_in_window: state.lines, tool_uses: state.uses.size, results: state.results.size, humans: state.humans.length },
   };
@@ -373,6 +394,6 @@ async function main() {
   if (!folders.length) console.log(`No transcript folders matched. Looked in ${projectsDir} for ${match.length ? match.join(', ') : 'this repo\'s worktrees'}.`);
 }
 
-if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
+if (require.main === module) main().then(() => printElapsed(), (e) => { console.error(e.message); printElapsed(); process.exit(1); });
 
-module.exports = { rawCount, encodeProjectPath, projectFolders, isHumanMessage, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };
+module.exports = { rawCount, encodeProjectPath, projectFolders, isHumanMessage, isAgentNotification, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };

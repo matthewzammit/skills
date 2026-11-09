@@ -156,3 +156,39 @@ test('with real pushes, a push no workflow ran on is a hole only when CI watches
   assert.strictEqual(by.s1.hole, true); // code with no run; the next pass came over an hour later
   assert.strictEqual(by.s2.hole, false);
 });
+
+test('holes: a later successful run within an hour covers a push, even past a cancelled push', () => {
+  const c = (sha) => ({ sha, date: at(0), subject: `commit ${sha}`, files: ['src/a.ts'] });
+  const runs = [
+    runOf(1, 'a1', { conclusion: 'cancelled', created_at: at(0) }),
+    runOf(2, 'b1', { conclusion: 'cancelled', created_at: at(10) }), // superseded, the run that replaced it passed
+    runOf(3, 'c1', { created_at: at(20) }),
+    runOf(4, 'd1', { conclusion: 'cancelled', created_at: at(200) }),
+    runOf(5, 'e1', { created_at: at(400) }), // passed, but far too late for d1
+  ];
+  const pushes = new Map([['a1', at(0)], ['b1', at(10)], ['c1', at(20)], ['d1', at(200)], ['e1', at(400)]]);
+  const by = Object.fromEntries(findHoles(['a1', 'b1', 'c1', 'd1', 'e1'].map(c), runs, ['CI'], {}, pushes).map((g) => [g.tip, g]));
+  assert.strictEqual(by.a1.hole, false);
+  assert.strictEqual(by.a1.covered_by, 'c1');
+  assert.strictEqual(by.b1.hole, false);
+  assert.strictEqual(by.d1.hole, true);
+});
+
+test('collect reads a merge push against its first parent only', () => {
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  const seen = [];
+  const gh = (args) => {
+    if (args[1] === 'rate_limit') return JSON.stringify({ remaining: 4000, reset: 0 });
+    return '';
+  };
+  const git = (args) => {
+    seen.push(args);
+    if (args[0] === 'log') return 'abc123\t2026-10-20T09:59:00Z\tMerge PR 1\n';
+    if (args[0] === 'diff-tree') return 'docs/a.md\n';
+    throw new Error('no');
+  };
+  collect({ repo: 'o/r', branch: 'main', win, gh, git, withJobs: false });
+  const dt = seen.find((a) => a[0] === 'diff-tree');
+  assert.ok(dt.includes('--diff-merges=first-parent'));
+  assert.ok(!dt.includes('-m') && !dt.includes('--first-parent'));
+});
