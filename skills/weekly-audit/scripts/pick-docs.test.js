@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { pickDocs, defaultCount, reReadLine, readRecords } = require('./pick-docs.js');
+const { isArchived, pickDocs, defaultCount, reReadLine, readRecords } = require('./pick-docs.js');
 
 const commits = new Map([
   ['a.md', '2026-01-01T00:00:00Z'],

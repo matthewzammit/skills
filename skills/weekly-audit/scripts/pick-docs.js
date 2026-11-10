@@ -115,4 +115,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { pickDocs, defaultCount, reReadLine, readRecords };
+module.exports = { isArchived, pickDocs, defaultCount, reReadLine, readRecords };
