@@ -41,18 +41,39 @@ not is the first place to look.
 
 Skip a check the repo already automates, for example an unindexed doc caught by a script.
 
+### Docs facts
+
+Every run, run `node <this skill>/scripts/doc-facts.js` from the repo root over ALL docs. It is cheap and read-only.
+It lists relative links to a missing file or heading, backticked repo paths that no longer exist, and `npm run`
+names with no such script. Each hit is a finding. A doc that tells a change's history is skipped by the script; a
+line that must keep a missing name carries `doc-check-ignore` and the reason. Docs about another codebase can
+trip it: say so once instead of listing each hit.
+
+Then check whether the repo's own gate (package.json scripts, git hooks, CI workflows) already runs a docs check
+like it. If it does not, that is one finding with a **Decision needed** block: add one to the gate. Options: adopt
+`doc-facts.js` as a gate step, write a stricter repo-specific check, or keep it audit-only. Pick "add it to the
+gate", because a stale doc found a week later has already been followed.
+
+A decision about a check or a rule never lives only in the record. It gets a Decision needed block, and a ticket
+when tickets are on, so the person sees it.
+
 ### Docs rotation
 
 The check above reads only docs next to changed code. A doc nobody edits is never read again, and it drifts as the
 code around it moves. So each run also re-reads a few docs the range did not change:
 
 - **Which:** run `scripts/pick-docs.js` (see SKILL.md step 3). It takes the config's `docsRotation.count`
-  (default 3) from `docsRotation.docs` (default every tracked Markdown file outside the records folder): docs
+  (default: enough to re-read every doc in about 16 runs, never under 3; 3 a run never finished a round of a
+  large docs set) from `docsRotation.docs` (default every tracked Markdown file outside the records folder): docs
   never re-read first, oldest last commit first, then the ones re-read longest ago. A doc's last commit is not a
   re-read: a one-line edit is not a review.
 - **How:** read each one end to end against today's code. Check both parts: the flow a person follows, and the
   developer details (file names, functions, switches, defaults, status lines). Each line that no longer matches
-  the code is a finding.
+  the code is a finding. Spend the re-read on what `doc-facts.js` cannot prove: behaviour, defaults, locations,
+  status lines.
+- **Contradictions and copies.** For each rule or fact in the doc, grep its key words across all `*.md`. Does
+  another doc say the opposite? Is the same rule copied in a second place? Each is a finding. Its fix names the one
+  source of truth and turns the other into a pointer.
 - **The repo's process docs count**, and so do this audit's own config and routine. A limit they state ("the run
   cannot do X") that no longer holds is a finding.
 - **Record it** on one fixed line, even when all were clean: `Docs re-read: a.md, b.md, c.md`. The next run reads

@@ -60,8 +60,9 @@ When installed as a Claude Code plugin, the command is `/matthewzammit-skills:we
 1. **Scope:** only the commits since the last run. A week with no commits ends in one line.
 2. **Review:** one agent per review skill, all at once, on the changed files. A few checks always run, because no
    skill covers them: new routes or endpoints that need an access check, docs for the features that changed, and
-   errors that never reach crash reporting. Each run also re-reads a few docs that nothing changed, the longest unread
-   first, so a guide nobody edits does not drift.
+   errors that never reach crash reporting. A docs facts pass checks every doc for broken links, missing paths and
+   scripts that do not exist. Each run also re-reads some docs that nothing changed, the longest unread first, so a
+   guide nobody edits does not drift, and a full round takes about 16 runs.
 3. **Check:** it removes duplicates and tries to prove each finding wrong against the code. What does not hold is
    dropped, and the record says why.
 4. **Decide:** a finding that needs your choice comes with 2 or 3 options and a pick.
@@ -86,7 +87,7 @@ the steps are in [templates/weekly-routine.md](templates/weekly-routine.md).
 
 ## What it needs
 
-- Node 18 or newer, for the docs rotation script. It has no dependencies and only reads.
+- Node 18 or newer, for the docs scripts. They have no dependencies and only read.
 
 ## Credits
 

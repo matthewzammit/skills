@@ -63,8 +63,9 @@ applies its rules to the changed files and the code around them, and returns fin
 the reasoning and a severity. Without an agent tool, apply the skills one after another and say so in the record.
 
 At the same time, run the checks in [references/built-in-checklist.md](references/built-in-checklist.md) that
-always run, including the docs rotation: `node <this skill>/scripts/pick-docs.js --records <records> --range
-<start>..<end>` names the docs no change touched that are due a full re-read (the config's `docsRotation`). With no review skills installed, run its whole checklist instead, and say in the record that it is thin.
+always run, including the docs checks: `node <this skill>/scripts/doc-facts.js` lists the broken links, paths and scripts in
+all docs, and `node <this skill>/scripts/pick-docs.js --records <records> --range <start>..<end>` names the docs no
+change touched that are due a full re-read (the config's `docsRotation`). With no review skills installed, run its whole checklist instead, and say in the record that it is thin.
 Add the repo's own extra checks from the config's `extraChecks`, if any.
 
 Done when: every agent has returned, and every skill in the config is either run or listed as skipped with why.
