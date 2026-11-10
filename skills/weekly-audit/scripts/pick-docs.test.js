@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { pickDocs, reReadLine, readRecords } = require('./pick-docs.js');
+const { isArchived, pickDocs, defaultCount, reReadLine, readRecords } = require('./pick-docs.js');
 
 const commits = new Map([
   ['a.md', '2026-01-01T00:00:00Z'],
@@ -50,4 +50,19 @@ test('records give each doc its newest re-read date', () => {
   assert.strictEqual(got.get('a.md'), '2026-10-26');
   assert.strictEqual(got.get('b.md'), '2026-10-19');
   assert.strictEqual(got.has('z.md'), false);
+});
+
+test('the default count covers every doc in about 16 runs, never under 3', () => {
+  assert.strictEqual(defaultCount(10), 3);
+  assert.strictEqual(defaultCount(48), 3);
+  assert.strictEqual(defaultCount(100), 7);
+  assert.strictEqual(defaultCount(800), 50);
+  assert.strictEqual(defaultCount(0), 3);
+});
+
+test('archived folders are history, not docs to re-read', () => {
+  assert.strictEqual(isArchived('plans/_archive/012-old.md'), true);
+  assert.strictEqual(isArchived('docs/archive/notes.md'), true);
+  assert.strictEqual(isArchived('docs/guides/Home.md'), false);
+  assert.strictEqual(isArchived('docs/archivist.md'), false);
 });

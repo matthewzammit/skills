@@ -3,13 +3,14 @@
  * Pick the docs this run re-reads in full, beside the docs the week changed. A doc no change touches is never
  * checked by the docs freshness check, so a few of them get a turn each run, the longest unread first.
  *
- *   node pick-docs.js --records <folder> --range <start>..<end> [--count 3] [--docs <folder or file>]...
+ *   node pick-docs.js --records <folder> --range <start>..<end> [--count <n>] [--docs <folder or file>]...
  *
  * - Docs: the tracked Markdown files under each --docs (default: the whole repo), less the records folder.
  * - Re-read: the "Docs re-read:" line of each past record (<records>/YYYY-MM-DD*.md). A doc's last commit is not a
  *   re-read: a one-line edit is not a review.
  * - Order: docs never re-read first, oldest last commit first; then the ones re-read longest ago.
  * - Docs the range changed are left out: the normal docs check reads them.
+ * - Count: --count, else about every doc in 16 runs: max(3, ceil(docs / 16)). A fixed 3 a run never finished a round.
  * Run it from the repo root. It only reads.
  */
 const fs = require('node:fs');
@@ -29,6 +30,9 @@ function reReadLine(text) {
 }
 
 /** Pure: order the candidates and take `count`. Dates are ISO strings, so they sort as text. */
+/** The default count: every doc re-read in about 16 runs, and never fewer than 3 a run. */
+const defaultCount = (docCount) => Math.max(3, Math.ceil(docCount / 16));
+
 function pickDocs({ docs, changed = [], reReads = new Map(), lastCommit = new Map(), count = 3 }) {
   const skip = new Set(changed);
   const commit = (d) => lastCommit.get(d) ?? '';
@@ -55,6 +59,13 @@ function readRecords(folder) {
   return out;
 }
 
+/**
+ * History, not docs to follow: any path with a folder named archive, _archive or archived. An archived plan or record
+ * says what was true on its day, so its facts are not checked and it is not re-read. Point --docs at other record
+ * folders (plans, past audits) to leave them out too.
+ */
+const isArchived = (f) => f.split('/').some((seg) => /^_?archived?$/i.test(seg));
+
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
 /** Each file's last commit date, from one pass over the log. */
@@ -69,7 +80,7 @@ function lastCommits() {
 }
 
 function main(argv) {
-  const args = { docs: [], count: 3 };
+  const args = { docs: [], count: null };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--records') args.records = argv[++i];
@@ -79,15 +90,18 @@ function main(argv) {
     else throw new Error(`Unknown option ${a}`);
   }
   if (!args.records) throw new Error('--records <folder> is required.');
-  if (!Number.isInteger(args.count) || args.count < 0) throw new Error('--count needs a whole number.');
+  if (args.count !== null && (!Number.isInteger(args.count) || args.count < 0)) throw new Error('--count needs a whole number.');
   const records = path.normalize(args.records).replace(/\/$/, '');
   const docs = git(['ls-files', '--', ...(args.docs.length ? args.docs : ['.'])])
     .split('\n')
-    .filter((f) => /\.mdx?$/i.test(f) && !f.startsWith(`${records}/`));
+    .filter((f) => /\.mdx?$/i.test(f) && !isArchived(f) && !f.startsWith(`${records}/`));
   const changed = args.range ? git(['diff', '--name-only', args.range]).split('\n').filter(Boolean) : [];
+  const count = args.count ?? defaultCount(docs.length);
+  const runs = count > 0 ? Math.ceil(docs.length / count) : 0;
+  console.log(`${docs.length} docs, ${count} a run${args.count === null ? ' (default)' : ''}: a full round takes about ${runs} runs.`);
   const reReads = readRecords(args.records);
   const lastCommit = lastCommits();
-  for (const d of pickDocs({ docs, changed, reReads, lastCommit, count: args.count })) {
+  for (const d of pickDocs({ docs, changed, reReads, lastCommit, count })) {
     console.log(`${d}\t${reReads.has(d) ? `re-read ${reReads.get(d)}` : 'never re-read'}\tlast commit ${(lastCommit.get(d) ?? '?').slice(0, 10)}`);
   }
 }
@@ -101,4 +115,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { pickDocs, reReadLine, readRecords };
+module.exports = { isArchived, pickDocs, defaultCount, reReadLine, readRecords };
