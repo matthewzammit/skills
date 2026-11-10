@@ -59,3 +59,10 @@ test('the default count covers every doc in about 16 runs, never under 3', () =>
   assert.strictEqual(defaultCount(800), 50);
   assert.strictEqual(defaultCount(0), 3);
 });
+
+test('archived folders are history, not docs to re-read', () => {
+  assert.strictEqual(isArchived('plans/_archive/012-old.md'), true);
+  assert.strictEqual(isArchived('docs/archive/notes.md'), true);
+  assert.strictEqual(isArchived('docs/guides/Home.md'), false);
+  assert.strictEqual(isArchived('docs/archivist.md'), false);
+});

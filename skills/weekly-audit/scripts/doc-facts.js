@@ -162,6 +162,13 @@ function checkDoc({ file, text, exists, readDoc, roots, scripts }) {
   return problems;
 }
 
+/**
+ * History, not docs to follow: any path with a folder named archive, _archive or archived. An archived plan or record
+ * says what was true on its day, so its facts are not checked and it is not re-read. Point --docs at other record
+ * folders (plans, past audits) to leave them out too.
+ */
+const isArchived = (f) => f.split('/').some((seg) => /^_?archived?$/i.test(seg));
+
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
 function main(argv) {
@@ -176,7 +183,9 @@ function main(argv) {
   const tracked = git(['ls-files']).split('\n').filter(Boolean);
   const roots = [...new Set(tracked.filter((f) => f.includes('/')).map((f) => f.split('/')[0]))];
   const listed = git(['ls-files', '--', ...(docsArgs.length ? docsArgs : ['.'])]).split('\n');
-  const docs = listed.filter((f) => /\.mdx?$/i.test(f) && !exclude.some((e) => f === e || f.startsWith(`${e}/`)));
+  const docs = listed.filter(
+    (f) => /\.mdx?$/i.test(f) && !isArchived(f) && !exclude.some((e) => f === e || f.startsWith(`${e}/`)),
+  );
   let scripts = null;
   if (fs.existsSync('package.json')) {
     try {

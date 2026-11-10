@@ -59,6 +59,13 @@ function readRecords(folder) {
   return out;
 }
 
+/**
+ * History, not docs to follow: any path with a folder named archive, _archive or archived. An archived plan or record
+ * says what was true on its day, so its facts are not checked and it is not re-read. Point --docs at other record
+ * folders (plans, past audits) to leave them out too.
+ */
+const isArchived = (f) => f.split('/').some((seg) => /^_?archived?$/i.test(seg));
+
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 
 /** Each file's last commit date, from one pass over the log. */
@@ -87,7 +94,7 @@ function main(argv) {
   const records = path.normalize(args.records).replace(/\/$/, '');
   const docs = git(['ls-files', '--', ...(args.docs.length ? args.docs : ['.'])])
     .split('\n')
-    .filter((f) => /\.mdx?$/i.test(f) && !f.startsWith(`${records}/`));
+    .filter((f) => /\.mdx?$/i.test(f) && !isArchived(f) && !f.startsWith(`${records}/`));
   const changed = args.range ? git(['diff', '--name-only', args.range]).split('\n').filter(Boolean) : [];
   const count = args.count ?? defaultCount(docs.length);
   const runs = count > 0 ? Math.ceil(docs.length / count) : 0;
