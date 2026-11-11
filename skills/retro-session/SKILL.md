@@ -40,7 +40,8 @@ Run `node <this skill>/scripts/scan.js <session> --since <window start>`, with `
 config's `patterns`. It counts hidden failures (a failure in
 a result not marked as an error), guardrails that fired, flagged errors, repeated commands and heavy results, and
 lists the person's messages. Then find the cause of each line with a count over 1 from its examples (the command
-and an excerpt of its result). When an example is not enough, read only that call's record in the transcript. Read the person's messages for corrections ("no", "again", "I said", a rule
+and an excerpt of its result). When the examples are not enough, mark it "cause not found": never open the
+transcript itself. Read the person's messages in the scan for corrections ("no", "again", "I said", a rule
 restated): each one is a finding.
 
 A guardrail that fired is either a catch (it stopped a real mistake) or **noise** (the work was already right).
@@ -63,7 +64,7 @@ calls for. Before you propose a new check, read the repo's own checks (its scrip
 exists but is broken or not wired is the finding.
 
 Give each finding its **cost** (how many times, about how many turns) and one line of **proof**: a command and its
-output, or a transcript quote. Drop a finding with no proof.
+output, or an excerpt from the scan. Drop a finding with no proof.
 
 A fix outside the repo (a dotfile, global settings) usually needs the person: give them the exact line and where it
 goes.

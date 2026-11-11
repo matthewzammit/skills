@@ -182,8 +182,8 @@ Done when: every screen and state on the approved map is drawn in every theme an
 A Figma copy goes stale in a week, so this step is part of the build, not an extra. Tell the person why in one line,
 then:
 
-1. **Install figma-sync** if it is missing. Tell the person the command:
-   `npx skills add matthewzammit/skills --skill figma-sync` (or the Claude Code plugin). Wait until it is installed.
+1. **Install figma-sync** if it is missing. Ask the person to install it the same way they installed this skill
+   (its README has the command). Wait until it is installed.
 2. **Run figma-sync with `setup`.** It adds the sync record and the diff script with a config written from the map,
    and records the build commit as the first sync. The repo parts go on a branch and a pull request, in another repo
    the person names when the product repo is read only for you.

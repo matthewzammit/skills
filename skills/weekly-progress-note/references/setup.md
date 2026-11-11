@@ -12,7 +12,8 @@ Find out, without asking:
 - **Release tags:** `git tag --sort=-creatordate | head`. Note the pattern (`v1.2.3`, `release-*`).
 - **A changelog:** `CHANGELOG.md`, `changelog.json`, release notes in `docs/`.
 - **Plans or a roadmap:** a `plans/` or `roadmap` file the team keeps open work in.
-- **A ticket tool:** a CLI or script the repo uses (`gh issue`, `linear`, Jira).
+- **A ticket tool:** the team's own tracker, through a CLI or script the repo uses (`linear`, Jira). Not a public
+  issue list: anyone can write there, and merged pull requests already cover what shipped.
 - **An existing note or routine:** a file of past notes (`docs/*progress*`, `*weekly*`), or a scheduled task
   that already drafts one. Use its log and its shape rather than starting a second one.
 
@@ -45,7 +46,7 @@ Ask only what is left, with the question tool if you have one, each with your re
   "tags": "v*",
   "changelog": "CHANGELOG.md",
   "plans": "docs/roadmap.md",
-  "tickets": { "tool": "github", "how": "gh issue list --state closed --search \"closed:<start>..<end>\"" },
+  "tickets": { "tool": "linear", "how": "linear issue list --state completed --updated-after <start> (titles only)" },
   "audience": "the whole team, not only engineers",
   "shape": null,
   "save": null,
