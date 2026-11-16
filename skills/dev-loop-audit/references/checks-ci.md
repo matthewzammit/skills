@@ -11,8 +11,10 @@ re-ran) rank above runner-minutes (only money).
    means every push is unchecked; it outranks everything else.
 2. **Holes** (top priority, always fix): a push to the main branch that changed files CI watches and never got a
    passing run (`holes` in ci.json, `hole: true`). Pushes come from GitHub's activity API; when ci.txt says
-   "from the runs (guessed)", a push no workflow ran on is folded into the next one, so say holes may be missed. Say what reached the branch unchecked and for how long. A cancelled
-   run covered by the next push within the hour is not a hole.
+   "from the runs (guessed)", a push no workflow ran on is folded into the next one, so say holes may be missed. Say what reached the branch unchecked and for how long. A push
+   is not a hole when a later successful CI run on the branch (in the window, or the first one after it) checked a
+   commit that contains it (`git merge-base --is-ancestor`): `covered_by` names that commit and `covered_after_min`
+   says how long the code waited. A long wait (overnight) is worth a line, not a hole.
 3. **Skipped by the workflow's own condition** (`status: skipped`): read the job's `if:`. Fine when it only skips
    commits that need no check (a version stamp right after a checked merge); a hole when it can skip real code.
 4. **Failures:** for each failed run, the cause from `gh run view <id> --log-failed` (the failed step is in
@@ -27,7 +29,10 @@ re-ran) rank above runner-minutes (only money).
    Each is a hole waiting to happen when the check is a required one.
 8. **No `timeout-minutes`** on a job: a hung job runs for 6 hours. Suggest twice the longest run of that job
    (`long_jobs`, or the job's `max_s` in `speed`).
-9. **Billing:** month-to-date use when the account allows it:
+9. **Stuck runs** (`stuck_queued`, `stuck runs` in ci.txt): a run still queued or in progress more than 6 hours after
+   it was created. It is usually a runner that never came (a self-hosted label, a concurrency group, a billing
+   block). Name the run ids and cancel them, or find the runner.
+10. **Billing:** month-to-date use when the account allows it:
    `gh api /users/<user>/settings/billing/usage` or `/organizations/<org>/settings/billing/usage` (needs admin;
    "not checked" otherwise). Flag a pace over the plan's free minutes, or any run blocked by billing.
 
@@ -36,7 +41,9 @@ re-ran) rank above runner-minutes (only money).
 1. **The longest job chain** (`longest_chain` per workflow): the jobs a run waits on one after another. A speed-up
    counts only on that chain; a faster job beside it saves runner-minutes, not wall time.
 2. **Run time from successful runs only:** median and p90 wall (`run_median_s`, `run_p90_s`), and per job and step
-   (`speed`). Compare with last week's trend row. Name the slowest steps and whether they grew (a test step grows
+   (`speed`). Compare with last week's trend row. When a past fix landed inside the window, the median mixes runs
+   from before and after it: read `fix_splits` (one line per fix in ci.txt, from `--since-fix <ISO time>` or the
+   config's `pastFixes`) and judge the fix on its after numbers. Name the slowest steps and whether they grew (a test step grows
    with the test count; say how many tests).
 3. **Queue wait** (`queue_median_s`): over a minute means runners are short (self-hosted, concurrency limits, or a
    busy org).

@@ -6,6 +6,7 @@
  *   node ci-runs.js --out ci.json                         last week, the repo in the working directory
  *   node ci-runs.js --from 2026-10-19 --to 2026-10-26 --out ci.json
  *   options: --repo owner/name  --branch main  --workflows "CI,Tests"  --config <file>  --no-fetch  --no-jobs
+ *            --since-fix <ISO time>   split the successful-run median and p90 at a fix (else the config's pastFixes)
  *
  * The rules (references/checks-ci.md):
  * - Runs are fetched one day at a time (the runs API returns at most 1,000 per query), after a rate-limit check.
@@ -15,17 +16,27 @@
  * - Billed minutes are an estimate: each job rounded up to a whole minute, times 2 on Windows and 10 on macOS,
  *   0 on self-hosted runners. Public repos pay nothing for standard runners.
  * - Holes: the main branch's first-parent commits are grouped by push (a push ends at a commit that has runs).
- *   A group that changed files CI watches is a hole when CI did not pass on it and did not pass on the next push
- *   within an hour either.
+ *   A group that changed files CI watches is a hole when CI did not pass on it and no later successful CI run on the
+ *   branch (in the window, or the first one after it) is on a commit that has the pushed tip as an ancestor.
+ * - Stuck: a run still queued or in progress more than 6 hours after it was created, at the time of the audit.
  */
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseArgs, windowFrom, loadConfig, run, repoRoot, median, p90, round, sum, ms, parseYaml, globToRegex, printElapsed } = require('./common.js');
+const { parseArgs, windowFrom, loadConfig, run, repoRoot, median, p90, round, sum, ms, parseYaml, globToRegex, printElapsed, fixesFrom, fixSplits } = require('./common.js');
 
 const RUN_FIELDS = '{id, name, path, event, head_branch, head_sha, status, conclusion, run_attempt, created_at, run_started_at, updated_at, display_title, html_url}';
 const JOB_FIELDS = '{id, name, status, conclusion, created_at, started_at, completed_at, labels, run_attempt, steps: [.steps[]? | {name, conclusion, started_at, completed_at}]}';
 const NOT_CI = /announce|release|deploy|publish|pages|label|stale|notify|slack|tag|dependabot|codeql|greet|welcome|triage/i;
 const FAILED = new Set(['failure', 'timed_out', 'startup_failure']);
+const STUCK_MS = 6 * 3600000;
+
+/** Runs still queued or in progress more than 6 hours after they were created, at `now`. */
+function stuckRuns(runs, now = Date.now()) {
+  return runs.filter((r) => r.status && r.status !== 'completed' && now - ms(r.created_at) > STUCK_MS).map((r) => ({
+    run: r.id, workflow: r.name, status: r.status, branch: r.head_branch, created_at: r.created_at,
+    age_h: round((now - ms(r.created_at)) / 3600000, 1), url: r.html_url,
+  }));
+}
 
 /** UTC dates (YYYY-MM-DD) that cover [start, end), plus `extraDays` after. */
 function utcDays(win, extraDays = 0) {
@@ -211,8 +222,12 @@ function statusOf(runs) {
  * ciNames: the workflows that check code; filters: { [workflow name]: pushFilters result };
  * pushes: Map of pushed tip sha to push time, from GitHub's activity API. Without it, a push is guessed as a commit
  * that has runs, which hides pushes no workflow ran on (a docs-only push, or code CI never saw).
+ * isAncestor(tip, sha): is `tip` an ancestor of `sha` (`git merge-base --is-ancestor`). Without it, order in `commits`
+ * decides, and a commit outside them is not a descendant.
  */
-function findHoles(commits, runs, ciNames, filters = {}, pushes = null) {
+function findHoles(commits, runs, ciNames, filters = {}, pushes = null, isAncestor = null) {
+  const order = new Map(commits.map((c, i) => [c.sha, i]));
+  const descends = isAncestor || ((tip, sha) => order.has(tip) && order.has(sha) && order.get(tip) <= order.get(sha));
   const pushRuns = runs.filter((r) => r.event === 'push');
   const tips = pushes ? new Set(pushes.keys()) : new Set(pushRuns.map((r) => r.head_sha));
   const groups = [];
@@ -231,24 +246,30 @@ function findHoles(commits, runs, ciNames, filters = {}, pushes = null) {
     g.files = files.length;
     g.watched_files = watched.length;
     g.watched_sample = watched.slice(0, 5);
-    const pass = ciRuns.filter((r) => r.conclusion === 'success').sort((a, b) => ms(a.created_at) - ms(b.created_at))[0];
-    g.passed_at = pass ? pass.created_at : null;
     g.pushed_at = (pushes && pushes.get(g.tip)) || (pushRuns.filter((r) => r.head_sha === g.tip).sort((a, b) => ms(a.created_at) - ms(b.created_at))[0] || {}).created_at || g.commits[g.commits.length - 1].date;
     g.runs = ciRuns.map((r) => ({ id: r.id, workflow: r.name, conclusion: r.conclusion || r.status }));
   }
-  groups.forEach((g, i) => {
+  // The successful CI runs that can cover a push: those in the window, and the first one after it.
+  const greens = pushRuns.filter((r) => ciNames.includes(r.name) && r.conclusion === 'success').sort((a, b) => ms(a.created_at) - ms(b.created_at));
+  const inWin = greens.filter((r) => r.in_window !== false);
+  const lastIn = inWin.length ? ms(inWin[inWin.length - 1].created_at) : -Infinity;
+  const firstAfter = greens.find((r) => r.in_window === false && ms(r.created_at) > lastIn);
+  const coverers = firstAfter ? [...inWin, firstAfter] : inWin;
+  for (const g of groups) {
     g.hole = false;
     // A skip is the workflow's own `if:` choosing not to check; it is listed apart, and the agent reads the condition.
-    if (['passed', 'running', 'skipped'].includes(g.status) || g.watched_files === 0) return;
-    // Covered when any later push had a successful CI run within 60 minutes; a later push whose run was cancelled does not hide it.
-    const next = groups.slice(i + 1).find((n) => n.passed_at && ms(n.passed_at) - ms(g.pushed_at) <= 3600000);
-    if (next) g.covered_by = next.tip.slice(0, 8);
-    else g.hole = true;
-  });
+    if (['passed', 'running', 'skipped'].includes(g.status) || g.watched_files === 0) continue;
+    // Covered when a later successful CI run checked a commit that contains this push; a cancelled or red run does not.
+    const cover = coverers.find((r) => ms(r.created_at) > ms(g.pushed_at) && r.head_sha !== g.tip && descends(g.tip, r.head_sha));
+    if (cover) {
+      g.covered_by = cover.head_sha.slice(0, 8);
+      g.covered_after_min = Math.round((ms(cover.created_at) - ms(g.pushed_at)) / 60000);
+    } else g.hole = true;
+  }
   return groups.map((g) => ({
     tip: g.tip.slice(0, 8), commits: g.commits.length, first: g.commits[0].subject.slice(0, 70), pushed_at: g.pushed_at,
     status: g.status, files: g.files, watched_files: g.watched_files, watched_sample: g.watched_sample,
-    hole: g.hole, covered_by: g.covered_by || null, unpushed_run: Boolean(g.unpushed_run), runs: g.runs,
+    hole: g.hole, covered_by: g.covered_by || null, covered_after_min: g.covered_after_min ?? null, unpushed_run: Boolean(g.unpushed_run), runs: g.runs,
   }));
 }
 
@@ -260,7 +281,7 @@ function pickCiWorkflows(runs, branch, given) {
   return names.filter((n) => !NOT_CI.test(n));
 }
 
-function summarize(runs, win, ciNames, holes, flakes) {
+function summarize(runs, win, ciNames, holes, flakes, fixes = [], now = Date.now()) {
   const inWin = runs.filter((r) => r.in_window);
   const ci = inWin.filter((r) => ciNames.includes(r.name));
   const ciOk = ci.filter((r) => r.conclusion === 'success' && r.jobs);
@@ -286,6 +307,8 @@ function summarize(runs, win, ciNames, holes, flakes) {
     pushes_no_run_filtered: holes.filter((h) => h.status === 'no_run' && h.watched_files === 0).length,
     run_median_s: median(walls),
     run_p90_s: p90(walls),
+    fix_splits: fixSplits(ciOk.map((r) => ({ created_at: r.created_at, wall_s: runWall(r.jobs) })), fixes, { start_utc: win.startIso, end_utc: win.endIso }),
+    stuck_queued: stuckRuns(inWin, now).length,
     queue_median_s: median(queues),
     billed_min: billed,
     billed_wasted_min: wasted,
@@ -311,7 +334,7 @@ function fetchPushes(gh, repo, branch, win) {
   } catch { return null; }
 }
 
-function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, log = () => {} }) {
+function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, fixes = [], now = Date.now(), log = () => {} }) {
   const rate = JSON.parse(gh(['api', 'rate_limit', '--jq', '.resources.core']));
   const days = utcDays(win, 1);
   if (rate.remaining < days.length + 50) {
@@ -364,7 +387,17 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
   const branchRuns = runs.filter((r) => r.head_branch === branch);
   const pushList = fetchPushes(gh, repo, branch, win);
   if (!pushList) log('warning: the activity API gave no pushes, so pushes are guessed from runs (docs-only pushes are hidden)');
-  const holes = findHoles(commits, branchRuns, ciNames, filters, pushList);
+  const known = new Map();
+  const isAncestor = (tip, sha) => {
+    const k = `${tip} ${sha}`;
+    if (!known.has(k)) {
+      let yes = false;
+      try { git(['merge-base', '--is-ancestor', tip, sha]); yes = true; } catch { /* not an ancestor, or the commit is unknown */ }
+      known.set(k, yes);
+    }
+    return known.get(k);
+  };
+  const holes = findHoles(commits, branchRuns, ciNames, filters, pushList, isAncestor);
 
   const inWin = runs.filter((r) => r.in_window);
   const failures = inWin.filter((r) => FAILED.has(r.conclusion)).map((r) => ({
@@ -387,9 +420,9 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
   return {
     repo, branch, window: { from: win.from, to: win.to, start_utc: win.startIso, end_utc: win.endIso },
     rate_limit: { before: rate.remaining, after: JSON.parse(gh(['api', 'rate_limit', '--jq', '.resources.core'])).remaining },
-    summary: { ...summarize(runs, win, ciNames, holes, flakes), pushes_from: pushList ? 'activity API' : 'runs (guessed)' },
+    summary: { ...summarize(runs, win, ciNames, holes, flakes, fixes, now), pushes_from: pushList ? 'activity API' : 'runs (guessed)' },
     speed: summarizeJobs(inWin),
-    failures, cancelled, flakes, holes, path_filter_use: filterUse,
+    failures, cancelled, flakes, holes, stuck_runs: stuckRuns(inWin, now), path_filter_use: filterUse,
     long_jobs: inWin.flatMap((r) => (r.jobs || []).map((j) => ({ run: r.id, workflow: r.name, job: j.name, conclusion: j.conclusion, s: dur(j.started_at, j.completed_at) })))
       .filter((j) => j.s != null).sort((a, b) => b.s - a.s).slice(0, 10),
     runs: inWin.map(({ jobs, ...r }) => ({ ...r, wall_s: jobs ? runWall(jobs) : null, billed_min: jobs ? sum(jobs.map(billedMinutes)) : null })),
@@ -405,10 +438,13 @@ function text(out) {
     ...(s.ci_workflows.length ? [] : [`NO CI: no workflow that checks code ran on ${out.branch} in the window, so every push is unchecked (${s.main_commits} commits). Check that the workflow files are pushed and that Actions is on.`]),
     `failed ${s.failed}, cancelled ${s.cancelled}, flaky ${s.flaky}, holes ${s.holes}, skipped by the workflow's own condition ${s.skipped_pushes} (${s.main_commits} commits on ${out.branch} in ${s.pushes} pushes, from the ${s.pushes_from}; ${s.pushes_no_run_filtered} changed only paths CI ignores)`,
     `CI run wall (successful): median ${s.run_median_s} s, p90 ${s.run_p90_s} s; queue median ${s.queue_median_s} s`,
+    ...(s.fix_splits || []).map((f) => `  around fix ${f.name} (${f.at}): before median ${f.before.median_s} s, p90 ${f.before.p90_s} s (${f.before.n} runs); after median ${f.after.median_s} s, p90 ${f.after.p90_s} s (${f.after.n} runs)`),
+    `stuck (queued or in progress over 6 h): ${s.stuck_queued}${(out.stuck_runs || []).length ? `, runs ${out.stuck_runs.map((r) => r.run).join(', ')}` : ''}`,
     `billed minutes (estimate) ${s.billed_min}, of which failed or cancelled ${s.billed_wasted_min}; jobs fetched for ${s.jobs_fetched} runs`,
     `rate limit ${out.rate_limit.before} -> ${out.rate_limit.after}`,
     '', 'failures:', ...out.failures.map((f) => `  ${JSON.stringify(f)}`),
     'cancelled:', ...out.cancelled.map((f) => `  ${JSON.stringify(f)}`),
+    'stuck:', ...(out.stuck_runs || []).map((f) => `  ${JSON.stringify(f)}`),
     'flakes:', ...out.flakes.map((f) => `  ${JSON.stringify(f)}`),
     'pushes to the main branch (not passed; pushes that changed only ignored paths left out):', ...out.holes.filter((g) => g.status !== 'passed' && g.watched_files > 0).map((g) => `  ${JSON.stringify(g)}`),
     'path filters (share of pushes the workflow ran on):', ...Object.entries(out.path_filter_use).map(([n, v]) => `  ${n} ${JSON.stringify(v)}`),
@@ -432,7 +468,7 @@ function main() {
     try { git(['fetch', '--quiet', 'origin', branch]); } catch (e) { console.error(`git fetch failed, using the local origin/${branch}: ${e.message.split('\n')[0]}`); }
   }
   const workflowsGiven = args.workflows ? String(args.workflows).split(',').map((s) => s.trim()) : (config.ci && config.ci.workflows) || null;
-  const out = collect({ repo, branch, win, gh, git, workflowsGiven, withJobs: !args['no-jobs'], log: (m) => console.error(m) });
+  const out = collect({ repo, branch, win, gh, git, workflowsGiven, withJobs: !args['no-jobs'], fixes: fixesFrom(args, config), log: (m) => console.error(m) });
   fs.writeFileSync(path.resolve(String(args.out)), JSON.stringify(out, null, 1));
   console.log(text(out));
 }
@@ -441,4 +477,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };
+module.exports = { stuckRuns, text, SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };

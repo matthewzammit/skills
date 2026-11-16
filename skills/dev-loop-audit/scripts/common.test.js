@@ -119,3 +119,18 @@ test('printElapsed writes one elapsed line', () => {
   printElapsed({ write: (x) => { out += x; } });
   assert.match(out, /^elapsed \d+ s\n$/);
 });
+
+test('fixesFrom: --since-fix wins over the config; fixSplits keeps fixes inside the window', () => {
+  const { fixesFrom, fixSplits } = require('./common.js');
+  assert.deepStrictEqual(fixesFrom({ 'since-fix': '2026-10-21T00:00:00Z' }, { pastFixes: [{ name: 'x', at: '2026-10-01T00:00:00Z' }] }),
+    [{ name: 'since-fix', at: '2026-10-21T00:00:00.000Z' }]);
+  assert.deepStrictEqual(fixesFrom({}, { pastFixes: [{ name: 'cache', at: '2026-10-21T00:00:00Z' }, { name: 'no time' }] }),
+    [{ name: 'cache', at: '2026-10-21T00:00:00.000Z' }]);
+  assert.deepStrictEqual(fixesFrom({}, {}), []);
+  const win = { start_utc: '2026-10-19T00:00:00.000Z', end_utc: '2026-10-26T00:00:00.000Z' };
+  const runs = [{ created_at: '2026-10-20T00:00:00Z', wall_s: 240 }, { created_at: '2026-10-21T00:00:00Z', wall_s: 215 }];
+  const [s] = fixSplits(runs, [{ name: 'f', at: '2026-10-21T00:00:00.000Z' }, { name: 'late', at: '2026-11-01T00:00:00.000Z' }], win);
+  assert.strictEqual(s.before.median_s, 240);
+  assert.strictEqual(s.after.median_s, 215); // a run at the fix time counts as after
+  assert.strictEqual(fixSplits(runs, [{ name: 'late', at: '2026-11-01T00:00:00.000Z' }], win).length, 0);
+});

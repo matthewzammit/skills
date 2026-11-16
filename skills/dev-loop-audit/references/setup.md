@@ -56,6 +56,8 @@ request, like any change). Keys:
   "ci": { "workflows": ["CI"] },
   "gate": { "commands": ["npm run (-s )?validate\\b"] },
   "screenReads": "\\.(png|jpe?g)$",
+  "untilMissPattern": "timed out|no match|not seen|gave up",
+  "pastFixes": [{ "name": "cache the dependency install", "at": "2026-10-21T14:05:00Z" }],
   "tags": [
     { "pattern": "npm run (-s )?shot\\b", "tags": ["screenshot"] },
     { "pattern": "npm run (-s )?dev:up\\b", "tags": ["helper", "helper_start"] }
@@ -71,9 +73,15 @@ request, like any change). Keys:
 - `gate.commands`: regexes for the gate commands, so their times are measured.
 - `screenReads`: which image reads count as the agent looking at the app (default: any png or jpg). Narrow it when
   agents also read design images or other pictures.
+- `untilMissPattern`: a regex (case-insensitive) over the output of an `--until` wait that means it missed. The
+  default is shown.
+- `pastFixes`: fixes already merged, with the time they landed. CI speed is split at each one inside the window, so
+  the median does not mix runs from before and after a fix. `--since-fix <ISO time>` on `ci-runs.js` or `metrics.js`
+  does the same for one run.
 - `tags`: the repo's own helpers, as regexes over Bash commands, with the tags they add. The tags the metrics use:
   `screenshot` (takes a picture of the app), `screen_seen` (the agent sees the app), `input` (taps or clicks it),
-  `helper` (a repo script for checking), `helper_start` (a helper that starts something: counts setup as cold),
+  `helper` (a repo script for checking), `helper_start` (a helper that starts something: counts setup as cold when
+  it runs over 2 minutes; if it prints "ready in N s", setup takes N),
   `qa` (any other call that belongs to checking the app). Any other tag is counted under its own name.
 
 Run the four commands from SKILL.md step 3 once and read `metrics.txt`: the sessions, inputs and gate numbers should look right

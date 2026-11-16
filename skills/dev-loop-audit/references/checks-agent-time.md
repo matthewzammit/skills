@@ -19,19 +19,26 @@ when a script changed: a new rule moves the numbers a few percent.
   permission prompt left open overnight) is the person's time, not the agent's. It is left out of tool and wall
   time and listed apart (`person_waits`, `person_wait_min`). Report it only when a pattern costs the person, such
   as the same approval asked for again and again.
-- **Sleeps:** the nominal seconds of every `sleep N`, apart for calls that are only a sleep. The tool time of a
-  command that contains a sleep is not all sleep.
+- **Sleeps:** the nominal seconds of every `sleep N`, Python `time.sleep(N)` and Node `setTimeout(fn, N)`, apart
+  for calls that are only a sleep (`python3 -c "import time; time.sleep(N)"` alone is sleep-only too). The tool time
+  of a command that contains a sleep is not all sleep.
+- **Loops:** a shell `until` or `while` loop is unbounded unless it counts or reads a clock. A helper's own
+  `--until` wait is bounded when the command gives it `--timeout N` (or `--timeout=N`). An `--until` call whose
+  output says it timed out or matched nothing is an **until miss** (`until_misses`, `until_miss_min`); the config's
+  `untilMissPattern` replaces the default `timed out|no match|not seen|gave up`.
 - **Retries:** a Bash command run again within 10 minutes after the same command failed.
 - **QA** (the agent checking its work on a device or in a browser; the add-ons say what counts): a QA episode starts
   after 20 minutes with no QA call. **Setup** is the QA tools' own wall time before its first input (coding in
   between does not count; `span_s` in the episode row is the elapsed time), **cold** when a build, an install, a dev
-  server start or a start helper over 2 minutes ran first. A build sent to the background is not in setup. A **check step** is an input to the first screen the agent sees after it; it is **batched** when the
+  server start or a start helper over 2 minutes ran first. A start helper that prints "ready in N s" counts N, not
+  the whole call, so commands chained after it in the same call are not setup. A build sent to the background is not in setup. A **check step** is an input to the first screen the agent sees after it; it is **batched** when the
   look went in the same message as the input (one round trip instead of two).
 
 ## Reliability: what counts as waste
 
 1. **Waits:** sleep-only calls, sleeps before a check that already waits, and unbounded `until`/`while` loops that
-   ran over a minute (`loops_unbounded_over_60s`). A bounded wait on something real (a build) is fine.
+   ran over a minute (`loops_unbounded_over_60s`). A bounded wait on something real (a build) is fine. Until misses
+   are waits that ran to their timeout: the screen never showed the text, so the wait or the text is wrong.
 2. **Long calls** (`long_calls`, `calls_over_60s_min`): each is a build, a test run, a network call, a stuck
    command, or a wait. Only the last two are waste; a slow build is a speed finding.
 3. **Retries** (`retries`, `retry_examples`): the same failing command again. Read why: a flaky tool, an error the
