@@ -320,7 +320,35 @@ function redact(s) {
     .replace(/(bearer\s+)[A-Za-z0-9._~+/-]{12,}=*/gi, '$1<secret>');
 }
 
+/**
+ * The past fixes to split CI speed at: `--since-fix <ISO time>` wins, else the config's `pastFixes: [{ name, at }]`.
+ * Each is { name, at } with `at` an ISO time.
+ */
+function fixesFrom(args = {}, config = {}) {
+  if (args['since-fix'] && args['since-fix'] !== true) return [{ name: 'since-fix', at: new Date(String(args['since-fix'])).toISOString() }];
+  return (config.pastFixes || []).filter((f) => f && f.at).map((f) => ({ name: f.name || f.at, at: new Date(f.at).toISOString() }));
+}
+
+/**
+ * Successful-run speed before and after each fix that falls inside the window, so a fix merged mid-week does not hide
+ * in a median that mixes both. `runs` are [{ created_at, wall_s }] (successful CI runs only).
+ */
+function fixSplits(runs, fixes, win) {
+  const out = [];
+  for (const f of fixes || []) {
+    const at = ms(f.at);
+    if (win && (at < ms(win.start_utc) || at >= ms(win.end_utc))) continue;
+    const side = (pick) => {
+      const xs = runs.filter((r) => r.wall_s != null && pick(ms(r.created_at))).map((r) => r.wall_s);
+      return { n: xs.length, median_s: median(xs), p90_s: p90(xs) };
+    };
+    out.push({ name: f.name, at: f.at, before: side((t) => t < at), after: side((t) => t >= at) });
+  }
+  return out;
+}
+
 module.exports = {
+  fixesFrom, fixSplits,
   parseArgs, windowFrom, parseDay, localDay, ms, median, p90, round, sum, countBy, run, timeoutMs, stripHeredocBodies, stripLiterals, printElapsed, repoRoot, commonRepoDir,
   loadConfig, repoNameFromUrl, parseYaml, globToRegex, redact,
 };

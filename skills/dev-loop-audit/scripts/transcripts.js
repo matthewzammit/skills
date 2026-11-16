@@ -165,9 +165,27 @@ function useRecord(c, { sid, folder, d, mid }) {
 
 // Commands that only read; a pattern that appears inside one (grep "git push" docs/) does not count.
 const READ_CMD = /^\s*(cat|grep|rg|sed|head|tail|less|ls|wc|awk|find|echo|diff|jq|git (log|show|diff|grep|status))\b/;
-const SLEEP_ONLY = /^\s*sleep\s+(\d+(?:\.\d+)?)\s*(?:;\s*echo\s+[\w"' ]*\s*)?$/;
-const SLEEP_ANY = /(?<![\w/.-])sleep\s+(\d+(?:\.\d+)?)/g;
+// A sleep is `sleep N`, a Python `time.sleep(N)`, or a Node `setTimeout(fn, N ms)`; each in seconds.
+const ECHO_TAIL = String.raw`(?:;\s*echo\s+[\w"' ]*\s*)?$`;
+const SLEEP_ONLY = [
+  new RegExp(String.raw`^\s*sleep\s+(\d+(?:\.\d+)?)\s*${ECHO_TAIL}`),
+  new RegExp(String.raw`^\s*python3?\s+-c\s+(["'])\s*(?:import time\s*[;\n]\s*time\.sleep|from time import sleep\s*[;\n]\s*sleep)\(\s*\d+(?:\.\d+)?\s*\)\s*;?\s*\1\s*${ECHO_TAIL}`),
+  new RegExp(String.raw`^\s*node\s+-e\s+(["'])\s*setTimeout\([^;]*?,\s*\d+(?:\.\d+)?\s*\)\s*;?\s*\1\s*${ECHO_TAIL}`),
+];
+const SLEEP_ANY = [
+  { re: /(?<![\w/.-])sleep\s+(\d+(?:\.\d+)?)/g, per: 1 },
+  { re: /(?<![\w])(?:time\.)?sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1 },
+  { re: /\bsetTimeout\([^;]*?,\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1000 },
+];
+/** Nominal seconds of every sleep in a command. */
+const sleepSeconds = (c) => SLEEP_ANY.reduce((tot, { re, per }) => tot + [...c.matchAll(re)].reduce((a, m) => a + (Number(m[1]) || 0) / per, 0), 0);
+const isSleepOnly = (c) => SLEEP_ONLY.some((re) => re.test(c));
 const BOUND = /\$SECONDS|-lt\s+\d|-ge\s+\d|-gt\s+\d|-le\s+\d|\(\(|date \+%s|seq \d|\{1\.\.\d|for \w+ in \d/;
+// A shell loop keyword, not a flag (`--until` is a helper's own wait, bounded by its `--timeout N`).
+const SHELL_LOOP = /(?<![\w-])(until|while)\b/;
+const FLAG_LOOP = /--(until|while)\b/;
+const OWN_TIMEOUT = /--timeout(?:=|\s+)\d/;
+const UNTIL_MISS = /timed out|no match|not seen|gave up/i;
 const INPUT_ACTIONS = new Set(['tap', 'swipe', 'text', 'button', 'press_key', 'touch_path', 'touch2_path', 'long_press', 'type', 'key',
   'left_click', 'right_click', 'double_click', 'triple_click', 'left_click_drag', 'scroll', 'click', 'hover', 'fill', 'select', 'drag', 'press']);
 
@@ -182,6 +200,7 @@ function compileConfig(config = {}) {
     gate: gate.map((g) => new RegExp(g)),
     screenRead: config.screenReads ? new RegExp(config.screenReads) : /\.(png|jpe?g|webp)$/i,
     pushFail: config.gate && config.gate.pushFailPattern ? new RegExp(config.gate.pushFailPattern) : null,
+    untilMiss: config.untilMissPattern ? new RegExp(config.untilMissPattern, 'i') : UNTIL_MISS,
   };
 }
 
@@ -269,19 +288,27 @@ function tagCall(rec, cfg) {
     if (/\b(eslint|npm run lint|biome (check|lint)|ruff|golangci-lint|rubocop|swiftlint|ktlint)\b/.test(c)) add('lint');
     if (/\b(jest|vitest|npm (run )?test|pnpm test|yarn test|pytest|go test|cargo test|rspec|phpunit|mocha|node --test)\b/.test(c)) add('test');
     if (/\b(npm (ci|install|i)|pnpm (i|install)|yarn( install)?|bun install|pip install|bundle install|poetry install)\b/.test(c) && !readonly) add('install');
-    if (SLEEP_ONLY.test(c)) add('sleep_only');
+    if (isSleepOnly(c)) add('sleep_only');
     // Loops in the shell only: a heredoc body is a script for another language (a Python `while` is not a wait).
     const shellOnly = stripHeredocBodies(c);
-    if (/\b(until|while)\b/.test(shellOnly) && !readonly) {
+    const shellLoop = SHELL_LOOP.test(shellOnly);
+    const flagLoop = FLAG_LOOP.test(stripLiterals(c));
+    if ((shellLoop || flagLoop) && !readonly) {
       add('loop');
       // `while read ...; done < file` (or fed by a pipe) ends with its input, so it is bounded.
       const fed = /\bdone\s*<|\|\s*while\s+(?:IFS=\S*\s+)?read\b/.test(shellOnly);
       const rest = fed ? shellOnly.replace(/\bwhile\s+(?:IFS=\S*\s+)?read\b/g, '') : shellOnly;
-      if (!BOUND.test(shellOnly) && /\b(until|while)\b/.test(rest)) add('loop_unbounded');
+      if (shellLoop && !BOUND.test(shellOnly) && SHELL_LOOP.test(rest)) add('loop_unbounded');
+      // A helper's own `--until` wait is bounded when the command gives it a `--timeout N`.
+      else if (!shellLoop && !OWN_TIMEOUT.test(c)) add('loop_unbounded');
+    }
+    // A wait for something on screen that never came: the helper timed out or found no match.
+    if (!readonly && /--until\b/.test(stripLiterals(c))) {
+      const out = `${body}${rec.stdout_tail || ''}${rec.stderr_tail || ''}`;
+      if (cfg.untilMiss.test(out)) add('until_miss');
     }
     if (/(^|\s)timeout\s+\d/.test(c)) add('timeout_cmd');
-    let nominal = 0;
-    for (const m of c.matchAll(SLEEP_ANY)) nominal += Number(m[1]) || 0;
+    const nominal = Math.round(sleepSeconds(c) * 1000) / 1000;
     if (nominal) {
       rec.sleep_nominal_s = nominal;
       if (rec.is_error && /blocked|denied|refused|not allowed|hook/i.test(rec.res_head || '')) {
@@ -396,4 +423,4 @@ async function main() {
 
 if (require.main === module) main().then(() => printElapsed(), (e) => { console.error(e.message); printElapsed(); process.exit(1); });
 
-module.exports = { rawCount, encodeProjectPath, projectFolders, isHumanMessage, isAgentNotification, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };
+module.exports = { sleepSeconds, isSleepOnly, rawCount, encodeProjectPath, projectFolders, isHumanMessage, isAgentNotification, newState, addRecord, buildCalls, tagCall, compileConfig, textOf };

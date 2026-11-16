@@ -5,6 +5,7 @@
  *
  *   node metrics.js --calls calls.json [--ci ci.json] --out metrics.json
  *   node metrics.js ... --append-trend <records>/trend.csv     after the findings are verified
+ *   options: --since-fix <ISO time>  --config <file>   split CI speed at a past fix (else the config's pastFixes)
  *
  * The rules (references/checks-agent-time.md):
  * - Wall time is the union of tool intervals per session: calls in one message overlap, so a plain sum
@@ -15,20 +16,22 @@
  *   (waiting on an agent), not model time.
  * - A call that waits on the person (a question, a plan to approve) or runs over 30 minutes (a permission prompt
  *   left open) is person time: it is left out of tool and wall time and listed apart.
- * - A QA episode starts after 20 minutes with no QA call; setup is its start to its first input.
+ * - A QA episode starts after 20 minutes with no QA call; setup is its start to its first input. A start helper that
+ *   prints "ready in N s" counts N, not the whole call (the same call may chain other commands after it).
  * - A check step is an input to the first screen seen after it (no other input between, under 10 minutes).
  *   It is batched when the input's own message also took a screenshot or read the screen.
  */
 const fs = require('node:fs');
-const { parseArgs, median, p90, round, sum, countBy, ms, printElapsed, stripHeredocBodies } = require('./common.js');
+const { parseArgs, median, p90, round, sum, countBy, ms, printElapsed, stripHeredocBodies, loadConfig, fixesFrom, fixSplits } = require('./common.js');
 
 const TREND_COLUMNS = [
   'week', 'days', 'ci_runs', 'ci_failed', 'ci_flaky', 'ci_holes', 'ci_run_median_s', 'ci_run_p90_s', 'ci_queue_median_s',
   'ci_billed_min', 'agent_sessions', 'agent_calls', 'agent_wall_min', 'agent_model_min', 'calls_over_60s_min',
   'sleep_only_calls', 'sleep_nominal_min', 'retries', 'hook_refusals', 'push_median_s', 'push_p90_s', 'push_failed',
   'gate_median_s', 'qa_inputs', 'qa_wall_min', 'qa_model_min', 'qa_per_input_s', 'check_step_median_s', 'batched_step_share',
-  'agent_wait_min',
+  'agent_wait_min', 'until_misses', 'until_miss_min', 'ci_stuck_queued',
 ];
+const READY = /ready in (\d+(?:\.\d+)?)\s*s/i;
 
 const has = (r, t) => r.tags.includes(t);
 const WAITS_ON_PERSON = new Set(['AskUserQuestion', 'ExitPlanMode']);
@@ -75,7 +78,19 @@ function timeShape(cmd) {
   return slow ? shape(slow) : shape(cmd);
 }
 
-function compute(data, ci) {
+/**
+ * A start helper's own setup time: the "ready in N s" it printed, when that is shorter than the call (the rest of the
+ * call ran other commands chained after it). Returns the call with its end moved, or the call as it was.
+ */
+function readyClipped(r, text) {
+  if (!r.tags.includes('helper_start') || r.t1 == null) return r;
+  const m = READY.exec(text);
+  if (!m) return r;
+  const end = r.t0 + Number(m[1]) * 1000;
+  return end < r.t1 ? { ...r, t1: end, tool_s: Number(m[1]) } : r;
+}
+
+function compute(data, ci, fixes = null) {
   const calls = data.calls.map((r) => ({
     ...r, t0: ms(r.ts_use), t1: r.ts_res ? ms(r.ts_res) : null, wait: WAITS_ON_PERSON.has(r.name) || r.tool_s > STALLED_S,
   }));
@@ -163,6 +178,8 @@ function compute(data, ci) {
       session: r.session.slice(0, 8), at: r.ts_use.slice(5, 16), s: Math.round(r.tool_s), cmd: (r.cmd || '').slice(0, 100).replace(/\n/g, ' '),
     })),
     timeout_cmds: calls.filter((r) => has(r, 'timeout_cmd')).length,
+    until_misses: calls.filter((r) => has(r, 'until_miss')).length,
+    until_miss_min: round(sum(toolS(calls.filter((r) => has(r, 'until_miss')))) / 60, 1),
     hook_refusals: calls.filter((r) => has(r, 'hook_refused')).length,
     // Device ids and paths would split one rule into many lines, so they are masked before grouping.
     hook_refusals_by_text: countBy(calls.filter((r) => has(r, 'hook_refused')), (r) => (r.res_head || '').replace(/\s+/g, ' ')
@@ -304,7 +321,7 @@ function compute(data, ci) {
       if (!cur.length) return;
       const first = cur.find((r) => has(r, 'input'));
       if (first) {
-        const pre = cur.filter((r) => r.t0 < first.t0);
+        const pre = cur.filter((r) => r.t0 < first.t0).map((r) => readyClipped(r, tail(r)));
         const cold = pre.some((r) => has(r, 'native') || has(r, 'dev_server') || has(r, 'install') || (has(r, 'helper_start') && r.tool_s > 120));
         const dt = unionMin(pre) * 60;
         (cold ? setupCold : setupWarm).push(dt);
@@ -374,7 +391,14 @@ function compute(data, ci) {
     };
   }
 
-  return { window: data.window, counts: data.counts, agent, gate, qa, mobile, web, custom_tags: custom, per_session: perSession, ci: ci ? ci.summary : null };
+  let ciOut = ci ? { ...ci.summary } : null;
+  // Fixes given to this script win over the ones ci-runs.js split at; the runs in ci.json carry their wall time.
+  if (ciOut && fixes && fixes.length && Array.isArray(ci.runs)) {
+    const names = ciOut.ci_workflows || [];
+    const ok = ci.runs.filter((r) => r.conclusion === 'success' && names.includes(r.name));
+    ciOut.fix_splits = fixSplits(ok, fixes, ci.window);
+  }
+  return { window: data.window, counts: data.counts, agent, gate, qa, mobile, web, custom_tags: custom, per_session: perSession, ci: ciOut };
 }
 
 function trendRow(M) {
@@ -389,6 +413,7 @@ function trendRow(M) {
     push_failed: M.gate.push_failed_n, gate_median_s: M.gate.gate_median_s, qa_inputs: M.qa.inputs, qa_wall_min: M.qa.wall_min,
     qa_model_min: M.qa.model_min, qa_per_input_s: M.qa.per_input_s, check_step_median_s: M.qa.check_step_median_s,
     batched_step_share: M.qa.batched_step_share, agent_wait_min: M.agent.agent_wait_min,
+    until_misses: M.agent.until_misses, until_miss_min: M.agent.until_miss_min, ci_stuck_queued: ci.stuck_queued,
   };
   return TREND_COLUMNS.map((c) => (v[c] === null || v[c] === undefined ? '' : v[c])).join(',');
 }
@@ -433,7 +458,11 @@ function summary(M) {
   if (M.web) { out.push('', '## Web'); for (const [k, v] of Object.entries(M.web)) line(k, v); }
   out.push('', '## Tags', JSON.stringify(M.custom_tags));
   out.push('', '## Sessions', ...Object.entries(M.per_session).sort((a, b) => b[1].calls - a[1].calls).map(([s, v]) => `  ${s} ${JSON.stringify(v)}`));
-  if (M.ci) { out.push('', '## CI'); for (const [k, v] of Object.entries(M.ci)) line(k, v); }
+  if (M.ci) {
+    out.push('', '## CI');
+    for (const [k, v] of Object.entries(M.ci)) if (k !== 'fix_splits') line(k, v);
+    out.push('CI speed around past fixes (successful runs):', ...(M.ci.fix_splits || []).map((f) => `  ${f.name} at ${f.at}: before median ${f.before.median_s} s, p90 ${f.before.p90_s} s (${f.before.n}); after median ${f.after.median_s} s, p90 ${f.after.p90_s} s (${f.after.n})`));
+  }
   out.push('', '## Trend row', TREND_COLUMNS.join(','), trendRow(M));
   return out.join('\n');
 }
@@ -444,7 +473,8 @@ function main() {
   const data = args.calls ? JSON.parse(fs.readFileSync(String(args.calls), 'utf8')) : { calls: [], humans: [], sessions: {}, counts: {}, window: null };
   const ci = args.ci ? JSON.parse(fs.readFileSync(String(args.ci), 'utf8')) : null;
   if (!data.window && ci) data.window = ci.window;
-  const M = compute(data, ci);
+  const fixes = args['since-fix'] || args.config ? fixesFrom(args, loadConfig(args)) : null;
+  const M = compute(data, ci, fixes);
   if (args.out) fs.writeFileSync(String(args.out), JSON.stringify(M, null, 1));
   console.log(summary(M));
   if (args['append-trend']) {
@@ -457,4 +487,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS };
+module.exports = { readyClipped, compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS };

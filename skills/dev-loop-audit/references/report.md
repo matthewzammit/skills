@@ -37,6 +37,8 @@ replaced, so a re-run does not double it. Empty means not measurable that week; 
 | `gate_median_s` | The config's gate commands run by hand |
 | `qa_inputs`, `qa_wall_min`, `qa_model_min`, `qa_per_input_s` | Taps and clicks; QA time; QA time per input |
 | `check_step_median_s`, `batched_step_share` | Input to screen seen; share of inputs whose look shared the message |
-| `agent_wait_min` | Minutes the main thread waited for a background subagent to hand back. Added last, so a trend file from before has empty cells for older weeks |
+| `agent_wait_min` | Minutes the main thread waited for a background subagent to hand back. Added later, so a trend file from before has empty cells for older weeks |
+| `until_misses`, `until_miss_min` | Calls that waited with `--until` and whose output says the wait timed out or matched nothing; their minutes. Added later, like `agent_wait_min` |
+| `ci_stuck_queued` | CI runs still queued or in progress more than 6 hours after they were created, at audit time (ids in `ci.txt`). Added later, like `agent_wait_min` |
 
 Compare weeks per input, not in totals: the amount of testing moves a lot from week to week.

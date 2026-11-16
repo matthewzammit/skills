@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS } = require('./metrics.js');
+const { readyClipped, compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS } = require('./metrics.js');
 
 const t = (sec) => new Date(Date.UTC(2026, 9, 20, 10, 0, 0) + sec * 1000).toISOString();
 let n = 0;
@@ -147,10 +147,10 @@ test('a call that opens with a heredoc takes the shape of the slow command it ch
   assert.strictEqual(M.agent.top_bash_shapes_by_min[0][0], 'npm run validate');
 });
 
-test('the trend file gains agent_wait_min at the end; an older file keeps its rows', () => {
+test('the trend file gains new columns at the end; an older file keeps its rows', () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-')), 'trend.csv');
-  const old = TREND_COLUMNS.slice(0, -1);
-  assert.strictEqual(TREND_COLUMNS[TREND_COLUMNS.length - 1], 'agent_wait_min');
+  const old = TREND_COLUMNS.slice(0, TREND_COLUMNS.indexOf('agent_wait_min') + 1);
+  assert.deepStrictEqual(TREND_COLUMNS.slice(-3), ['until_misses', 'until_miss_min', 'ci_stuck_queued']);
   fs.writeFileSync(file, `${old.join(',')}\n2026-10-12,${old.slice(1).map(() => '1').join(',')}\n`);
   appendTrend(file, trendRow(compute(data([call(0, 10)]))));
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
@@ -158,4 +158,47 @@ test('the trend file gains agent_wait_min at the end; an older file keeps its ro
   assert.strictEqual(lines.length, 3);
   assert.strictEqual(lines[1].split(',').length, TREND_COLUMNS.length);
   assert.strictEqual(lines[2].split(',').length, TREND_COLUMNS.length);
+});
+
+test('setup ends at a start helper\'s "ready in N s", not at the end of its chained call', () => {
+  const M = compute(data([
+    call(0, 102, { tags: ['helper', 'helper_start', 'qa'], res_head: 'booting\nready in 25s\n' }), // then chained a screenshot
+    call(110, 112, { tags: ['input', 'qa'] }),
+  ]));
+  assert.strictEqual(M.qa.setup_median_warm_s, 25);
+  assert.strictEqual(M.qa.setup_n_cold, 0);
+  const plain = { t0: 0, t1: 50000, tool_s: 50, tags: ['helper_start'] };
+  assert.strictEqual(readyClipped(plain, 'no ready line'), plain);
+  assert.strictEqual(readyClipped(plain, 'Ready in 80 s'), plain); // longer than the call: kept
+  assert.strictEqual(readyClipped({ ...plain, tags: ['helper'] }, 'ready in 5s').t1, 50000); // not a start helper
+});
+
+test('until misses and stuck CI runs reach the metrics and the trend row', () => {
+  const M = compute(data([
+    call(0, 90, { tags: ['loop', 'until_miss'] }),
+    call(100, 130, { tags: ['loop', 'until_miss'] }),
+    call(200, 210, { tags: ['loop'] }),
+  ]), { summary: { runs: 3, stuck_queued: 2 } });
+  assert.strictEqual(M.agent.until_misses, 2);
+  assert.strictEqual(M.agent.until_miss_min, 2);
+  const row = trendRow(M).split(',');
+  assert.deepStrictEqual(row.slice(-3), ['2', '2', '2']);
+});
+
+test('fixes given to metrics.js split the CI runs in ci.json', () => {
+  const ci = {
+    window: { start_utc: '2026-10-19T00:00:00.000Z', end_utc: '2026-10-26T00:00:00.000Z' },
+    summary: { ci_workflows: ['CI'], fix_splits: [] },
+    runs: [
+      { name: 'CI', conclusion: 'success', created_at: '2026-10-20T10:00:00Z', wall_s: 240 },
+      { name: 'CI', conclusion: 'success', created_at: '2026-10-20T11:00:00Z', wall_s: 260 },
+      { name: 'CI', conclusion: 'failure', created_at: '2026-10-21T11:00:00Z', wall_s: 900 },
+      { name: 'Deploy', conclusion: 'success', created_at: '2026-10-21T11:00:00Z', wall_s: 900 },
+      { name: 'CI', conclusion: 'success', created_at: '2026-10-22T10:00:00Z', wall_s: 215 },
+    ],
+  };
+  const M = compute(data([]), ci, [{ name: 'since-fix', at: '2026-10-21T00:00:00Z' }]);
+  assert.deepStrictEqual(M.ci.fix_splits[0].before, { n: 2, median_s: 250, p90_s: 260 });
+  assert.deepStrictEqual(M.ci.fix_splits[0].after, { n: 1, median_s: 215, p90_s: 215 });
+  assert.deepStrictEqual(compute(data([]), ci).ci.fix_splits, []);
 });

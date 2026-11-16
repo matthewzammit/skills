@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { rawCount, encodeProjectPath, projectFolders, newState, addRecord, buildCalls, compileConfig, tagCall } = require('./transcripts.js');
+const { sleepSeconds, isSleepOnly, rawCount, encodeProjectPath, projectFolders, newState, addRecord, buildCalls, compileConfig, tagCall } = require('./transcripts.js');
 
 const win = { startIso: '2026-10-19T00:00:00.000Z', endIso: '2026-10-26T00:00:00.000Z' };
 const use = (id, ts, name, input, extra = {}) => ({
@@ -168,4 +168,34 @@ test('a while-read loop fed by a file is bounded; a bare while is not', () => {
   assert.ok(!tagsOf('cat list | while IFS= read -r l; do echo "$l"; done').tags.includes('loop_unbounded'));
   assert.ok(tagsOf('while ! curl -s localhost:3000; do sleep 2; done').tags.includes('loop_unbounded'));
   assert.ok(tagsOf('while read x; do y; done < f; until ok; do sleep 1; done').tags.includes('loop_unbounded'));
+});
+
+test('a helper\'s own --until wait is bounded by its --timeout flag', () => {
+  const t = (cmd) => tagCall({ name: 'Bash', cmd }, compileConfig({}));
+  assert.ok(!t('npm run sim:ui -- --until "Home" --timeout 90').includes('loop_unbounded'));
+  assert.ok(!t('npm run sim:ui -- --until=Home --timeout=90').includes('loop_unbounded'));
+  assert.ok(t('npm run sim:ui -- --until Home').includes('loop_unbounded'));
+  // A --timeout on a command inside a real shell loop does not bound the loop.
+  assert.ok(t('until npm run check -- --timeout 5; do sleep 1; done').includes('loop_unbounded'));
+});
+
+test('python and node sleeps count as sleeps, and as sleep-only when that is the whole command', () => {
+  const t = (cmd) => { const rec = { name: 'Bash', cmd }; return { tags: tagCall(rec, compileConfig({})), s: rec.sleep_nominal_s }; };
+  assert.deepStrictEqual(t('python3 -c "import time; time.sleep(20)"'), { tags: ['sleep_only'], s: 20 });
+  assert.deepStrictEqual(t("python -c 'from time import sleep; sleep(1.5)'"), { tags: ['sleep_only'], s: 1.5 });
+  assert.deepStrictEqual(t('node -e "setTimeout(() => {}, 15000)"'), { tags: ['sleep_only'], s: 15 });
+  const chained = t('npm run build && python3 -c "import time; time.sleep(5)" && sleep 2');
+  assert.ok(!chained.tags.includes('sleep_only'));
+  assert.strictEqual(chained.s, 7);
+  assert.strictEqual(sleepSeconds('node -e "setTimeout(r, 2500)"'), 2.5);
+  assert.ok(isSleepOnly('sleep 5') && !isSleepOnly('python3 -c "import time; time.sleep(5); print(1)"'));
+});
+
+test('an --until wait that timed out or matched nothing is an until miss; the pattern can be set in the config', () => {
+  const t = (cmd, res, config = {}) => tagCall({ name: 'Bash', cmd, res_head: res }, compileConfig(config));
+  assert.ok(t('npm run sim:ui -- --until "Home" --timeout 90', 'timed out after 90 s waiting for "Home"').includes('until_miss'));
+  assert.ok(t('npm run sim:ui -- --until Home --timeout 9', 'Gave up: not seen').includes('until_miss'));
+  assert.ok(!t('npm run sim:ui -- --until Home --timeout 9', 'found Home after 3 s').includes('until_miss'));
+  assert.ok(!t('npm run sim:ui', 'timed out').includes('until_miss'));
+  assert.ok(t('npm run sim:ui -- --until Home --timeout 9', 'WAIT FAILED', { untilMissPattern: 'wait failed' }).includes('until_miss'));
 });

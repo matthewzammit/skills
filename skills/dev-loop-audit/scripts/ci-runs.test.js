@@ -1,7 +1,7 @@
 // Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');
+const { stuckRuns, text, summarize, SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');
 const { windowFrom } = require('./common.js');
 
 const at = (min) => new Date(Date.UTC(2026, 9, 20, 10, 0) + min * 60000).toISOString().replace('.000', '');
@@ -153,25 +153,84 @@ test('with real pushes, a push no workflow ran on is a hole only when CI watches
   const by = Object.fromEntries(findHoles(commits, runs, ['CI'], filters, pushes).map((g) => [g.tip, g]));
   assert.strictEqual(by.d1.status, 'no_run');
   assert.strictEqual(by.d1.hole, false);
-  assert.strictEqual(by.s1.hole, true); // code with no run; the next pass came over an hour later
+  assert.strictEqual(by.s1.hole, false); // code with no run, but the later green run on s2 contains it
+  assert.strictEqual(by.s1.covered_by, 's2');
+  assert.strictEqual(by.s1.covered_after_min, 195);
   assert.strictEqual(by.s2.hole, false);
 });
 
-test('holes: a later successful run within an hour covers a push, even past a cancelled push', () => {
+test('holes: any later successful run on a descendant covers a push, even past a cancelled push', () => {
   const c = (sha) => ({ sha, date: at(0), subject: `commit ${sha}`, files: ['src/a.ts'] });
   const runs = [
     runOf(1, 'a1', { conclusion: 'cancelled', created_at: at(0) }),
     runOf(2, 'b1', { conclusion: 'cancelled', created_at: at(10) }), // superseded, the run that replaced it passed
     runOf(3, 'c1', { created_at: at(20) }),
     runOf(4, 'd1', { conclusion: 'cancelled', created_at: at(200) }),
-    runOf(5, 'e1', { created_at: at(400) }), // passed, but far too late for d1
+    runOf(5, 'e1', { created_at: at(400) }), // passed hours later: still covers d1
   ];
   const pushes = new Map([['a1', at(0)], ['b1', at(10)], ['c1', at(20)], ['d1', at(200)], ['e1', at(400)]]);
   const by = Object.fromEntries(findHoles(['a1', 'b1', 'c1', 'd1', 'e1'].map(c), runs, ['CI'], {}, pushes).map((g) => [g.tip, g]));
   assert.strictEqual(by.a1.hole, false);
   assert.strictEqual(by.a1.covered_by, 'c1');
   assert.strictEqual(by.b1.hole, false);
-  assert.strictEqual(by.d1.hole, true);
+  assert.strictEqual(by.d1.hole, false);
+  assert.strictEqual(by.d1.covered_by, 'e1');
+  assert.strictEqual(by.d1.covered_after_min, 200);
+});
+
+test('holes: a later green run covers only when it descends from the push; the first run after the window counts', () => {
+  const c = (sha) => ({ sha, date: at(0), subject: `commit ${sha}`, files: ['src/a.ts'] });
+  const runs = [
+    runOf(1, 'a1', { conclusion: 'failure', created_at: at(0) }),
+    runOf(2, 'x9', { created_at: at(30) }), // green, but on a commit that does not contain a1 (history rewritten)
+    runOf(3, 'b1', { conclusion: 'cancelled', created_at: at(60) }),
+    runOf(4, 'n1', { created_at: at(900), in_window: false }), // the first green run after the window, next morning
+    runOf(5, 'n2', { created_at: at(1000), in_window: false }),
+  ];
+  const pushes = new Map([['a1', at(0)], ['b1', at(60)]]);
+  const asked = [];
+  const isAncestor = (tip, sha) => { asked.push(`${tip}>${sha}`); return sha === 'n1' || (tip === 'a1' && sha === 'b1'); };
+  const by = Object.fromEntries(findHoles([c('a1'), c('b1')], runs, ['CI'], {}, pushes, isAncestor).map((g) => [g.tip, g]));
+  assert.strictEqual(by.a1.covered_by, 'n1');
+  assert.strictEqual(by.b1.covered_by, 'n1');
+  assert.ok(asked.includes('a1>x9') && !asked.some((q) => q.endsWith('>n2')));
+  const none = Object.fromEntries(findHoles([c('a1'), c('b1')], runs, ['CI'], {}, pushes, (tip, sha) => sha === 'x9').map((g) => [g.tip, g]));
+  assert.strictEqual(none.a1.covered_by, 'x9');
+  assert.strictEqual(none.b1.hole, true); // x9 ran before b1 was pushed
+});
+
+test('stuck runs: queued or in progress over 6 hours at audit time, listed in the text', () => {
+  const now = Date.parse(at(0)) + 7 * 3600000;
+  const runs = [
+    runOf(1, 'a', { status: 'queued', conclusion: null, created_at: at(0) }),
+    runOf(2, 'b', { status: 'in_progress', conclusion: null, created_at: at(400) }), // under 6 h old
+    runOf(3, 'c', { created_at: at(0) }),
+  ];
+  const stuck = stuckRuns(runs, now);
+  assert.deepStrictEqual(stuck.map((r) => r.run), [1]);
+  assert.strictEqual(stuck[0].age_h, 7);
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  const s = summarize(runs.map((r) => ({ ...r, in_window: true })), win, ['CI'], [], [], [], now);
+  assert.strictEqual(s.stuck_queued, 1);
+  const out = { repo: 'o/r', branch: 'main', window: { from: 'a', to: 'b' }, rate_limit: {}, summary: { ...s, pushes_from: 'x' },
+    failures: [], cancelled: [], flakes: [], holes: [], stuck_runs: stuck, path_filter_use: {}, speed: {}, long_jobs: [] };
+  assert.match(text(out), /stuck \(queued or in progress over 6 h\): 1, runs 1/);
+});
+
+test('CI speed is split at a past fix inside the window', () => {
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  const runs = [
+    { ...runOf(1, 'a', { created_at: at(0) }), jobs: [job('t', 0, 5)] },
+    { ...runOf(2, 'b', { created_at: at(10) }), jobs: [job('t', 0, 6)] },
+    { ...runOf(3, 'c', { created_at: at(100) }), jobs: [job('t', 0, 3)] },
+    { ...runOf(4, 'd', { created_at: at(110) }), jobs: [job('t', 0, 4)] },
+  ].map((r) => ({ ...r, in_window: true }));
+  const fixes = [{ name: 'cache', at: at(50) }, { name: 'old', at: '2026-01-01T00:00:00Z' }];
+  const s = summarize(runs, win, ['CI'], [], [], fixes);
+  assert.strictEqual(s.run_median_s, 270);
+  assert.strictEqual(s.fix_splits.length, 1); // the fix outside the window is left out
+  assert.deepStrictEqual(s.fix_splits[0].before, { n: 2, median_s: 330, p90_s: 360 });
+  assert.deepStrictEqual(s.fix_splits[0].after, { n: 2, median_s: 210, p90_s: 240 });
 });
 
 test('collect reads a merge push against its first parent only', () => {
