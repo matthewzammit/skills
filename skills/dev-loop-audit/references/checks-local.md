@@ -50,6 +50,10 @@ transcripts; say so under "Not checked".
 8. **A faster tool shipped:** when a check is a top step, look for a faster successor or major version (TypeScript 7,
    Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
    this repo, cold and warm, before proposing it: a warm incremental cache often already beats it.
+   A formatter counts too: Prettier in a hook or a CI format check has faster successors (`bun fmt`, Biome,
+   dprint). Time a check of the whole repo and of the staged files only: a hook that formats only staged files is
+   often already fast. A new formatter can change the layout of many files, so the switch needs one formatting
+   commit on its own (add it to `.git-blame-ignore-revs`) and a check that the output matches the team's style.
    Do not propose a different hook manager (hk, Lefthook, prek, pre-commit, husky) for speed: on about 60 staged
    files they differ by 1 to 2 s in all, while the checks they run take far longer. Make the checks faster instead.
 9. **Every test on every push** (`tests in the gate:` in checks.txt says `every test on every push`): a branch push

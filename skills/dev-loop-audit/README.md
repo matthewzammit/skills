@@ -184,8 +184,11 @@ Speed: how long does a push take?
 - **What lint spends its time on**: `TIMING=20 npx eslint` once. One or two rules are often most of it, and a rule
   the typechecker already enforces (`import/namespace`, `import/named`) can go.
 - **A faster tool shipped**: Oxlint or Biome for ESLint, TypeScript 7, Vitest without isolation (OpenClaw: 174 s to
-  97 s on the lanes where it was safe), a native type checker (OpenClaw: tsgo 447 s to tsrs 64 s). Timed cold and warm
-  on your repo first, because a warm cache often already wins. Not a new hook manager: see above.
+  97 s on the lanes where it was safe), a native type checker (OpenClaw: tsgo 447 s to tsrs 64 s), a faster
+  formatter for Prettier (Pontus's timing: `bun fmt` 0.07 s, Biome 0.28 s, dprint 0.44 s, Prettier 7 s). Timed cold
+  and warm on your repo first, because a warm cache often already wins, and a hook that formats only staged files is
+  often fast already. A new formatter changes the layout of many files: one formatting commit, kept out of `git
+  blame`. Not a new hook manager: see above.
 - **Every test on every push**: a branch push can run only the tests its change reaches (Jest `--changedSince`,
   Vitest `--changed` or `related`, pytest-testmon, Nx `affected`, Turborepo filters; for Go, Rust and Swift, the
   changed packages). Before you trust the selection, replay a past bug through it, and run it in shadow mode
@@ -296,7 +299,8 @@ Thanks to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.
 gave the checks for tests scoped to the change (with what must still run everything), one slow test file holding
 the run, and more jobs against one on a per-minute plan. His
 [git hook manager timing](https://x.com/pontusab/status/2122466524493730107) gave the note that a faster hook
-manager is not worth a switch.
+manager is not worth a switch, and his formatter timing (`bun fmt`, Biome, dprint against Prettier) gave the
+formatter part of "A faster tool shipped".
 
 Thanks to [Vincent Koc](https://vincent.build), whose
 [write-up of making OpenClaw's CI faster and 95% cheaper](https://vincent.build/openclaw-ci-cost-reduction/) gave
