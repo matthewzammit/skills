@@ -43,12 +43,38 @@ transcripts; say so under "Not checked".
    passed by hand on the same tree.
 6. **One after another:** lint and typecheck each use about one core, and a test runner set to half the cores leaves
    the rest free. When the hook runs them in a row, propose running them beside the tests, so the push takes as long
-   as its slowest step. The failing step must still be named on the last line. One repo: a cold push went from
-   57 s to 27 s, a warm one from 12 s to 10 s.
+   as its slowest step. The failing step must still be named on the last line.
 7. **What lint spends its time on:** when lint is a top step, profile it once (`TIMING=20 npx eslint <src> --no-cache`).
    One or two rules are often most of it. A rule the typechecker already enforces can go (in TypeScript:
    `import/namespace`, `import/named`, `import/default`); a rule that catches real bugs stays, however slow.
 8. **A faster tool shipped:** when a check is a top step, look for a faster successor or major version (TypeScript 7,
    Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
-   this repo, cold and warm, before proposing it: a warm incremental cache often already beats it (one repo's warm
-   `tsc --incremental` took 1.4 s, TypeScript 7 1 s, not worth a second compiler).
+   this repo, cold and warm, before proposing it: a warm incremental cache often already beats it.
+   Do not propose a different hook manager (hk, Lefthook, prek, pre-commit, husky) for speed: on about 60 staged
+   files they differ by 1 to 2 s in all, while the checks they run take far longer. Make the checks faster instead.
+9. **Every test on every push** (`tests in the gate:` in checks.txt says `every test on every push`): a branch push
+   can run only the tests its change reaches, while the main branch keeps the full run. The test runner finds them
+   from the import graph: Jest `--changedSince=origin/main`, Vitest `--changed origin/main` (or `vitest related`),
+   pytest with `pytest-testmon`, Nx `affected`, Turborepo `--filter=...[origin/main]`. With no such tool (Go, Rust,
+   Swift, a plain runner), map changed files to their packages or test targets and run those. Propose it only with
+   these rules, or it hides failures:
+   - a change to an input the import graph cannot see runs everything: the lockfile, the runner's or compiler's
+     config, shared test helpers and mocks, a deleted or moved file, and code generated at build or test time (an
+     API client made from a spec: the spec changes, but no test imports the spec). A generated file that is
+     committed and imported like any other file is in the graph and needs no rule;
+   - a test that reads source files from disk (a file scan, a snapshot of the tree) always runs, since no import
+     links it to the file it reads;
+   - a per-file coverage bar is checked on the changed files only, so a new file with no test still fails at 0%;
+     keep only changed files a threshold rule covers, or a change outside every threshold glob fails with "coverage
+     data was not found";
+   - inside a git hook, git sets `GIT_DIR`; a runner that calls git from a subfolder (Jest's `--changedSince` runs
+     `git diff` from each root) then fails with "outside repository" in a worktree. Clear the hook's `GIT_*`
+     variables before starting the runner, and prove it with a real push from a worktree that does not force a
+     full run (a push that changes the lockfile skips this code and hides the bug);
+   - the main branch, the pre-release gate and CI on the main branch always run every test.
+   Time it on a probe branch before proposing. Full runs still happen on every lockfile bump, so keep the full run
+   fast too: on CI, shards balanced by recorded test time (CI speed item 10) keep a full run to a few minutes.
+10. **One test file holds the whole run:** a test runner spreads files across workers but cannot split a file. When
+   the slowest file takes most of the test step (Jest `--json` gives each file's start and end; pytest
+   `--durations`; `go test -json` per package), splitting it into several files on a shared helper lets the other
+   workers help.

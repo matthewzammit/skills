@@ -61,8 +61,26 @@ re-ran) rank above runner-minutes (only money).
 7. **Setup against checks** (`setup_median_s` per job: checkout, toolchain, cache restore and save, install):
    setup is the part nobody reads, and agents retry past it. Over a third of a warm job's time is worth a look.
 8. **Workers against cores:** a test runner set to a share of the cores (Jest `maxWorkers: '50%'`) gets one worker
-   on a 2-vCPU runner (GitHub's standard runner for a private repo). Before proposing more, time it both ways in
-   one run on the same runner. One repo's 2-vCPU runner gained nothing from 2 workers (33 s against 31 s).
+   on a 2-vCPU runner (GitHub's standard runner for a private repo), so every test file runs one after another. A
+   setting chosen for a laptop shared with other work often ends up on CI this way. Time 1, 2 and 3 workers on the
+   real runner, each twice (a throwaway workflow on a branch, a matrix of settings): more workers than cores can win,
+   because a worker spends part of each file waiting on module loading and the transform cache. Set the CI value
+   apart (Jest: `maxWorkers: process.env.CI ? N : '50%'`) so the laptop keeps its own. It is free: the job is the
+   same, only shorter. Two things to time in the same matrix: coverage off (often costs less than expected) and a
+   different coverage provider (V8 coverage can be far slower than Babel's on code Babel already transforms). Watch
+   for test timeouts after the change: more workers on few cores make each file slower.
+9. **One test file holds the test step:** the slowest file's time against the step's time. Jest and Vitest print a
+   time beside slow files (`PASS path (35.3 s)`, in `gh run view <id> --log`); pytest needs `--durations=20`;
+   `go test -json` gives each package. A file that is most of the step is the first fix, before sharding or a
+   bigger runner (see checks-local item 10).
+10. **More jobs, or one?** Splitting lint, typecheck and tests into parallel jobs, or tests into shards, cuts wall
+   time but repeats setup in each job, and each job is billed rounded up to a whole minute. Propose it only when
+   people wait on CI (a required check on pull requests). When CI runs after the merge and nobody waits, keep one
+   job, run the checks beside each other inside it or in the local gate, and save the minutes. When people do
+   wait, fill shards by each file's recorded time (`--shard` in Jest and Vitest, `pytest-split` with its
+   durations file), not by file count.
+11. **Tests scoped to the change on pull requests:** the same rules as checks-local item 9 apply in CI. A pull
+   request may run only the reached tests when the merge queue or the main branch runs everything.
 
 ## Already right
 

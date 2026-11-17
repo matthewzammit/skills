@@ -90,6 +90,34 @@ function commandsIn(stepsOrText) {
   return [...found].sort();
 }
 
+// Test runners a gate may call, and the flags that make one run only the tests a change can reach.
+const TEST_RUNNERS = [
+  ['jest', /\bjest\b/], ['vitest', /\bvitest\b/], ['bun test', /\bbun test\b/], ['node --test', /\bnode\s+(?:--\S+\s+)*--test\b/],
+  ['mocha', /\bmocha\b/], ['pytest', /\bpytest\b/], ['go test', /\bgo test\b/], ['cargo test', /\bcargo (?:nextest|test)\b/],
+  ['rspec', /\brspec\b/], ['phpunit', /\bphpunit\b/], ['dotnet test', /\bdotnet test\b/], ['gradle test', /\bgradlew?\b[^\n]*\btest\b/],
+  ['xcodebuild test', /\bxcodebuild\b[^\n]*\btest\b/], ['swift test', /\bswift test\b/],
+];
+const SCOPE_FLAGS = [
+  ['--changedSince', /--changedSince\b/], ['--onlyChanged', /--onlyChanged\b/], ['--findRelatedTests', /--findRelatedTests\b/],
+  ['--changed', /--changed\b(?!Since)/], ['vitest related', /\bvitest related\b/], ['--testmon', /--testmon\b/], ['--picked', /--picked\b/],
+  ['affected', /\b(?:nx affected|--affected)\b/], ['turbo filter', /--filter=\S*\.\.\.\[/],
+];
+
+/**
+ * Which test runners the gate's text calls, and whether any run is scoped to the change. `texts` are hook bodies and
+ * the package scripts they reach; shell comments are dropped, so a sentence about a flag does not count as using it.
+ */
+function testScopeIn(texts) {
+  const body = texts.map((t) => String(t).split('\n').map((l) => l.replace(/(^|\s)#.*$/, '')).join('\n')).join('\n');
+  const runners = TEST_RUNNERS.filter(([, re]) => re.test(body)).map(([n]) => n);
+  // A wrapper script (`npm run test:ci` that starts its own runner) still counts as the gate's tests.
+  if (!runners.length) for (const m of body.matchAll(/\b(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(test[\w:.-]*)/g)) if (!runners.includes(`script ${m[1]}`)) runners.push(`script ${m[1]}`);
+  return {
+    runners,
+    scoped: SCOPE_FLAGS.filter(([, re]) => re.test(body)).map(([n]) => n),
+  };
+}
+
 /** Expand `script:x` through package.json scripts (three levels), so `npm run validate` shows the tools it runs. */
 function expand(commands, scripts = {}) {
   const out = new Set(commands);
@@ -193,6 +221,15 @@ function main() {
     if (m.name === 'core.hooksPath') for (const n of m.hooks || []) hookBodies.push(...commandsIn(fs.readFileSync(path.join(root, m.config, n), 'utf8')));
   }
   const hookTools = expand([...new Set(hookBodies)], hooks.scripts);
+  const hookTexts = [];
+  const readText = (p) => { try { hookTexts.push(fs.readFileSync(p, 'utf8')); } catch { /* gone */ } };
+  for (const h of hooks.hooks) readText(path.resolve(root, hooks.hooks_dir, h.name));
+  for (const m of hooks.managers) {
+    if (m.name === 'husky') for (const n of m.hooks || []) readText(path.join(root, '.husky', n));
+    if (m.name === 'lefthook') readText(path.join(root, m.config));
+  }
+  for (const t of hookTools) if (t.startsWith('script:') && hooks.scripts && hooks.scripts[t.slice(7)]) hookTexts.push(hooks.scripts[t.slice(7)]);
+  const gateTests = testScopeIn(hookTexts);
 
   const head = git(['log', '-1', '--format=%h %cs']).trim();
   let since = [];
@@ -220,6 +257,7 @@ function main() {
     removed_locally: removedLocally,
     workflows,
     hooks: { ...hooks, scripts: undefined },
+    gate_tests: gateTests,
     compare: {
       ci: ciTools,
       hooks: hookTools,
@@ -242,6 +280,9 @@ function main() {
   lines.push('', '# Hooks', `git runs hooks from ${out.hooks.hooks_dir}${hooks.core_hooks_path ? ` (core.hooksPath ${hooks.core_hooks_path})` : ''}`);
   for (const h of hooks.hooks) lines.push(`  ${h.name}${h.executable ? '' : ' (NOT executable: git skips it)'}${h.manager ? ` via ${h.manager}` : ''}: ${h.commands.join(' ') || 'no known tools'}`);
   if (!hooks.hooks.length) lines.push('  no active hooks');
+  lines.push(gateTests.runners.length
+    ? `  tests in the gate: ${gateTests.runners.join(', ')}; ${gateTests.scoped.length ? `scoped to the change (${gateTests.scoped.join(', ')})` : 'every test on every push (no diff-scoped flag)'}`
+    : '  tests in the gate: no test runner seen');
   for (const m of hooks.managers) lines.push(`  manager ${m.name} (${m.config}): ${m.installed ? 'installed' : 'NOT installed in this clone'}`);
   if (hooks.tracked_but_not_used.length) lines.push(`  hook folders git does not use: ${hooks.tracked_but_not_used.join(', ')}`);
   if (worktrees.length > 1) {
@@ -257,4 +298,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn };
+module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn };
