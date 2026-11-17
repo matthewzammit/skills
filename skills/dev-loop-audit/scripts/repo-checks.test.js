@@ -1,7 +1,7 @@
 // Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { hookDrift, checkWorkflow, commandsIn, expand } = require('./repo-checks.js');
+const { hookDrift, checkWorkflow, commandsIn, expand, isTestPath, isCodePath, lateSkips, sizeOf, testGrowth, growthLine, parseGrepCounts, measureGrowth } = require('./repo-checks.js');
 
 const WORKFLOW = `name: CI
 on:
@@ -83,4 +83,109 @@ test('testScopeIn names the test runners a gate calls and whether they are scope
 test('testScopeIn counts a test script that wraps its own runner', () => {
   const { testScopeIn } = require('./repo-checks.js');
   assert.deepStrictEqual(testScopeIn(['npm run test:coverage -- --changed']), { runners: ['script test:coverage'], scoped: ['--changed'] });
+});
+
+test('isTestPath knows test files across languages', () => {
+  for (const p of ['src/a.test.ts', 'src/a.spec.js', 'pkg/x_test.go', 'tests/test_x.py', 'x/test_x.py', 'x/y_test.py', 'src/__tests__/a.ts', 'tests/a.rs', 'test/a.rb', 'spec/a.rb',
+    'App/FooTests.swift', 'app/FooTest.kt', 'src/FooTest.java', 'spec/foo_spec.rb']) assert.ok(isTestPath(p), p);
+  for (const p of ['src/a.ts', 'src/latest.ts', 'src/contest.py', 'src/Foo.swift', 'src/attestation.go']) assert.ok(!isTestPath(p), p);
+});
+
+test('isCodePath skips tests, vendored, built, declarations and generated files', () => {
+  assert.ok(isCodePath('src/a.ts') && isCodePath('main.go') && isCodePath('App.swift'));
+  for (const p of ['src/a.test.ts', 'node_modules/x/a.js', 'vendor/a.go', 'dist/a.js', 'build/a.js', 'src/a.d.ts', 'src/a.generated.ts', 'api/a.pb.go', 'README.md', 'a.json']) assert.ok(!isCodePath(p), p);
+});
+
+test('sizeOf counts test and code lines and the test share', () => {
+  const paths = ['src/a.ts', 'src/a.test.ts', 'src/b.ts', 'README.md'];
+  const lines = new Map([['src/a.ts', 60], ['src/a.test.ts', 30], ['src/b.ts', 10], ['README.md', 99]]);
+  assert.deepStrictEqual(sizeOf(paths, lines), { test_files: 1, test_lines: 30, code_lines: 70, test_share: 0.3 });
+  assert.deepStrictEqual(sizeOf(paths, null), { test_files: 1, test_lines: null, code_lines: null, test_share: null });
+});
+
+test('testGrowth with and without a start commit', () => {
+  const now = { test_files: 12, test_lines: 300, code_lines: 700, test_share: 0.3 };
+  const start = { test_files: 10, test_lines: 200, code_lines: 600, test_share: 0.25 };
+  const g = testGrowth(now, start);
+  assert.deepStrictEqual(g.delta, { test_files: 2, test_lines: 100, code_lines: 100 });
+  assert.strictEqual(growthLine(g), 'test growth: 12 test files (+2 in the window), 300 test lines (+100), 30% of test+code lines (was 25%); code +100 lines');
+  const none = testGrowth(now, null);
+  assert.strictEqual(none.start, null);
+  assert.strictEqual(none.delta, null);
+  assert.strictEqual(growthLine(none), 'test growth: 12 test files, 300 test lines, 30% of test+code lines; code 700 lines');
+});
+
+test('parseGrepCounts reads git grep -c output', () => {
+  const m = parseGrepCounts('abc:src/a.ts:12\nabc:src/we:ird.ts:3\n', 'abc');
+  assert.strictEqual(m.get('src/a.ts'), 12);
+  assert.strictEqual(m.get('src/we:ird.ts'), 3);
+});
+
+test('measureGrowth reads head and the window start with a faked git', () => {
+  const calls = [];
+  const git = (a) => {
+    calls.push(a.join(' '));
+    if (a[0] === 'rev-parse') return 'headsha\n';
+    if (a[0] === 'rev-list') return a.some((x) => x.startsWith('--before=')) ? 'startsha\n' : '';
+    if (a[0] === 'ls-tree') return a.includes('headsha') ? 'a.ts\na.test.ts\nb.test.ts\n' : 'a.ts\na.test.ts\n';
+    if (a[0] === 'grep') return a.includes('headsha') ? 'headsha:a.ts:10\nheadsha:a.test.ts:5\nheadsha:b.test.ts:5\n' : 'startsha:a.ts:8\nstartsha:a.test.ts:2\n';
+    throw new Error('unexpected');
+  };
+  const g = measureGrowth(git, 'origin/main', '2026-11-10T00:00:00.000Z');
+  assert.deepStrictEqual(g.delta, { test_files: 1, test_lines: 8, code_lines: 2 });
+  assert.strictEqual(g.now.test_share, 0.5);
+  assert.strictEqual(calls.filter((c) => c.startsWith('grep')).length, 2);
+  // A file cap turns line counting off and says so.
+  const capped = measureGrowth(git, 'origin/main', '2026-11-10T00:00:00.000Z', 1);
+  assert.strictEqual(capped.now.test_lines, null);
+  assert.match(capped.now.skipped_lines, /more than 1 source files/);
+});
+
+const LATE = `name: CI
+on: [push]
+jobs:
+  late:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - id: changed
+        run: echo "src=true" >> "$GITHUB_OUTPUT"
+      - if: steps.changed.outputs.src == 'true'
+        run: npm test
+  early:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - id: decide
+        run: echo "go=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - if: steps.decide.outputs.go == 'true'
+        run: npm test
+`;
+
+test('a step that decides to skip after checkout and install is a late skip', () => {
+  const r = checkWorkflow('.github/workflows/ci.yml', LATE);
+  assert.deepStrictEqual(r.late_skips, [{ file: '.github/workflows/ci.yml', job: 'late', step_id: 'changed', after: 'npm ci' }]);
+});
+
+test('a decide step before any setup is not a late skip, even in a job with its own if', () => {
+  assert.deepStrictEqual(lateSkips([{ id: 'd', run: 'echo' }, { uses: 'actions/checkout@v4' }, { if: 'steps.d.outputs.x', run: 'npm test' }]), []);
+  // A cache restore whose cache-hit output gates an install is a cache check, not a decision to skip the job.
+  assert.deepStrictEqual(lateSkips([{ uses: 'actions/checkout@v4' }, { id: 'c', uses: 'actions/cache@v4' }, { if: "steps.c.outputs.cache-hit != 'true'", run: 'npm ci' }]), []);
+  assert.deepStrictEqual(lateSkips([{ uses: 'actions/checkout@v4' }, { id: 'unused', run: 'echo' }, { run: 'npm test' }]), []);
+  assert.strictEqual(checkWorkflow('ci.yml', LATE).late_skips.filter((l) => l.job === 'early').length, 0);
+});
+
+test('fetch-depth 0 without filter is a full history checkout, with filter it is not', () => {
+  const r = checkWorkflow('.github/workflows/ci.yml', LATE);
+  assert.deepStrictEqual(r.full_history_checkouts, [{ file: '.github/workflows/ci.yml', job: 'late' }]);
 });

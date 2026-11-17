@@ -147,7 +147,10 @@ only at CI.
 
 Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
 details, and to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.com/pontusab)), whose
-[post on a CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) gave its test-speed checks.
+[post on a CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) gave its test-speed checks,
+and to [Vincent Koc](https://vincent.build), whose
+[write-up of OpenClaw's 95% cheaper CI](https://vincent.build/openclaw-ci-cost-reduction/) gave its test-growth,
+two-clock and setup checks.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 

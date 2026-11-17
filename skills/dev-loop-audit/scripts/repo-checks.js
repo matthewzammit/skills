@@ -12,6 +12,8 @@
  * the repo uses and whether it is installed, and which tools the hooks run that CI does not, and the other way.
  * Worktrees: each one runs its own branch's copy of a tracked hook folder and of `.claude/settings.json`, so an old
  * branch runs old hooks; the ones that differ from the main branch's worktree are listed.
+ * Also: late skips (a step decides to skip after checkout and setup), full-history checkouts, and test growth
+ * (test files and lines now against the window's start).
  * The files are read as they are now. With a window (--to), the commits since its end that changed workflows or
  * hooks are listed, so a finding the repo has already fixed is reported as "fixed since".
  */
@@ -30,7 +32,7 @@ function checkWorkflow(file, text) {
     for (let i = from; i < lines.length; i++) if (re.test(lines[i])) return i + 1;
     return null;
   };
-  const out = { file, name: doc.name || path.basename(file), jobs: [], findings: [] };
+  const out = { file, name: doc.name || path.basename(file), jobs: [], findings: [], late_skips: [], full_history_checkouts: [] };
   const jobs = doc.jobs && typeof doc.jobs === 'object' ? doc.jobs : {};
   for (const [id, job] of Object.entries(jobs)) {
     if (!job || typeof job !== 'object') continue;
@@ -48,6 +50,8 @@ function checkWorkflow(file, text) {
       const reads = JSON.stringify(job).match(/needs\.[\w*-]+\.result|contains\(needs|needs\.\*\.result|toJSON\(needs\)/);
       if (!reads) out.findings.push({ kind: 'summary_passes_on_failure', job: id, line: jobLine, note: `if: ${ifText.trim()} with needs [${needs.join(', ')}] but no step checks needs.*.result, so it passes when they fail` });
     }
+    for (const l of lateSkips(steps)) out.late_skips.push({ file, job: id, step_id: l.step_id, after: l.after });
+    if (fullHistoryCheckout(steps)) out.full_history_checkouts.push({ file, job: id });
     steps.forEach((st, i) => {
       if (!st || typeof st !== 'object') return;
       const label = st.name || st.uses || (typeof st.run === 'string' ? st.run.split('\n')[0].slice(0, 60) : `step ${i + 1}`);
@@ -72,6 +76,116 @@ function checkWorkflow(file, text) {
   } else out.triggers = [].concat(on || []);
   out.commands = commandsIn(steps(doc));
   return out;
+}
+
+const stepLabel = (st, i = 0) => st.name || st.uses || (typeof st.run === 'string' ? st.run.split('\n')[0].slice(0, 60) : `step ${i + 1}`);
+const INSTALL_RUN = /\b(?:npm ci|npm install|pnpm install|yarn install|bun install|pip install|bundle install|go mod download)\b/;
+
+/** Is this step a checkout, a setup-* action or a dependency install: the part of a job a runner pays for first. */
+function isSetupStep(st) {
+  if (!st || typeof st !== 'object') return false;
+  if (typeof st.uses === 'string' && /^actions\/(checkout|setup-[\w-]+)(@|$)/.test(st.uses)) return true;
+  return typeof st.run === 'string' && INSTALL_RUN.test(st.run);
+}
+
+/**
+ * Steps that decide whether the rest of the job runs: a step with an `id` whose output a later step's `if:` reads,
+ * placed after a checkout, setup or install step. The job paid for a runner and its setup before it chose to skip.
+ * Returns [{ step_id, after }], `after` being the last setup step before the deciding step.
+ */
+function lateSkips(steps) {
+  const out = [];
+  steps.forEach((st, i) => {
+    if (!st || typeof st !== 'object' || !st.id) return;
+    // A cache restore gates an install on `cache-hit`; that is a cache check, not a decision to skip the job.
+    if (typeof st.uses === 'string' && /^actions\/cache(\/restore)?@/.test(st.uses)) return;
+    const id = String(st.id);
+    const used = steps.slice(i + 1).some((later) => later && typeof later.if === 'string' && later.if.includes(`steps.${id}.outputs`));
+    if (!used) return;
+    let setup = null;
+    for (let j = 0; j < i; j++) if (isSetupStep(steps[j])) setup = stepLabel(steps[j], j);
+    if (setup) out.push({ step_id: id, after: setup });
+  });
+  return out;
+}
+
+/** Does a job check out with `fetch-depth: 0` and no `filter:` input (full history, every blob)? */
+function fullHistoryCheckout(steps) {
+  return steps.some((st) => st && typeof st.uses === 'string' && /^actions\/checkout(@|$)/.test(st.uses)
+    && st.with && typeof st.with === 'object' && String(st.with['fetch-depth']) === '0' && !st.with.filter);
+}
+
+const SOURCE_EXT = ['ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'py', 'go', 'rs', 'swift', 'kt', 'java', 'rb', 'php', 'cs'];
+const SOURCE_RE = new RegExp(`\\.(?:${SOURCE_EXT.join('|')})$`);
+const SKIP_DIRS = /(^|\/)(node_modules|vendor|dist|build)\//;
+const TEST_FILE = /(\.test\.[^/]+|\.spec\.[^/]+|_test\.go|(^|\/)test_[^/]+\.py|_test\.py|Tests\.swift|Test\.kt|Test\.java|_spec\.rb)$/;
+const TEST_DIR = /(^|\/)(__tests__|tests|test|spec)\//;
+/** Is this path a test file, in any of the common languages? */
+function isTestPath(p) {
+  return TEST_FILE.test(p) || TEST_DIR.test(p);
+}
+/** A source file that is not a test, not vendored or built, not a type declaration, not generated. */
+function isCodePath(p) {
+  return SOURCE_RE.test(p) && !isTestPath(p) && !SKIP_DIRS.test(p) && !/\.d\.ts$/.test(p) && !/\.(generated|pb)\./.test(p);
+}
+/** A counted test file: a test path with a source extension, not vendored or built (fixtures and snapshots do not count). */
+const isCountedTest = (p) => SOURCE_RE.test(p) && isTestPath(p) && !SKIP_DIRS.test(p);
+
+const FILE_CAP = 20000;
+
+/** Size of the suite from every path in the tree and a Map of path to non-blank lines (null when lines were not counted). */
+function sizeOf(paths, lines) {
+  const tests = paths.filter(isCountedTest);
+  const code = paths.filter(isCodePath);
+  const total = (xs) => xs.reduce((a, p) => a + (lines.get(p) || 0), 0);
+  const out = { test_files: tests.length, test_lines: lines ? total(tests) : null, code_lines: lines ? total(code) : null, test_share: null };
+  if (lines && out.test_lines + out.code_lines > 0) out.test_share = Math.round((out.test_lines / (out.test_lines + out.code_lines)) * 1000) / 1000;
+  return out;
+}
+
+/** Growth of the test suite: `now` and `start` are sizeOf results (start may be null). */
+function testGrowth(now, start) {
+  const d = (k) => (now[k] == null || start[k] == null ? null : now[k] - start[k]);
+  return { now, start: start || null, delta: start ? { test_files: d('test_files'), test_lines: d('test_lines'), code_lines: d('code_lines') } : null };
+}
+
+/** Parse `git grep -c` output taken at `commit` into a Map of path to count. */
+function parseGrepCounts(text, commit) {
+  const m = new Map();
+  for (const l of text.split('\n')) {
+    if (!l.startsWith(`${commit}:`)) continue;
+    const rest = l.slice(commit.length + 1);
+    const i = rest.lastIndexOf(':');
+    if (i > 0) m.set(rest.slice(0, i), Number(rest.slice(i + 1)));
+  }
+  return m;
+}
+
+/** Measure the tree at one commit with two git processes. Lines are skipped above `cap` source files. */
+function measureTree(git, commit, cap = FILE_CAP) {
+  const paths = git(['ls-tree', '-r', '--name-only', commit]).split('\n').filter(Boolean);
+  if (paths.filter((p) => isCountedTest(p) || isCodePath(p)).length > cap) return { ...sizeOf(paths, null), skipped_lines: `more than ${cap} source files` };
+  const grep = git(['grep', '-c', '-I', '-v', '-e', '^[[:space:]]*$', commit, '--', ...SOURCE_EXT.map((e) => `*.${e}`)]);
+  return sizeOf(paths, parseGrepCounts(grep, commit));
+}
+
+/** Test growth on `ref`: now at its head, start at the last commit before `startIso` (null when there is none). */
+function measureGrowth(git, ref, startIso, cap = FILE_CAP) {
+  const head = git(['rev-parse', ref]).trim();
+  const now = measureTree(git, head, cap);
+  let startSha = '';
+  try { startSha = git(['rev-list', '-1', `--before=${startIso}`, ref]).trim(); } catch { /* no history that old */ }
+  return testGrowth(now, startSha ? measureTree(git, startSha, cap) : null);
+}
+
+const pct = (x) => (x == null ? '?' : `${Math.round(x * 1000) / 10}`);
+const signed = (n) => (n == null ? '?' : `${n >= 0 ? '+' : ''}${n}`);
+/** The one printed line for a testGrowth result. */
+function growthLine(g) {
+  const { now, start, delta } = g;
+  const part = (v, tail = '') => (delta ? ` (${signed(v)}${tail})` : '');
+  if (now.test_lines == null) return `test growth: ${now.test_files} test files${part(delta && delta.test_files, ' in the window')}; lines not counted (${now.skipped_lines})`;
+  return `test growth: ${now.test_files} test files${part(delta && delta.test_files, ' in the window')}, ${now.test_lines} test lines${part(delta && delta.test_lines)}, ${pct(now.test_share)}% of test+code lines${start ? ` (was ${pct(start.test_share)}%)` : ''}; code ${delta ? signed(delta.code_lines) : now.code_lines} lines`;
 }
 
 const steps = (doc) => Object.values(doc.jobs || {}).flatMap((j) => (j && Array.isArray(j.steps) ? j.steps : []));
@@ -248,9 +362,15 @@ function main() {
   const refPath = (worktrees.find((w) => w.branch === branch) || { path: root }).path;
   const drift = worktrees.length > 1 ? hookDrift(worktrees.map((w) => ({ ...w, ...hookPrint(w.path, tracked) })), refPath) : [];
 
+  let growth = null;
+  try { growth = measureGrowth(git, `origin/${branch}`, windowFrom(args).startIso); } catch { /* no remote branch */ }
+
   const out = {
     branch,
     read_at: head,
+    test_growth: growth,
+    late_skips: workflows.flatMap((w) => w.late_skips || []),
+    full_history_checkouts: workflows.flatMap((w) => w.full_history_checkouts || []),
     changed_since_window_end: since,
     hook_drift: drift,
     not_on_remote: notPushed,
@@ -275,8 +395,11 @@ function main() {
   for (const w of workflows) {
     lines.push(`${w.file} (${w.name}) triggers ${JSON.stringify(w.triggers)} jobs ${w.jobs.map((j) => `${j.id}${j.timeout ? `[${j.timeout}m]` : ''}`).join(', ')}`);
     for (const f of w.findings) lines.push(`  ${f.kind}${f.job ? ` ${f.job}` : ''}${f.step ? ` / ${f.step}` : ''}${f.line ? ` (line ${f.line})` : ''}${f.text ? ` \`${f.text}\`` : ''}: ${f.note}${f.paths ? ` ${JSON.stringify(f.paths)}` : ''}${f.ignore ? ` ${JSON.stringify(f.ignore)}` : ''}`);
+    for (const l of w.late_skips || []) lines.push(`  late skip: ${l.file} job ${l.job} decides at step ${l.step_id} after ${l.after}; a job-level if: would not start a runner`);
+    for (const f of w.full_history_checkouts || []) lines.push(`  full history checkout: ${f.file} job ${f.job} (fetch-depth: 0 with no filter: blob:none)`);
     if (w.error) lines.push(`  could not read: ${w.error}`);
   }
+  lines.push('', '# Tests', growth ? growthLine(growth) : `test growth: not measured (origin/${branch} not found)`);
   lines.push('', '# Hooks', `git runs hooks from ${out.hooks.hooks_dir}${hooks.core_hooks_path ? ` (core.hooksPath ${hooks.core_hooks_path})` : ''}`);
   for (const h of hooks.hooks) lines.push(`  ${h.name}${h.executable ? '' : ' (NOT executable: git skips it)'}${h.manager ? ` via ${h.manager}` : ''}: ${h.commands.join(' ') || 'no known tools'}`);
   if (!hooks.hooks.length) lines.push('  no active hooks');
@@ -298,4 +421,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn };
+module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn, isTestPath, isCodePath, lateSkips, fullHistoryCheckout, sizeOf, testGrowth, parseGrepCounts, measureTree, measureGrowth, growthLine };

@@ -316,6 +316,58 @@ function summarize(runs, win, ciNames, holes, flakes, fixes = [], now = Date.now
   };
 }
 
+/**
+ * Time from opening to merging for the pull requests merged inside the window: { merged, median_min, p90_min,
+ * slowest: [{ number, minutes }] (top 3) }, or null when none merged (a repo that pushes straight to main).
+ * Draft time is not removed: createdAt is when the PR was opened, even as a draft (taking it out needs the
+ * timeline API, one call per PR).
+ */
+function prCycle(prs, win) {
+  const inWin = (prs || []).filter((p) => p.mergedAt && p.createdAt && p.mergedAt >= win.startIso && p.mergedAt < win.endIso);
+  if (!inWin.length) return null;
+  const mins = inWin.map((p) => ({ number: p.number, minutes: round((ms(p.mergedAt) - ms(p.createdAt)) / 60000, 1) }));
+  const all = mins.map((m) => m.minutes);
+  return {
+    merged: inWin.length,
+    median_min: median(all),
+    p90_min: p90(all),
+    slowest: [...mins].sort((a, b) => b.minutes - a.minutes).slice(0, 3),
+  };
+}
+
+/** Merged pull requests for the window from gh, or null with the reason. Never throws. */
+function fetchPrCycle(gh, repo, win) {
+  try {
+    const prs = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'merged', '--search', `merged:${win.from}..${win.to}`,
+      '--json', 'number,createdAt,mergedAt,isDraft,author', '--limit', '1000']));
+    return { value: prCycle(prs, win), error: null };
+  } catch (e) { return { value: null, error: String(e.message || e).split('\n')[0].slice(0, 120) }; }
+}
+
+const REVIEW_BOT = /review|claude|coderabbit|copilot|codex|gemini|ai[-_ ]?review/i;
+
+/**
+ * Workflows that look like automated review: the workflow's name or file path matches a review-bot word and the run
+ * came from a pull request event. prs counts distinct head branches; billed_min is null when no run has its jobs loaded.
+ */
+function reviewBots(runs) {
+  const by = new Map();
+  for (const r of runs) {
+    if (!['pull_request', 'pull_request_target'].includes(r.event) || !REVIEW_BOT.test(`${r.name || ''} ${r.path || ''}`)) continue;
+    if (!by.has(r.name)) by.set(r.name, []);
+    by.get(r.name).push(r);
+  }
+  return [...by.entries()].map(([workflow, rs]) => {
+    const perPr = {};
+    for (const r of rs) perPr[r.head_branch] = (perPr[r.head_branch] || 0) + 1;
+    const withJobs = rs.filter((r) => r.jobs);
+    return {
+      workflow, runs: rs.length, prs: Object.keys(perPr).length, runs_per_pr_median: median(Object.values(perPr)),
+      billed_min: withJobs.length ? sum(withJobs.flatMap((r) => r.jobs.map(billedMinutes))) : null,
+    };
+  }).sort((a, b) => b.runs - a.runs);
+}
+
 function ghJsonLines(text) {
   return text.split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
 }
@@ -412,6 +464,7 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
     const next = inWin.find((x) => x.name === r.name && x.head_branch === r.head_branch && ms(x.created_at) > ms(r.created_at) && ms(x.created_at) - ms(r.created_at) < 600000);
     return { run: r.id, workflow: r.name, branch: r.head_branch, sha: r.head_sha.slice(0, 8), at: r.created_at, superseded_by: next ? next.id : null, billed_min: sum((r.jobs || []).map(billedMinutes)) };
   });
+  const pr = fetchPrCycle(gh, repo, win);
   const pushes = holes.filter((g) => !g.unpushed_run).length;
   const filterUse = Object.fromEntries(Object.entries(filters).filter(([, f]) => f.paths || f.ignore).map(([n]) => {
     const ran = holes.filter((g) => g.runs.some((x) => x.workflow === n)).length;
@@ -422,6 +475,7 @@ function collect({ repo, branch, win, gh, git, workflowsGiven, withJobs = true, 
     rate_limit: { before: rate.remaining, after: JSON.parse(gh(['api', 'rate_limit', '--jq', '.resources.core'])).remaining },
     summary: { ...summarize(runs, win, ciNames, holes, flakes, fixes, now), pushes_from: pushList ? 'activity API' : 'runs (guessed)' },
     speed: summarizeJobs(inWin),
+    pr_cycle: pr.value, pr_cycle_error: pr.error, review_bots: reviewBots(inWin),
     failures, cancelled, flakes, holes, stuck_runs: stuckRuns(inWin, now), path_filter_use: filterUse,
     long_jobs: inWin.flatMap((r) => (r.jobs || []).map((j) => ({ run: r.id, workflow: r.name, job: j.name, conclusion: j.conclusion, s: dur(j.started_at, j.completed_at) })))
       .filter((j) => j.s != null).sort((a, b) => b.s - a.s).slice(0, 10),
@@ -442,6 +496,10 @@ function text(out) {
     `stuck (queued or in progress over 6 h): ${s.stuck_queued}${(out.stuck_runs || []).length ? `, runs ${out.stuck_runs.map((r) => r.run).join(', ')}` : ''}`,
     `billed minutes (estimate) ${s.billed_min}, of which failed or cancelled ${s.billed_wasted_min}; jobs fetched for ${s.jobs_fetched} runs`,
     `rate limit ${out.rate_limit.before} -> ${out.rate_limit.after}`,
+    ...(out.pr_cycle_error ? [`PR cycle: not checked (${out.pr_cycle_error})`]
+      : out.pr_cycle ? [`PR cycle (open to merge): ${out.pr_cycle.merged} merged, median ${out.pr_cycle.median_min} min, p90 ${out.pr_cycle.p90_min} min (draft time included)`]
+        : ['PR cycle: no merged pull requests in the window']),
+    ...(out.review_bots || []).map((b) => `review workflow ${b.workflow}: ${b.runs} runs on ${b.prs} PRs (median ${b.runs_per_pr_median} per PR), ${b.billed_min == null ? '?' : b.billed_min} billed min`),
     '', 'failures:', ...out.failures.map((f) => `  ${JSON.stringify(f)}`),
     'cancelled:', ...out.cancelled.map((f) => `  ${JSON.stringify(f)}`),
     'stuck:', ...(out.stuck_runs || []).map((f) => `  ${JSON.stringify(f)}`),
@@ -477,4 +535,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { stuckRuns, text, SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect };
+module.exports = { stuckRuns, text, SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect, prCycle, fetchPrCycle, reviewBots };
