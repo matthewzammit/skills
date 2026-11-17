@@ -119,4 +119,9 @@ Checks borrowed from other public skills, with thanks:
   minutes apart from wall time, cancelled-run waste, path filters that match most runs, fetching runs one day at a
   time.
 
+Thanks to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.com/pontusab)), whose
+[post on getting a frontend CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) and its replies
+gave the checks for tests scoped to the change (with what must still run everything), one slow test file holding
+the run, and more jobs against one on a per-minute plan.
+
 Built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.

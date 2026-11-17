@@ -146,7 +146,8 @@ It double-checks the biggest problems, keeps a trend week to week, and builds th
 only at CI.
 
 Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
-details.
+details, and to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.com/pontusab)), whose
+[post on a CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) gave its test-speed checks.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 

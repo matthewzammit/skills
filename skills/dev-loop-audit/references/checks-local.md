@@ -52,3 +52,20 @@ transcripts; say so under "Not checked".
    Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
    this repo, cold and warm, before proposing it: a warm incremental cache often already beats it (one repo's warm
    `tsc --incremental` took 1.4 s, TypeScript 7 1 s, not worth a second compiler).
+9. **Every test on every push** (`tests in the gate:` in checks.txt says `every test on every push`): a branch push
+   can run only the tests its change reaches, while the main branch keeps the full run. The test runner finds them
+   from the import graph: Jest `--changedSince=origin/main`, Vitest `--changed origin/main` (or `vitest related`),
+   pytest with `pytest-testmon`, Nx `affected`, Turborepo `--filter=...[origin/main]`. With no such tool (Go, Rust,
+   Swift, a plain runner), map changed files to their packages or test targets and run those. Propose it only with
+   these rules, or it hides failures:
+   - a change to an input the import graph cannot see runs everything: the lockfile, the runner's or compiler's
+     config, shared test helpers and mocks, generated code, and a deleted or moved file;
+   - a test that reads source files from disk (a file scan, a snapshot of the tree) always runs, since no import
+     links it to the file it reads;
+   - a per-file coverage bar is checked on the changed files only, so a new file with no test still fails at 0%;
+   - the main branch, the pre-release gate and CI on the main branch always run every test.
+   Time it on a probe branch before proposing: one repo's push test step went from 36 s to 10 to 11 s.
+10. **One test file holds the whole run:** a test runner spreads files across workers but cannot split a file. When
+   the slowest file takes most of the test step (Jest `--json` gives each file's start and end; pytest
+   `--durations`; `go test -json` per package), splitting it into several files on a shared helper lets the other
+   workers help. One repo's 3,300-line file took 30 s of a 32 s run; split into six, the whole run took 12 s.

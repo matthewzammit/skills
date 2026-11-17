@@ -66,3 +66,21 @@ test('hookDrift lists worktrees whose hooks differ from the main branch\'s', () 
   ], '/r/main');
   assert.deepStrictEqual(d.map((x) => [x.branch, x.git_differs, x.agent_differs]), [['feat/old', true, true]]);
 });
+
+test('testScopeIn names the test runners a gate calls and whether they are scoped to the change', () => {
+  const { testScopeIn } = require('./repo-checks.js');
+  assert.deepStrictEqual(testScopeIn(['npm run lint\nnpx jest --coverage']), { runners: ['jest'], scoped: [] });
+  assert.deepStrictEqual(testScopeIn(['npx jest --changedSince=origin/main']), { runners: ['jest'], scoped: ['--changedSince'] });
+  assert.deepStrictEqual(testScopeIn(['vitest run --changed origin/main']).scoped, ['--changed']);
+  assert.deepStrictEqual(testScopeIn(['pytest --testmon -q']), { runners: ['pytest'], scoped: ['--testmon'] });
+  assert.deepStrictEqual(testScopeIn(['go test ./...', 'cargo nextest run']).runners, ['go test', 'cargo test']);
+  assert.deepStrictEqual(testScopeIn(['npx nx affected -t test']).scoped, ['affected']);
+  // A comment about a flag is not a use of it.
+  assert.deepStrictEqual(testScopeIn(['# we could use --changedSince here\nnpx jest']).scoped, []);
+  assert.deepStrictEqual(testScopeIn(['npm run lint']), { runners: [], scoped: [] });
+});
+
+test('testScopeIn counts a test script that wraps its own runner', () => {
+  const { testScopeIn } = require('./repo-checks.js');
+  assert.deepStrictEqual(testScopeIn(['npm run test:coverage -- --changed']), { runners: ['script test:coverage'], scoped: ['--changed'] });
+});
