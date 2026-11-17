@@ -62,7 +62,7 @@ re-ran) rank above runner-minutes (only money).
    setup is the part nobody reads, and agents retry past it. Over a third of a warm job's time is worth a look.
 8. **Workers against cores:** a test runner set to a share of the cores (Jest `maxWorkers: '50%'`) gets one worker
    on a 2-vCPU runner (GitHub's standard runner for a private repo). Before proposing more, time it both ways in
-   one run on the same runner. One repo's 2-vCPU runner gained nothing from 2 workers (33 s against 31 s).
+   one run on the same runner.
 9. **One test file holds the test step:** the slowest file's time against the step's time. Jest and Vitest print a
    time beside slow files (`PASS path (35.3 s)`, in `gh run view <id> --log`); pytest needs `--durations=20`;
    `go test -json` gives each package. A file that is most of the step is the first fix, before sharding or a
