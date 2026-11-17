@@ -59,12 +59,15 @@ transcripts; say so under "Not checked".
    Swift, a plain runner), map changed files to their packages or test targets and run those. Propose it only with
    these rules, or it hides failures:
    - a change to an input the import graph cannot see runs everything: the lockfile, the runner's or compiler's
-     config, shared test helpers and mocks, generated code, and a deleted or moved file;
+     config, shared test helpers and mocks, a deleted or moved file, and code generated at build or test time (an
+     API client made from a spec: the spec changes, but no test imports the spec). A generated file that is
+     committed and imported like any other file is in the graph and needs no rule;
    - a test that reads source files from disk (a file scan, a snapshot of the tree) always runs, since no import
      links it to the file it reads;
    - a per-file coverage bar is checked on the changed files only, so a new file with no test still fails at 0%;
    - the main branch, the pre-release gate and CI on the main branch always run every test.
-   Time it on a probe branch before proposing.
+   Time it on a probe branch before proposing. Full runs still happen on every lockfile bump, so keep the full run
+   fast too: on CI, shards balanced by recorded test time (CI speed item 10) keep a full run to a few minutes.
 10. **One test file holds the whole run:** a test runner spreads files across workers but cannot split a file. When
    the slowest file takes most of the test step (Jest `--json` gives each file's start and end; pytest
    `--durations`; `go test -json` per package), splitting it into several files on a shared helper lets the other

@@ -173,9 +173,10 @@ Speed: how long does a push take?
 - **Every test on every push**: a branch push can run only the tests its change reaches (Jest `--changedSince`,
   Vitest `--changed` or `related`, pytest-testmon, Nx `affected`, Turborepo filters; for Go, Rust and Swift, the
   changed packages). Safe only with four rules: a change the import graph cannot see (lockfile, configs, test
-  helpers, mocks, generated code, a deleted or moved file) runs everything; a test that reads files from disk always
+  helpers, mocks, a client generated at build time from a spec, a deleted or moved file) runs everything; a test that reads files from disk always
   runs; a per-file coverage bar checks the changed files only, so a new file with no test still fails; `main` and
-  CI on `main` run everything. Pontus's
+  CI on `main` run everything. A lockfile bump still runs it all, so keep the full run fast as well: Pontus runs
+  10 shards balanced by test time at about 150 s each. His
   [replies](https://x.com/pontusab/status/2121982070193058191) gave the first rule.
 - **One test file holds the whole run**: a runner spreads files across workers but cannot split one. Ours: 30 s of a
   32 s run in one file; split in six, 12 s.
