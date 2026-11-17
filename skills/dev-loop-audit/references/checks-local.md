@@ -52,6 +52,8 @@ transcripts; say so under "Not checked".
    Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
    this repo, cold and warm, before proposing it: a warm incremental cache often already beats it (one repo's warm
    `tsc --incremental` took 1.4 s, TypeScript 7 1 s, not worth a second compiler).
+   Do not propose a different hook manager (hk, Lefthook, prek, pre-commit, husky) for speed: on about 60 staged
+   files they differ by 1 to 2 s in all, while the checks they run take far longer. Make the checks faster instead.
 9. **Every test on every push** (`tests in the gate:` in checks.txt says `every test on every push`): a branch push
    can run only the tests its change reaches, while the main branch keeps the full run. The test runner finds them
    from the import graph: Jest `--changedSince=origin/main`, Vitest `--changed origin/main` (or `vitest related`),
