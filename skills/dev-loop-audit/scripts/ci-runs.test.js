@@ -1,7 +1,7 @@
 // Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { stuckRuns, text, summarize, SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect } = require('./ci-runs.js');
+const { stuckRuns, text, summarize, SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect, prCycle, fetchPrCycle, reviewBots } = require('./ci-runs.js');
 const { windowFrom } = require('./common.js');
 
 const at = (min) => new Date(Date.UTC(2026, 9, 20, 10, 0) + min * 60000).toISOString().replace('.000', '');
@@ -250,4 +250,42 @@ test('collect reads a merge push against its first parent only', () => {
   const dt = seen.find((a) => a[0] === 'diff-tree');
   assert.ok(dt.includes('--diff-merges=first-parent'));
   assert.ok(!dt.includes('-m') && !dt.includes('--first-parent'));
+});
+
+const prAt = (number, openMin, mergeMin) => ({ number, createdAt: at(openMin), mergedAt: at(mergeMin), isDraft: false, author: { login: 'a' } });
+
+test('prCycle gives median, p90 and the slowest three, and null with no PRs', () => {
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  const prs = [prAt(1, 0, 10), prAt(2, 0, 20), prAt(3, 0, 30), prAt(4, 0, 40), prAt(5, 0, 600),
+    { ...prAt(6, -5000, -4000), mergedAt: '2026-10-01T00:00:00Z' }, { number: 7, createdAt: at(0), mergedAt: null }];
+  const c = prCycle(prs, win);
+  assert.strictEqual(c.merged, 5);
+  assert.strictEqual(c.median_min, 30);
+  assert.strictEqual(c.p90_min, 600);
+  assert.deepStrictEqual(c.slowest, [{ number: 5, minutes: 600 }, { number: 4, minutes: 40 }, { number: 3, minutes: 30 }]);
+  assert.strictEqual(prCycle([], win), null);
+  assert.strictEqual(prCycle([prs[5]], win), null);
+});
+
+test('fetchPrCycle asks gh for merged PRs and never throws', () => {
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  let seen;
+  const ok = fetchPrCycle((a) => { seen = a; return JSON.stringify([prAt(1, 0, 10)]); }, 'o/r', win);
+  assert.strictEqual(ok.value.merged, 1);
+  assert.ok(seen.includes('merged:2026-10-20..2026-10-21') && seen.includes('o/r'));
+  const bad = fetchPrCycle(() => { throw new Error('gh: not logged in\nmore'); }, 'o/r', win);
+  assert.deepStrictEqual(bad, { value: null, error: 'gh: not logged in' });
+});
+
+test('reviewBots groups review workflows by name on pull request events', () => {
+  const pr = (id, name, branch, extra = {}) => ({ id, name, path: '.github/workflows/x.yml', event: 'pull_request', head_branch: branch, ...extra });
+  const bots = reviewBots([
+    pr(1, 'Claude Code Review', 'a', { jobs: [job('review', 0, 2.5)] }), pr(2, 'Claude Code Review', 'a', { jobs: [job('review', 0, 1)] }),
+    pr(3, 'Claude Code Review', 'b'), pr(4, 'CI', 'a'), pr(5, 'Claude Code Review', 'main', { event: 'push' }),
+    pr(6, 'Checks', 'c', { path: '.github/workflows/coderabbit.yml', event: 'pull_request_target' }),
+  ]);
+  assert.strictEqual(bots.length, 2);
+  assert.deepStrictEqual(bots[0], { workflow: 'Claude Code Review', runs: 3, prs: 2, runs_per_pr_median: 1.5, billed_min: 4 });
+  assert.deepStrictEqual(bots[1], { workflow: 'Checks', runs: 1, prs: 1, runs_per_pr_median: 1, billed_min: null });
+  assert.deepStrictEqual(reviewBots([pr(1, 'CI', 'a')]), []);
 });

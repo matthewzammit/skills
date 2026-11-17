@@ -72,9 +72,26 @@ transcripts; say so under "Not checked".
      variables before starting the runner, and prove it with a real push from a worktree that does not force a
      full run (a push that changes the lockfile skips this code and hides the bug);
    - the main branch, the pre-release gate and CI on the main branch always run every test.
+   Before trusting a selector, backtest it: take a past bug, check out the commit before its fix, feed that change to
+   the selector, and check that it picks the test that fails. Run a new shortcut in shadow mode first (run every
+   test, record what the selector would have skipped, count the misses). Keep a switch that turns selection off
+   (an environment variable such as `TEST_SCOPE=full`), and make the selection explain itself (why each test was
+   picked: owner, importer, policy). A missing or unclear dependency widens the run; it never skips a test.
    Time it on a probe branch before proposing. Full runs still happen on every lockfile bump, so keep the full run
    fast too: on CI, shards balanced by recorded test time (CI speed item 10) keep a full run to a few minutes.
 10. **One test file holds the whole run:** a test runner spreads files across workers but cannot split a file. When
    the slowest file takes most of the test step (Jest `--json` gives each file's start and end; pytest
    `--durations`; `go test -json` per package), splitting it into several files on a shared helper lets the other
    workers help.
+11. **Test suite growth** (`test_growth` in checks.txt): test files and lines now and at the start of the week, and
+   their share of test plus code lines. An agent writes tests easily and seldom deletes one, so a suite can grow
+   much faster than the code it protects, and every test costs run time and upkeep. When tests grow faster than
+   code week after week, propose two things:
+   - a test budget: a check that fails a change adding more than a set number of test lines, unless it deletes or
+     merges tests elsewhere or records why it needs more (one large project allowed 400 net new test lines a change
+     without a record);
+   - a clean-up, one area at a time: read the code first, name the behaviour each test protects and a real bug that
+     would make it fail, keep the strongest test for each behaviour, and delete tests that restate the code, repeat
+     another test, or pass when the behaviour is broken. Break the code on purpose to prove the kept test still
+     fails. Never delete the only test of a behaviour, and never sort by run time and delete the slowest.
+   Report the trend, not a target: a share can fall because the code grew.

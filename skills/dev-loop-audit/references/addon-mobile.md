@@ -26,3 +26,8 @@ and image reads that match `screenReads`. Numbers are in the Mobile and QA secti
 4. **Setup:** warm and cold medians, and the slowest episodes (`episode_rows`).
 5. **The simulator tool's own screenshot** (`sim_tool_actions.screenshot`) against the repo's screenshot helper,
    when the repo has one: the helper usually waits for a still screen and is cheaper to read.
+6. **Simulator background services:** a simulator boots with services the tests never use (Spotlight indexing,
+   Screen Time, photo analysis) that take CPU and memory while the agent waits, and more so with several simulators
+   on one machine. A preparation step can turn off the ones the app does not need (SimSlim does this for iOS) and
+   keep the ones it does (Siri, network). Time setup with and without it before proposing; trim the environment,
+   never the behaviour under test.

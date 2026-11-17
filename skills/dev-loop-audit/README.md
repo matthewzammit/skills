@@ -91,9 +91,10 @@ pre-commit took 1.4 to 3 s on 60 staged files
 
 ## Every check
 
-44 checks in three areas, and 17 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
+49 checks in three areas, and 18 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
 says **measured** or **estimated**, and names its proof (a run id, a file line, a session). Time someone waited
-ranks above runner minutes, which only cost money. The full rules are in [references/](references/).
+ranks above runner minutes, which only cost money. Each proposed fix says what it does to both: billed minutes
+and how long someone waits. The full rules are in [references/](references/).
 
 ### CI (GitHub Actions)
 
@@ -141,6 +142,17 @@ Speed: how long does a run take, and what does it cost?
 - **Tests scoped to the change on pull requests**: a pull request can run only the tests it reaches when the merge
   queue or `main` runs everything (the rules are under the gate's "Every test on every push").
 
+- **Skip a job before it starts**: a job that checks out and installs, then decides to skip, has already paid for
+  the runner. The decision moves to the job's `if:`, or to a small decide job that feeds the others.
+- **Setup that repeats or fetches too much**: `fetch-depth: 0` where a blobless checkout (`filter: blob:none`)
+  would do, caches saved by untrusted runs, too many shards each paying setup again, and small jobs restoring what
+  the whole suite needs. OpenClaw packed 95 planned shards into 63, then rebalanced one group so its slowest job
+  went from 403 s to 300 s.
+- **Automated review on every push**: an AI review workflow that runs again on every push repeats its findings
+  and bills minutes while the author is still editing. Review the first push, later ones on request.
+- **Two clocks**: CI time next to pull request open-to-merge time. A cheaper CI that makes pull requests wait
+  longer is not a win. OpenClaw's smaller runner cost 41.7% less for the same 240 test files and took 16.5% longer.
+
 ### Git hooks and the gate
 
 Reliability: does the gate catch what CI would?
@@ -171,11 +183,13 @@ Speed: how long does a push take?
   long as its slowest step (57 s to 27 s cold above).
 - **What lint spends its time on**: `TIMING=20 npx eslint` once. One or two rules are often most of it, and a rule
   the typechecker already enforces (`import/namespace`, `import/named`) can go.
-- **A faster tool shipped**: Oxlint or Biome for ESLint, TypeScript 7, Vitest without isolation. Timed cold and warm
+- **A faster tool shipped**: Oxlint or Biome for ESLint, TypeScript 7, Vitest without isolation (OpenClaw: 174 s to
+  97 s on the lanes where it was safe), a native type checker (OpenClaw: tsgo 447 s to tsrs 64 s). Timed cold and warm
   on your repo first, because a warm cache often already wins. Not a new hook manager: see above.
 - **Every test on every push**: a branch push can run only the tests its change reaches (Jest `--changedSince`,
   Vitest `--changed` or `related`, pytest-testmon, Nx `affected`, Turborepo filters; for Go, Rust and Swift, the
-  changed packages). Safe only with four rules: a change the import graph cannot see (lockfile, configs, test
+  changed packages). Before you trust the selection, replay a past bug through it, and run it in shadow mode
+  (run everything, record what it would have skipped). Safe only with four rules: a change the import graph cannot see (lockfile, configs, test
   helpers, mocks, a client generated at build time from a spec, a deleted or moved file) runs everything; a test that reads files from disk always
   runs; a per-file coverage bar checks the changed files only, so a new file with no test still fails; `main` and
   CI on `main` run everything. A lockfile bump still runs it all, so keep the full run fast as well: Pontus runs
@@ -183,6 +197,11 @@ Speed: how long does a push take?
   [replies](https://x.com/pontusab/status/2121982070193058191) gave the first rule.
 - **One test file holds the whole run**: a runner spreads files across workers but cannot split one. Ours: 30 s of a
   32 s run in one file; split in six, 12 s.
+
+- **Test suite growth**: test files and lines now and a week ago, against the code. Agents add tests easily and
+  rarely delete one: our app went from 119 test files to 563 in two months. When tests grow faster than code, the
+  audit proposes a test budget and an area-by-area clean-up that keeps one strong test per behaviour. OpenClaw cut
+  417,906 net test lines this way.
 
 ### Agent time (Claude Code)
 
@@ -219,6 +238,8 @@ overnight).
 - **Setup**: warm and cold time before the first tap of a test session (ours: 22 s warm).
 - **The simulator tool's own screenshot**: against the repo's screenshot helper, which usually waits for a still
   screen.
+- **Simulator background services**: Spotlight, Screen Time and photo analysis take CPU while the agent waits.
+  Turning off the ones the app does not need (SimSlim does this) trims setup, never the behaviour under test.
 
 ### Web add-on (web apps, on by itself)
 
@@ -276,5 +297,12 @@ gave the checks for tests scoped to the change (with what must still run everyth
 the run, and more jobs against one on a per-minute plan. His
 [git hook manager timing](https://x.com/pontusab/status/2122466524493730107) gave the note that a faster hook
 manager is not worth a switch.
+
+Thanks to [Vincent Koc](https://vincent.build), whose
+[write-up of making OpenClaw's CI faster and 95% cheaper](https://vincent.build/openclaw-ci-cost-reduction/) gave
+the checks for test suite growth (a test budget and a clean-up that keeps one strong test per behaviour), the two
+clocks (CI time beside pull request time, and each fix judged on both), skipping a job before it starts, repeated
+or oversized setup, automated review on every push, backtesting and shadow-running test selection, and trimming
+simulator background services.
 
 Built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.

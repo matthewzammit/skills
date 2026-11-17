@@ -82,6 +82,33 @@ re-ran) rank above runner-minutes (only money).
 11. **Tests scoped to the change on pull requests:** the same rules as checks-local item 9 apply in CI. A pull
    request may run only the reached tests when the merge queue or the main branch runs everything.
 
+12. **Skip a job before it starts** (`late_skips` in checks.txt): a job that checks out the code and installs
+   dependencies, then decides at a step that the rest can skip, has already paid for the runner and its setup. Move
+   the decision to the job's `if:` (an event, a branch, a label, an author), so no runner starts. When the decision
+   needs the changed files, a small "decide" job with no install feeds the others through `needs` and outputs; the
+   decide job costs one short runner, the skipped jobs cost nothing.
+13. **Setup that repeats or fetches too much:**
+   - `full_history_checkouts`: `fetch-depth: 0` downloads every version of every file. A job that needs history
+     (a merge base, a changelog) usually works with `filter: blob:none`, which fetches history but file contents
+     only when used. Check the job's diff still works, and that lazy fetches later in the job do not cost more.
+   - Cache writers: only a trusted branch (the main branch, a merge queue) should save a cache that other jobs
+     restore. A workflow on `pull_request_target`, or any run of untrusted code, that saves a cache can poison every
+     later run. Restore-only (`actions/cache/restore`) for the rest.
+   - Too many shards: each shard pays checkout, install and startup again. When a shard's setup (`setup_median_s`)
+     is close to its test time, pack shards into fewer jobs; then balance them by recorded time so they finish
+     together. Packing cuts repeated setup; balancing cuts the wait for the last job. Fewer is not always better.
+   - Packages a small job does not need: once selection makes a job small, a job that still restores everything the
+     whole suite needs spends most of its time on setup. Split shared archives by what each job uses.
+14. **Automated review on every push** (`review_bots` in ci.json): an AI review workflow that runs again on every
+   push to a pull request bills runner minutes and model time, and repeats its findings while the author is still
+   editing. Several runs per pull request is the sign. Review the first push automatically and later pushes on
+   request (a label, a comment, a "ready for review" event), or run the review locally before the push.
+15. **Two clocks** (`pr_cycle` in ci.json): CI time is one step; the clock people feel is a pull request from open
+   to merge (median and p90). Report both, side by side, never added. A fix that makes CI cheaper and pull requests
+   slower (a smaller runner, fewer shards) is not a win; say which clock each fix moves. The PR clock includes
+   draft time and review waits, so judge it as a trend, not as CI's fault. A repo that pushes straight to the main
+   branch has no PR clock; say so.
+
 ## Already right
 
 List what you checked and found fine (0 holes, 0 flakes, timeouts set, filters working). The report keeps it, so a

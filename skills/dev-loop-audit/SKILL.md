@@ -98,7 +98,8 @@ Reply in the chat, short:
 - Minutes lost per area (CI, gate, agent time), one line each, with the change from last week.
 - What broke, most minutes first. What got slower or faster, most minutes first. What is already right.
 - The proposed fixes, numbered, ranked by minutes saved a week, each marked Reliability or Speed and its area,
-  with your pick.
+  with your pick. Each fix says what it does to both clocks: billed minutes and how long someone waits. A fix
+  that cuts one and raises the other says so ("parallel jobs: 2 min less wait, +3 billed min a run").
 
 Then ask: "Which should I build? Numbers, 'all' or 'none'." **Stop and wait.**
 
