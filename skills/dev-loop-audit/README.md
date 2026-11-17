@@ -75,6 +75,7 @@ Claude Code doing most of the work. These are real numbers from three weekly run
 | One 3,300-line test file was the whole test run | split it into six files on a shared helper | 32 s (that file: 30 s) | 12 s |
 | Every push ran every test | run only the tests the change reaches; `main` runs all | 36 s test step | 10 to 11 s |
 | The pre-push hook ran lint, typecheck and tests one after another | run them side by side | 57 s cold push | 27 s |
+| Jest used 1 worker on the 2-core CI runner (`maxWorkers: '50%'` set for the laptop) | 3 workers on CI only | 136 to 140 s test step | 70 to 85 s |
 | A slow test passed on a fast Mac and timed out on the 2-vCPU runner | fix the slow test case | `main` red 14 h, 69 billed min wasted | green |
 | A stale ESLint cache let a lint error pass the hook and reach `main` | cold lint cache in the hook | a hole | caught locally |
 | The agent sent its tap, screenshot and the screenshot read in separate messages | one message per step | 23.7 s per tap | 12.7 s |
@@ -82,7 +83,7 @@ Claude Code doing most of the work. These are real numbers from three weekly run
 | A lookup script fetched the whole ticket list once per search term | one fetch, then search | 13.4 min in 24 calls | fix in progress |
 | Agent hooks refused correct commands | a helper or a narrower rule for each refused command | 28 refusals a week | 14 |
 
-It also says what is **not** worth it. Two Jest workers on a 2-vCPU runner: 33 s against 31 s for one. TypeScript 7
+It also says what is **not** worth it. Turning coverage off on CI: no gain. TypeScript 7
 against a warm `tsc --incremental`: 1 s against 1.4 s. A faster git hook manager: hk, Lefthook, prek and
 pre-commit took 1.4 to 3 s on 60 staged files
 ([Pontus's timing](https://x.com/pontusab/status/2122466524493730107)), while the checks inside the hook took 10 to
@@ -128,8 +129,10 @@ Speed: how long does a run take, and what does it cost?
   took 408 s and a warm one 262 s.
 - **Setup against checks**: checkout, toolchain, cache and install time. Over a third of a warm job is worth a look;
   ours spent 32 s of 155 s restoring caches.
-- **Workers against cores**: Jest's `maxWorkers: '50%'` is one worker on a 2-vCPU runner. Time both before you
-  change it: we gained nothing (33 s against 31 s).
+- **Workers against cores**: Jest's `maxWorkers: '50%'` is one worker on a 2-vCPU runner, so the test files run one
+  after another. On our runner, timed twice each: 1 worker 136 to 140 s, 2 workers 82 to 106 s, 3 workers 70 to
+  85 s. More workers than cores won, because each worker waits part of the time. Coverage off saved nothing, and V8
+  coverage took 758 s. Free: same job, shorter. Time it on your own runner before you change it.
 - **One test file holds the test step**: the slowest file against the whole step. Jest and Vitest print the time of
   slow files in the log. Split that file before you shard or pay for a bigger runner.
 - **More jobs, or one?**: parallel jobs cut wall time but repeat setup and round each job up to a minute. Worth it

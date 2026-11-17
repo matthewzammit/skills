@@ -65,6 +65,12 @@ transcripts; say so under "Not checked".
    - a test that reads source files from disk (a file scan, a snapshot of the tree) always runs, since no import
      links it to the file it reads;
    - a per-file coverage bar is checked on the changed files only, so a new file with no test still fails at 0%;
+     keep only changed files a threshold rule covers, or a change outside every threshold glob fails with "coverage
+     data was not found";
+   - inside a git hook, git sets `GIT_DIR`; a runner that calls git from a subfolder (Jest's `--changedSince` runs
+     `git diff` from each root) then fails with "outside repository" in a worktree. Clear the hook's `GIT_*`
+     variables before starting the runner, and prove it with a real push from a worktree that does not force a
+     full run (a push that changes the lockfile skips this code and hides the bug);
    - the main branch, the pre-release gate and CI on the main branch always run every test.
    Time it on a probe branch before proposing. Full runs still happen on every lockfile bump, so keep the full run
    fast too: on CI, shards balanced by recorded test time (CI speed item 10) keep a full run to a few minutes.
