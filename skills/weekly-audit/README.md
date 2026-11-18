@@ -94,4 +94,5 @@ the steps are in [templates/weekly-routine.md](templates/weekly-routine.md).
 
 ## Credits
 
-Review rules by [each review skill's authors](references/review-skills.md), built from our weekly audit on the [Binderr](https://binderr.com) Wallet app.
+- [Each review skill's authors](references/review-skills.md): the review rules.
+- Built from our weekly audit on the [Binderr](https://binderr.com) Wallet app.

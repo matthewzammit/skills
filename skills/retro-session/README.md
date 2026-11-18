@@ -70,4 +70,5 @@ a command, and the findings quote commands, not your conversations.
 
 ## Credits
 
-Based on [Matt Pocock's retro skill](https://github.com/mattpocock/skills) (MIT), built from our retros on the [Binderr](https://binderr.com) Wallet app.
+- [Matt Pocock's retro skill](https://github.com/mattpocock/skills) (MIT): the idea and first shape.
+- Built from our retros on the [Binderr](https://binderr.com) Wallet app.

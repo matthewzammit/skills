@@ -146,7 +146,11 @@ The changelog lists every change, but nobody reads it. This is the short version
 It double-checks the biggest problems, keeps a trend week to week, and builds the fixes you pick. Most audits look
 only at CI.
 
-Thanks to [Simon Agius Muscat](https://github.com/simonamdev), [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191) and [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/).
+Thanks to:
+
+- [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit.
+- [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191), for the test-speed checks.
+- [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/), for the test-growth and setup checks.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 

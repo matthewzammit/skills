@@ -299,4 +299,11 @@ store or print a command, and the report quotes commands, not your conversations
 
 ## Credits
 
-Thanks to [Simon Agius Muscat](https://github.com/simonamdev), [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191), [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/) and the skills [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix), [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit), [edloidas/ci-audit](https://www.skills.sh/edloidas/skills/ci-audit) and [enesgules/optimise-github-actions](https://www.skills.sh/enesgules/dotfiles/optimise-github-actions), built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.
+- [Simon Agius Muscat](https://github.com/simonamdev): suggested this audit and gave tips.
+- [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191): the test-speed and hook-timing checks.
+- [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/): the test-growth, two-clock and setup checks.
+- [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix): job times and flake counts.
+- [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit): hooks that match CI.
+- [edloidas/ci-audit](https://www.skills.sh/edloidas/skills/ci-audit): the longest job chain and timeouts.
+- [enesgules/optimise-github-actions](https://www.skills.sh/enesgules/dotfiles/optimise-github-actions): billed minutes and wasted runs.
+- Built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.
