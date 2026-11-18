@@ -101,3 +101,114 @@ test("pictures, a loaded skill's text, a resumed session's summary and a subagen
   ]);
   assert.deepStrictEqual(s.humans.map((h) => h.text), ['go ahead and merge']);
 });
+
+// Unproven work: build a session from a list of steps, in order.
+const edit = (id, file, newText = 'x', oldText = 'y') => ({
+  type: 'assistant',
+  timestamp: '2026-10-30T10:00:00Z',
+  message: { content: [{ type: 'tool_use', id, name: 'Edit', input: { file_path: file, old_string: oldText, new_string: newText } }] },
+});
+const write = (id, file, content) => ({
+  type: 'assistant',
+  timestamp: '2026-10-30T10:00:00Z',
+  message: { content: [{ type: 'tool_use', id, name: 'Write', input: { file_path: file, content } }] },
+});
+const person = (text) => ({ type: 'user', timestamp: '2026-10-30T10:00:02Z', message: { content: text } });
+
+test('a commit with no check since the last edit is counted', () => {
+  const s = scan([edit('e', 'src/a.ts'), use('c', 'git add -A && git commit -m "fix a"'), result('c', 'ok')]);
+  assert.strictEqual(s.uncheckedCommits[0].count, 1);
+  assert.match(s.uncheckedCommits[0].examples[0], /git commit/);
+});
+
+test('a commit after a check, in an earlier call or in the same chain, is not counted', () => {
+  const earlier = scan([edit('e', 'src/a.ts'), use('t', 'npm test'), result('t', 'ok'), use('c', 'git commit -m "fix a"'), result('c', 'ok')]);
+  assert.strictEqual(earlier.uncheckedCommits.length, 0);
+  const chained = scan([edit('e', 'src/a.ts'), use('c', 'npm run lint && git commit -m "fix a"'), result('c', 'ok')]);
+  assert.strictEqual(chained.uncheckedCommits.length, 0);
+});
+
+test('an edit after the check makes the next commit unchecked; a doc-only edit and a quoted word do not', () => {
+  const s = scan([
+    edit('e1', 'src/a.ts'), use('t', 'npx jest'), result('t', 'ok'),
+    edit('e2', 'src/a.ts'), use('c', 'git commit -m "fix a"'), result('c', 'ok'),
+  ]);
+  assert.strictEqual(s.uncheckedCommits[0].count, 1);
+  const docs = scan([edit('e', 'docs/readme.md'), use('c', 'git commit -m "docs"'), result('c', 'ok')]);
+  assert.strictEqual(docs.uncheckedCommits.length, 0);
+  const quoted = scan([edit('e', 'src/a.ts'), use('c', 'git commit -m "npm test passes; ran npm run lint"'), result('c', 'ok')]);
+  assert.strictEqual(quoted.uncheckedCommits[0].count, 1);
+  const noEdit = scan([use('c', 'git commit --amend --no-edit'), result('c', 'ok')]);
+  assert.strictEqual(noEdit.uncheckedCommits.length, 0);
+});
+
+test('a check that fails then passes with no edit between is a re-run until green', () => {
+  const s = scan([
+    edit('e', 'src/a.ts'),
+    use('t1', 'npm test'), result('t1', 'Exit code 1\nfail', true),
+    use('t2', 'npm test'), result('t2', 'pass'),
+  ]);
+  assert.strictEqual(s.rerunsUntilGreen[0].count, 1);
+  assert.strictEqual(s.rerunsUntilGreen[0].what, 'npm test');
+});
+
+test('a fail, an edit, then a pass is a fix, not a re-run', () => {
+  const s = scan([
+    use('t1', 'npm test'), result('t1', 'fail', true),
+    edit('e', 'src/a.ts'),
+    use('t2', 'npm test'), result('t2', 'pass'),
+  ]);
+  assert.strictEqual(s.rerunsUntilGreen.length, 0);
+});
+
+test('the same check failing 4 times with edits between, nobody asked, is a fix loop', () => {
+  const round = (n, id) => [edit(`e${id}`, 'src/a.ts', `v${n}`), use(`t${id}`, 'npm test'), result(`t${id}`, 'fail', true)];
+  const s = scan([...round(1, 1), ...round(2, 2), ...round(3, 3), ...round(4, 4), ...round(5, 5)]);
+  assert.strictEqual(s.fixLoops.length, 1);
+  assert.strictEqual(s.fixLoops[0].count, 1);
+  assert.match(s.fixLoops[0].examples[0], /failed 5 times in a row/);
+});
+
+test('3 failing rounds, a pass in the middle, a question to the person, or no edits between are not a fix loop', () => {
+  const round = (id) => [edit(`e${id}`, 'src/a.ts', `v${id}`), use(`t${id}`, 'npm test'), result(`t${id}`, 'fail', true)];
+  assert.strictEqual(scan([...round(1), ...round(2), ...round(3)]).fixLoops.length, 0);
+  const pass = [use('p', 'npm test'), result('p', 'ok')];
+  assert.strictEqual(scan([...round(1), ...round(2), ...round(3), ...pass, ...round(4), ...round(5)]).fixLoops.length, 0);
+  const asked = scan([...round(1), ...round(2), ...round(3), person('which one do you want?'), ...round(4)]);
+  assert.strictEqual(asked.fixLoops.length, 0);
+  const sameEdit = [edit('e', 'src/a.ts'), ...[1, 2, 3, 4, 5].flatMap((n) => [use(`t${n}`, 'npm test'), result(`t${n}`, 'fail', true)])];
+  assert.strictEqual(scan(sameEdit).fixLoops.length, 0);
+});
+
+test('a sleep or retry added to a test file is counted, in an Edit or a Write', () => {
+  const s = scan([
+    edit('a', 'src/data/foo.test.ts', 'await new Promise((r) => setTimeout(r, 500));'),
+    write('b', 'tests/test_sync.py', 'import time\ndef test_x():\n    time.sleep(2)\n'),
+    edit('c', 'src/data/bar.spec.ts', 'jest.retryTimes(3);'),
+    edit('d', 'src/data/baz.test.ts', 'await retry(() => expect(x).toBe(1));'),
+  ]);
+  assert.strictEqual(s.testSleeps.length, 4);
+  assert.match(s.testSleeps.map((r) => r.examples[0]).join('\n'), /adds setTimeout/);
+});
+
+test('a sleep in a source file, a test that keeps an old sleep, or plain test text is not counted', () => {
+  const s = scan([
+    edit('a', 'src/data/foo.ts', 'await sleep(500)'),
+    edit('b', 'src/data/foo.test.ts', 'await sleep(500); // renamed', 'await sleep(500);'),
+    edit('c', 'src/data/foo.test.ts', 'expect(total).toBe(3);'),
+  ]);
+  assert.strictEqual(s.testSleeps.length, 0);
+});
+
+test('a replayed history counts unproven work once', () => {
+  const records = [
+    edit('e', 'src/a.test.ts', 'setTimeout(r, 5)'),
+    use('c', 'git commit -m "x"'), result('c', 'ok'),
+    use('t1', 'npm test'), result('t1', 'fail', true),
+    use('t2', 'npm test'), result('t2', 'ok'),
+  ];
+  const s = scan([...records, ...records]);
+  assert.strictEqual(s.uncheckedCommits[0].count, 1);
+  assert.strictEqual(s.rerunsUntilGreen[0].count, 1);
+  assert.strictEqual(s.testSleeps[0].count, 1);
+});

@@ -39,10 +39,14 @@ Done when: you can say the session and the window in one line.
 Run `node <this skill>/scripts/scan.js <session> --since <window start>`, with `--pattern "<regex>"` for each of the
 config's `patterns`. It counts hidden failures (a failure in
 a result not marked as an error), guardrails that fired, flagged errors, repeated commands and heavy results, and
-lists the person's messages. Then find the cause of each line with a count over 1 from its examples (the command
+four kinds of unproven work (commits with no check, a check re-run until green, a fix loop, a sleep or retry added to
+a test), and lists the person's messages. Then find the cause of each line with a count over 1 from its examples (the command
 and an excerpt of its result). When the examples are not enough, mark it "cause not found": never open the
 transcript itself. Read the person's messages in the scan for corrections ("no", "again", "I said", a rule
 restated): each one is a finding.
+
+Each count of unproven work is a finding on its own, even at 1. Read it as [references/categories.md](references/categories.md)
+"Unproven work" says: the examples show the command or file, and you check what was real before you call it a finding.
 
 A guardrail that fired is either a catch (it stopped a real mistake) or **noise** (the work was already right).
 Noise is a finding: every false fire costs a turn.
