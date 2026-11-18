@@ -65,13 +65,16 @@ When installed as a Claude Code plugin, the command is `/matthewzammit-skills:we
    guide nobody edits does not drift, and a full round takes about 16 runs.
 3. **Check:** it removes duplicates and tries to prove each finding wrong against the code. What does not hold is
    dropped, and the record says why.
-4. **Decide:** a finding that needs your choice comes with 2 or 3 options and a pick.
-5. **Record and tickets:** a dated record in your repo. If you use a tracker, one ticket per finding under a new
+4. **Grade and count:** each finding is Important, Nit or Pre-existing (already there before the change, so
+   reported apart). The record counts findings at each stage, so a big drop at checking is easy to see. Review rules
+   are read from the main branch, so a change cannot edit its own judge.
+5. **Decide:** a finding that needs your choice comes with 2 or 3 options and a pick.
+6. **Record and tickets:** a dated record in your repo. If you use a tracker, one ticket per finding under a new
    group for the week, and last week's open tickets move into it.
-6. **Fixes, only if you turn them on:** a draft pull request for each finding with one clear fix. It checks a
+7. **Fixes, only if you turn them on:** a draft pull request for each finding with one clear fix. It checks a
    visible fix on a simulator or in a browser, the bug on the main branch first, then gone on the fix branch. When
    it cannot, the pull request says exactly how to check it. It never merges.
-7. **Summary:** progress first, then what needs your decision.
+8. **Summary:** progress first, then what needs your decision. It also proposes a rule when last week's audit missed a bug a diff showed, and checks to prune; you approve each.
 
 ## Why fixes are off by default
 

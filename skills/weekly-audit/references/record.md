@@ -15,7 +15,7 @@ first and use today's real date. The next run reads this file to find where to s
   place. A week with zero commits writes nothing and ends with "Nothing changed since <date>."
 - **Verified, or not.** Each finding says whether you read the code that proves it and tried to prove it wrong.
   "Not verified" says why.
-- **Findings come from the code.** Each has `file:line`, the reasoning, and a severity. Skip anything you did not
+- **Findings come from the code.** Each has `file:line`, the reasoning, and a grade. Skip anything you did not
   read yourself.
 - **Say what you did not do.** "Not checked" names the skills skipped (with why), the parts of the repo you did
   not read, and the checks you could not run.
@@ -28,6 +28,11 @@ first and use today's real date. The next run reads this file to find where to s
 The date, the range ("last record 2026-10-21, `abc1234`, to `def5678`"), the commit count, the number of changed
 files, the stack, and where the tickets for this run live (the group's name and link), if tickets are filed.
 
+The `Counts:` line gives how many findings came from the review agents, how many were left after merging, how many
+after verifying, and how many were reported (the Findings and Pre-existing sections). A big drop at verifying (more
+than half) is worth a look: read the Dropped reasons again, and ask whether a guard or a misread of the platform was
+real, or the check was too eager.
+
 ### Skills run
 
 A line for each review skill run, and for each skipped one with its reason. Add the built-in checks that ran. When
@@ -35,27 +40,36 @@ no review skill ran, say: "Thin review: no review skills installed, so only the 
 
 ### Findings
 
-Ranked High first. Each finding:
+Important first, then Nit. Each finding:
 
 ```
 ### <short title>
 - **Where:** path/to/file.ext:42
 - **Skill or check:** vibe-security, rule "..." (or "built-in: security surface")
-- **Severity:** High | Medium | Low
+- **Grade:** Important | Nit
 - **Verified:** yes (what you read to prove it) | no (why not)
 - **What and why:** two or three sentences. The problem, the evidence, who it affects.
 - **Ticket:** link, if filed
 ```
 
-Severity:
+### Grades
 
-- **High:** data loss or exposure, a security hole, a crash, a person blocked from finishing a task.
-- **Medium:** wrong behaviour in a common path, an accessibility barrier, a missing error state, a doc that
-  misleads.
-- **Low:** polish, a nit, a doc gap, a convention drift. File a ticket only when it is worth a person's time.
+Every finding has one of three grades. This is the only definition; the review brief and the templates point here.
+
+- **Important:** the change makes something wrong: data loss or exposure, a security hole, a crash, a person blocked
+  from finishing a task, wrong behaviour in a common path, an accessibility barrier, a missing error state, a doc
+  that misleads.
+- **Nit:** polish, a doc gap, a convention drift. File a ticket only when it is worth a person's time.
+- **Pre-existing:** the problem was already there before the range (the code is the same at the start commit), so
+  the author of the change is not to blame. Report it apart, in the Pre-existing section, with the same fields. It
+  keeps its place in carry-over like any finding.
 
 When unsure a finding is real, report it in the record as "not verified" and file no ticket. A noisy list costs
 more than a missed nit.
+
+### Pre-existing
+
+Findings graded Pre-existing, in the same shape as above. Leave the section out when there are none.
 
 ### Decision needed
 
@@ -86,6 +100,11 @@ it only after reading the code or doc that proves it.
 ### Not checked
 
 What you could not or did not check, and why.
+
+### Misses and rules
+
+What step 5 found, following [rules-from-misses.md](rules-from-misses.md): misses, proposed rules with their
+evidence, and checks to prune.
 
 ## The one-line record for a clean week
 

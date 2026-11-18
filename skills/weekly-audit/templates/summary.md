@@ -9,7 +9,7 @@ text. Without both, it stays in the chat.
 Lead with progress, as counts of what the person can act on:
 
 ```
-Weekly audit, <YYYY-MM-DD>: <N> fixes ready to review, <N> needs your decision, <N> issues found.
+Weekly audit, <YYYY-MM-DD>: <N> fixes ready to review, <N> needs your decision, <N> important, <N> nits, <N> pre-existing.
 ```
 
 Leave out a count that is zero. A clean week is one line:
@@ -33,7 +33,7 @@ reason in a few words.>
 
 Each one: the choice in one line, the options, the pick, and the ticket.
 
-- **<Finding title>** (<severity>, <ticket link>): <the choice>. Options: <1>, <2>, <3>. My pick: <number>,
+- **<Finding title>** (<grade>, <ticket link>): <the choice>. Options: <1>, <2>, <3>. My pick: <number>,
   <one reason>.
 
 ## Carry-over
@@ -43,6 +43,9 @@ Each one: the choice in one line, the options, the pick, and the ticket.
 
 ## The rest
 
-- <N> other findings, each with a ticket: <group name and link>.
+- <N> other findings, each with a ticket: <group name and link>. Pre-existing ones are listed apart in the record.
+- Counts: <N> from the review agents, <N> after merging, <N> after verifying, <N> reported. Say so when verifying
+  dropped more than half.
+- Misses and rules to approve, and checks to prune: <one line each, or leave out>.
 - Full record: <path to the record file>.
 - Skipped or not checked: <short list, with why>.

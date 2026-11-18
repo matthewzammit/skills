@@ -76,7 +76,8 @@ Keys:
   to skip it. Never a write.
 - `commitRecords`: `false` (recommended) leaves each record for a person to review and commit; `true` lets the run
   commit it to the main branch itself, only where the repo's rules allow that.
-- `extraChecks`: the repo's own review rules, as files or `file#heading`.
+- `extraChecks`: the repo's own review rules, as files or `file#heading`. Each run reads them from the default
+  branch, never from a change under review.
 - `docsRotation`: how many unchanged docs each run re-reads in full (`count`; the default covers every doc in about 16 runs, never under 3 a run; `0` turns it off), and
   where its docs live (`docs`, folders or files; default every tracked Markdown file outside the records folder).
 - `summary.postTo`: where the summary goes besides the chat (a Slack channel, an issue). `null` keeps it in the
