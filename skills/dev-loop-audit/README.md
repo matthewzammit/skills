@@ -15,6 +15,10 @@ It checks three areas:
    browser checks. This part reads Claude Code's transcripts, so it is Claude Code only for now. Other agents get
    areas 1 and 2.
 
+4. **Proof of agent work.** Whether anyone can see that an agent's change was checked: commits stamped with how they
+   were verified, checks re-run until green, sleeps added to tests, fix loops, a verify step, and rules a change
+   could edit to pass its own review.
+
 Most audits look only at CI. Time lost in one area often shows up in another, so this ranks them all on one list.
 
 ## Install
@@ -91,7 +95,7 @@ pre-commit took 1.4 to 3 s on 60 staged files
 
 ## Every check
 
-49 checks in three areas, and 18 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
+56 checks in four areas, and 18 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
 says **measured** or **estimated**, and names its proof (a run id, a file line, a session). Time someone waited
 ranks above runner minutes, which only cost money. Each proposed fix says what it does to both: billed minutes
 and how long someone waits. The full rules are in [references/](references/).
@@ -225,6 +229,22 @@ overnight).
 - **Model time after errors**: the thinking an error cost.
 - **QA, per input**: the agent checking its work on a simulator or in a browser, as seconds per tap or click. The one
   number that compares weeks with more or less testing. Ours: 23.7 s, then 12.7 s.
+
+### Proof of agent work (git, the repo's files, Claude Code)
+
+Most of it reads git and the repo's files, so it works for any AI agent. The transcript items are Claude Code only.
+
+- **Proof on commits**: agent commits counted as verified, `none` or unstamped, by a trailer such as
+  `Verified: ran the app, checked the new screen`, with the share in the trend. A repo with no stamp gets one proposed,
+  in observe mode first (it logs what it would block), then enforce.
+- **Re-run until green**: the same test or check run again with no edit between, failing and then passing. That is a
+  flaky test the agent worked around. The fix is the cause, never a sleep or a retry.
+- **Sleeps and retries in tests**: `sleep`, `setTimeout`, `retryTimes` and the like added to test files in the week,
+  with the commit and file.
+- **Fix loops**: the same check failing 4 or more times in a session before the agent asked the person.
+- **A verify step**: one command or skill that runs the app and checks a change end to end. None is a finding.
+- **Verify step time**: a step that takes minutes gets skipped; the audit times it against the trend.
+- **Judges out of reach**: a CI or review rule read from the branch under review, so a change can edit its own gate.
 
 ### Mobile add-on (iOS and Android apps, on by itself)
 

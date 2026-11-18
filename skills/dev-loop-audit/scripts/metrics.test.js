@@ -150,7 +150,8 @@ test('a call that opens with a heredoc takes the shape of the slow command it ch
 test('the trend file gains new columns at the end; an older file keeps its rows', () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dev-loop-audit-')), 'trend.csv');
   const old = TREND_COLUMNS.slice(0, TREND_COLUMNS.indexOf('agent_wait_min') + 1);
-  assert.deepStrictEqual(TREND_COLUMNS.slice(-3), ['until_misses', 'until_miss_min', 'ci_stuck_queued']);
+  const u = TREND_COLUMNS.indexOf('until_misses');
+  assert.deepStrictEqual(TREND_COLUMNS.slice(u, u + 3), ['until_misses', 'until_miss_min', 'ci_stuck_queued']);
   fs.writeFileSync(file, `${old.join(',')}\n2026-10-12,${old.slice(1).map(() => '1').join(',')}\n`);
   appendTrend(file, trendRow(compute(data([call(0, 10)]))));
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
@@ -182,7 +183,8 @@ test('until misses and stuck CI runs reach the metrics and the trend row', () =>
   assert.strictEqual(M.agent.until_misses, 2);
   assert.strictEqual(M.agent.until_miss_min, 2);
   const row = trendRow(M).split(',');
-  assert.deepStrictEqual(row.slice(-3), ['2', '2', '2']);
+  const u = TREND_COLUMNS.indexOf('until_misses');
+  assert.deepStrictEqual(row.slice(u, u + 3), ['2', '2', '2']);
 });
 
 test('fixes given to metrics.js split the CI runs in ci.json', () => {
@@ -201,4 +203,69 @@ test('fixes given to metrics.js split the CI runs in ci.json', () => {
   assert.deepStrictEqual(M.ci.fix_splits[0].before, { n: 2, median_s: 250, p90_s: 260 });
   assert.deepStrictEqual(M.ci.fix_splits[0].after, { n: 1, median_s: 215, p90_s: 215 });
   assert.deepStrictEqual(compute(data([]), ci).ci.fix_splits, []);
+});
+
+// ---- verification ----
+const bash = (startS, endS, cmd, extra = {}) => call(startS, endS, { cmd, tags: ['test'], ...extra });
+const withT = (rs) => rs.map((r) => ({ ...r, t0: Date.parse(r.ts_use), t1: r.ts_res ? Date.parse(r.ts_res) : null }));
+const FAIL = { is_error: true, res_head: 'Exit code 1' };
+
+test('rerunGreen: the same check failed then passed with no edit between', () => {
+  const rs = withT([
+    bash(0, 5, 'npm test 2>&1 | tail -20', FAIL),
+    bash(30, 40, 'npm test'), // same check once the pipe is dropped, no edit between
+  ]);
+  assert.strictEqual(require('./metrics.js').rerunGreen(rs).length, 1);
+});
+
+test('rerunGreen: an edit, a sed -i or git checkout between makes it a fix, not a flake', () => {
+  const { rerunGreen } = require('./metrics.js');
+  const edited = withT([bash(0, 5, 'npm test', FAIL), call(10, 11, { name: 'Edit', tags: [] }), bash(30, 40, 'npm test')]);
+  assert.strictEqual(rerunGreen(edited).length, 0);
+  const sed = withT([bash(0, 5, 'npm test', FAIL), call(10, 11, { cmd: "sed -i '' s/a/b/ src/x.ts" }), bash(30, 40, 'npm test')]);
+  assert.strictEqual(rerunGreen(sed).length, 0);
+  const other = withT([bash(0, 5, 'npm test', FAIL), bash(30, 40, 'npm run lint', { tags: ['lint'] })]);
+  assert.strictEqual(rerunGreen(other).length, 0);
+  const late = withT([bash(0, 5, 'npm test', FAIL), bash(4000, 4010, 'npm test')]);
+  assert.strictEqual(rerunGreen(late).length, 0, 'over 30 minutes apart');
+  const passTwice = withT([bash(0, 5, 'npm test'), bash(30, 40, 'npm test')]);
+  assert.strictEqual(rerunGreen(passTwice).length, 0);
+});
+
+test('fixLoops: 4 failures of one check in a row, reset by a question or a human message', () => {
+  const { fixLoops } = require('./metrics.js');
+  const f = (i) => bash(i * 20, i * 20 + 5, 'npm run lint', { ...FAIL, tags: ['lint'] });
+  assert.strictEqual(fixLoops(withT([f(0), f(1), f(2)])).length, 0, 'three is allowed');
+  const four = fixLoops(withT([f(0), f(1), f(2), f(3)]));
+  assert.strictEqual(four.length, 1);
+  assert.strictEqual(four[0].fails, 4);
+  const asked = withT([f(0), f(1), f(2), call(70, 71, { name: 'AskUserQuestion', tags: [] }), f(4), f(5)]);
+  assert.strictEqual(fixLoops(asked).length, 0);
+  const human = withT([f(0), f(1), f(2), f(4), f(5)]);
+  assert.strictEqual(fixLoops(human, [Date.parse(t(65))]).length, 0);
+  const passed = withT([f(0), f(1), f(2), bash(65, 70, 'npm run lint', { tags: ['lint'] }), f(4)]);
+  assert.strictEqual(fixLoops(passed).length, 0, 'a pass ends the streak');
+  const five = fixLoops(withT([f(0), f(1), f(2), f(3), f(4), bash(110, 115, 'npm run lint', { tags: ['lint'] })]));
+  assert.strictEqual(five.length, 1, 'counted once, when the streak ends');
+  assert.strictEqual(five[0].fails, 5);
+});
+
+test('compute reports the verification numbers and the trend row carries them', () => {
+  const calls = [
+    bash(0, 5, 'npm run verify', { ...FAIL, tags: ['verify'] }),
+    bash(30, 70, 'npm run verify', { tags: ['verify'] }),
+    bash(100, 140, 'npm run verify', { tags: ['verify'] }),
+  ];
+  const checks = { verification: { stamps: { agent_commits: 4, verified_share: 0.5 }, test_waits: { added: 3 } } };
+  const M = compute(data(calls), null, null, checks);
+  assert.strictEqual(M.agent.rerun_green, 1);
+  assert.strictEqual(M.agent.verify_calls, 3);
+  assert.strictEqual(M.agent.verify_median_s, 40);
+  const row = trendRow(M).split(',');
+  assert.strictEqual(row[TREND_COLUMNS.indexOf('agent_commits')], '4');
+  assert.strictEqual(row[TREND_COLUMNS.indexOf('verified_share')], '0.5');
+  assert.strictEqual(row[TREND_COLUMNS.indexOf('test_waits_added')], '3');
+  assert.strictEqual(row.length, TREND_COLUMNS.length);
+  // no checks.json: those cells stay empty
+  assert.strictEqual(trendRow(compute(data(calls))).split(',')[TREND_COLUMNS.indexOf('agent_commits')], '');
 });

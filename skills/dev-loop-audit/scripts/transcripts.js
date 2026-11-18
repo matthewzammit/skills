@@ -198,6 +198,7 @@ function compileConfig(config = {}) {
     addons,
     custom,
     gate: gate.map((g) => new RegExp(g)),
+    verify: ((config.verification && config.verification.commands) || []).map((g) => new RegExp(g)),
     screenRead: config.screenReads ? new RegExp(config.screenReads) : /\.(png|jpe?g|webp)$/i,
     pushFail: config.gate && config.gate.pushFailPattern ? new RegExp(config.gate.pushFailPattern) : null,
     untilMiss: config.untilMissPattern ? new RegExp(config.untilMissPattern, 'i') : UNTIL_MISS,
@@ -240,6 +241,7 @@ function tagCall(rec, cfg) {
     if (!readonly) {
       for (const t of cfg.custom) if (t.re.test(c)) add(...t.tags);
       if (cfg.gate.some((re) => re.test(c))) add('gate');
+      if (cfg.verify.some((re) => re.test(c))) add('verify');
     }
     if (mobile && !readonly) {
       if (/xcrun simctl|\bsimctl\b/.test(c)) {

@@ -30,6 +30,7 @@ const TREND_COLUMNS = [
   'sleep_only_calls', 'sleep_nominal_min', 'retries', 'hook_refusals', 'push_median_s', 'push_p90_s', 'push_failed',
   'gate_median_s', 'qa_inputs', 'qa_wall_min', 'qa_model_min', 'qa_per_input_s', 'check_step_median_s', 'batched_step_share',
   'agent_wait_min', 'until_misses', 'until_miss_min', 'ci_stuck_queued',
+  'agent_commits', 'verified_share', 'test_waits_added', 'rerun_green', 'fix_loops', 'verify_median_s',
 ];
 const READY = /ready in (\d+(?:\.\d+)?)\s*s/i;
 
@@ -90,7 +91,71 @@ function readyClipped(r, text) {
   return end < r.t1 ? { ...r, t1: end, tool_s: Number(m[1]) } : r;
 }
 
-function compute(data, ci, fixes = null) {
+// ---- Verification (references/checks-verification.md) ----
+const CHECK_TAGS = ['gate', 'verify', 'typecheck', 'lint', 'test'];
+const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+// A shell command that changes files without an edit tool. Not complete (a redirect or a script can write too).
+const SHELL_WRITES = /\bsed\s+(-\w*\s+)*-i|\bgit\s+(checkout|restore|stash|pull|merge|rebase|apply|reset|cherry-pick|revert)\b|--fix\b|--write\b|\b(npm|pnpm|yarn|bun)\s+(ci|install|i|update|add|remove)\b|\bpatch\s|\btee\s/;
+const RERUN_WINDOW_MS = 30 * 60000;
+const FIX_LOOP_FAILS = 4; // "more than 3"
+
+const isCheck = (r) => r.name === 'Bash' && r.cmd && r.tags.some((t) => CHECK_TAGS.includes(t));
+/** The same failure test the retries use: an error result, or an exit code, FAILED or error: in the head. */
+const failedCall = (r) => Boolean(r.is_error) || /exit code [1-9]|FAILED|error:/i.test(r.res_head || '');
+/** A command with its output plumbing removed, so `npm test 2>&1 | tail -20` and `npm test` are one check. */
+const checkKey = (cmd) => String(cmd).replace(/\s+2>&1/g, '').replace(/\s*\|\s*(tail|head|grep|tee|cat)\b.*$/s, '').replace(/\s+/g, ' ').trim();
+const changesFiles = (r) => EDIT_TOOLS.has(r.name) || (r.name === 'Bash' && SHELL_WRITES.test(r.cmd || ''));
+
+/**
+ * Re-run until green: a check command that failed and then passed with no file change between (calls `rs` of one
+ * session, in time order). A repeat of a check that passed is not counted, and neither is one after an edit.
+ */
+function rerunGreen(rs) {
+  const out = [];
+  rs.forEach((r, i) => {
+    if (!isCheck(r) || r.t1 == null || failedCall(r)) return;
+    const key = checkKey(r.cmd);
+    for (let j = i - 1; j >= 0; j--) {
+      const p = rs[j];
+      if (r.t0 - p.t0 > RERUN_WINDOW_MS || changesFiles(p)) break;
+      if (isCheck(p) && p.t1 != null && checkKey(p.cmd) === key) {
+        if (failedCall(p)) out.push({ session: r.session.slice(0, 8), at: r.ts_use.slice(5, 16), cmd: key.slice(0, 100), failed_at: p.ts_use.slice(5, 16) });
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+/**
+ * Fix loops: one check that failed 4 or more times in a row (a pass ends the streak) before the agent asked the
+ * person. A question to the person (AskUserQuestion) or a human message resets it. `humanTimes` are ms.
+ */
+function fixLoops(rs, humanTimes = []) {
+  const out = [];
+  const streak = new Map();
+  let prevT = -Infinity;
+  const reset = () => { for (const [k, e] of streak) { if (e.n >= FIX_LOOP_FAILS) out.push({ ...e.row, fails: e.n }); streak.delete(k); } };
+  for (const r of rs) {
+    if (humanTimes.some((h) => h > prevT && h <= r.t0) || r.name === 'AskUserQuestion') reset();
+    prevT = r.t0;
+    if (!isCheck(r) || r.t1 == null) continue;
+    const key = checkKey(r.cmd);
+    if (failedCall(r)) {
+      const e = streak.get(key) || { n: 0, row: { session: r.session.slice(0, 8), at: r.ts_use.slice(5, 16), cmd: key.slice(0, 100) } };
+      e.n++;
+      streak.set(key, e);
+    } else if (streak.has(key)) {
+      const e = streak.get(key);
+      if (e.n >= FIX_LOOP_FAILS) out.push({ ...e.row, fails: e.n });
+      streak.delete(key);
+    }
+  }
+  reset();
+  return out;
+}
+
+function compute(data, ci, fixes = null, checks = null) {
   const calls = data.calls.map((r) => ({
     ...r, t0: ms(r.ts_use), t1: r.ts_res ? ms(r.ts_res) : null, wait: WAITS_ON_PERSON.has(r.name) || r.tool_s > STALLED_S,
   }));
@@ -204,6 +269,17 @@ function compute(data, ci, fixes = null) {
   agent.retries_min = round(sum(toolS(retries)) / 60, 1);
   agent.retry_examples = retries.slice(0, 10).map((r) => ({ session: r.session.slice(0, 8), at: r.ts_use.slice(5, 16), s: Math.round(r.tool_s || 0), cmd: r.cmd.slice(0, 100).replace(/\n/g, ' ') }));
   agent.model_after_error_min = modelAfter((r) => r.is_error).min;
+  // Verification: checks run again with no edit between, fix loops, and the repo's verify command.
+  const reruns = [...bySession.values()].flatMap(rerunGreen);
+  const loops = [...bySession.entries()].flatMap(([s, rs]) => fixLoops(rs, humansBy.get(s) || []));
+  const verifyRuns = calls.filter((r) => has(r, 'verify') && r.t1 != null && !r.bg);
+  agent.rerun_green = reruns.length;
+  agent.rerun_green_examples = reruns.slice(0, 10);
+  agent.fix_loops = loops.length;
+  agent.fix_loop_examples = loops.slice(0, 10);
+  agent.verify_calls = verifyRuns.length;
+  agent.verify_median_s = median(toolS(verifyRuns));
+  agent.verify_p90_s = p90(toolS(verifyRuns));
   agent.top_bash_shapes = Object.entries(countBy(calls.filter((r) => r.name === 'Bash' && r.cmd), (r) => shape(r.cmd)))
     .sort((a, b) => b[1] - a[1]).slice(0, 25);
   // The same shapes by time: a slow lookup run in a loop shows here even when it is rare by count.
@@ -398,11 +474,13 @@ function compute(data, ci, fixes = null) {
     const ok = ci.runs.filter((r) => r.conclusion === 'success' && names.includes(r.name));
     ciOut.fix_splits = fixSplits(ok, fixes, ci.window);
   }
-  return { window: data.window, counts: data.counts, agent, gate, qa, mobile, web, custom_tags: custom, per_session: perSession, ci: ciOut };
+  return { window: data.window, counts: data.counts, agent, verification: checks && checks.verification ? checks.verification : null, gate, qa, mobile, web, custom_tags: custom, per_session: perSession, ci: ciOut };
 }
 
 function trendRow(M) {
   const ci = M.ci || {};
+  const vs = M.verification && M.verification.stamps;
+  const vw = M.verification && M.verification.test_waits;
   const days = Math.round((ms(M.window.end_utc) - ms(M.window.start_utc)) / 86400000);
   const v = {
     week: M.window.from, days, ci_runs: ci.runs, ci_failed: ci.failed, ci_flaky: ci.flaky, ci_holes: ci.holes,
@@ -414,6 +492,8 @@ function trendRow(M) {
     qa_model_min: M.qa.model_min, qa_per_input_s: M.qa.per_input_s, check_step_median_s: M.qa.check_step_median_s,
     batched_step_share: M.qa.batched_step_share, agent_wait_min: M.agent.agent_wait_min,
     until_misses: M.agent.until_misses, until_miss_min: M.agent.until_miss_min, ci_stuck_queued: ci.stuck_queued,
+    agent_commits: vs && vs.agent_commits, verified_share: vs && vs.verified_share, test_waits_added: vw && vw.added,
+    rerun_green: M.agent.rerun_green, fix_loops: M.agent.fix_loops, verify_median_s: M.agent.verify_median_s,
   };
   return TREND_COLUMNS.map((c) => (v[c] === null || v[c] === undefined ? '' : v[c])).join(',');
 }
@@ -440,14 +520,20 @@ function summary(M) {
   const out = [];
   const line = (k, v) => out.push(`${k}: ${typeof v === 'object' && v !== null ? JSON.stringify(v) : v}`);
   out.push(`# Window ${M.window.from} to ${M.window.to} (end exclusive, local time). Every "at" below is UTC.`, '', '## Agent');
-  for (const [k, v] of Object.entries(M.agent)) if (!['person_wait_examples', 'long_calls', 'top_bash_shapes', 'top_bash_shapes_by_min', 'retry_examples', 'loops_unbounded_over_60s', 'hook_refusals_by_text'].includes(k)) line(k, v);
+  for (const [k, v] of Object.entries(M.agent)) if (!['person_wait_examples', 'long_calls', 'top_bash_shapes', 'top_bash_shapes_by_min', 'retry_examples', 'rerun_green_examples', 'fix_loop_examples', 'loops_unbounded_over_60s', 'hook_refusals_by_text'].includes(k)) line(k, v);
   out.push('waits on the person (left out of tool and wall time):', ...M.agent.person_wait_examples.map((e) => `  ${JSON.stringify(e)}`));
   out.push(`long calls (the ${M.agent.long_calls.length} longest of ${M.agent.calls_over_60s}):`, ...M.agent.long_calls.map((e) => `  ${JSON.stringify(e)}`));
   out.push('retries:', ...M.agent.retry_examples.map((e) => `  ${JSON.stringify(e)}`));
+  out.push('checks run again with no edit between, failed then passed:', ...M.agent.rerun_green_examples.map((e) => `  ${JSON.stringify(e)}`));
+  out.push('checks that failed 4 or more times before the person was asked:', ...M.agent.fix_loop_examples.map((e) => `  ${JSON.stringify(e)}`));
   out.push('unbounded loops over 60 s:', ...M.agent.loops_unbounded_over_60s.map((e) => `  ${JSON.stringify(e)}`));
   out.push('hook refusals:', ...Object.entries(M.agent.hook_refusals_by_text).map(([k, v]) => `  ${v} x ${k}`));
   out.push('top command shapes:', ...M.agent.top_bash_shapes.map(([k, v]) => `  ${v} x ${k}`));
   out.push('top command shapes by time (calls, minutes):', ...M.agent.top_bash_shapes_by_min.map(([k, n, m]) => `  ${m} min, ${n} x ${k}`));
+  if (M.verification) {
+    out.push('', '## Verification (from checks.json)');
+    for (const k of ['stamps', 'stamp_in_use', 'test_waits', 'verify_step']) line(k, M.verification[k]);
+  }
   out.push('', '## Gate');
   for (const [k, v] of Object.entries(M.gate)) if (k !== 'push_failed') line(k, v);
   out.push('failed pushes:', ...M.gate.push_failed.map((e) => `  ${JSON.stringify(e)}`));
@@ -474,7 +560,8 @@ function main() {
   const ci = args.ci ? JSON.parse(fs.readFileSync(String(args.ci), 'utf8')) : null;
   if (!data.window && ci) data.window = ci.window;
   const fixes = args['since-fix'] || args.config ? fixesFrom(args, loadConfig(args)) : null;
-  const M = compute(data, ci, fixes);
+  const checks = args.checks ? JSON.parse(fs.readFileSync(String(args.checks), 'utf8')) : null;
+  const M = compute(data, ci, fixes, checks);
   if (args.out) fs.writeFileSync(String(args.out), JSON.stringify(M, null, 1));
   console.log(summary(M));
   if (args['append-trend']) {
@@ -487,4 +574,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { readyClipped, compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS };
+module.exports = { rerunGreen, fixLoops, checkKey, readyClipped, compute, trendRow, appendTrend, unionMin, shape, timeShape, TREND_COLUMNS };
