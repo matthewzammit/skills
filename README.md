@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v2.png">
-  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session." width="100%">
+  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -37,6 +37,7 @@ anything and check their own work. They work in Claude Code, Cursor, Codex and [
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
 <tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Finds what slows down your CI, git hooks and agents, ranked by minutes lost, with the fixes.</td><td>Every Monday, or any time</td></tr>
 <tr><td><a href="skills/retro-session/">retro-session</a></td><td>Finds what went wrong in an agent session, including failures a quick read misses, and fixes them with checks, hooks and scripts. Keeps a record, so a problem that comes back is fixed at its cause.</td><td>After a long session</td></tr>
+<tr><td><a href="skills/verify-setup/">verify-setup</a></td><td>Sets up your repo so agents prove their work before each commit: a verify skill, the right checks for each change, and a stamp on every commit that says what ran. You look at the result.</td><td>Once per repo, then after a week</td></tr>
 <tr><td><a href="skills/weekly-audit/">weekly-audit</a></td><td>Reviews every change of the week for security, accessibility, design and code quality, with the review skills you install. Every finding is checked against the code.</td><td>Every Monday, or any time</td></tr>
 </table>
 
@@ -194,6 +195,19 @@ When agents write much of the code, a week brings more changes than anyone can r
 them a proper review. It also tells you which review skills to install for your stack.
 
 [Read more about the weekly audit](skills/weekly-audit/)
+
+#### #7: Let your agents prove their own work
+
+[**verify-setup**](skills/verify-setup/) sets up your repo so every AI agent proves its work before it commits. The
+repo gets its own `verify` skill: the checks the change needs, cheapest first, then the real app, run and looked at.
+Each commit carries a stamp, `Verified: lint, test, app`, that says what ran. A hook counts the stamps. It starts
+in observe mode and never blocks, and you switch to enforce after a clean week.
+
+Reading every diff does not scale when agents write the code. This lets you say what "done" means and look at the
+proof. It also shows how many commits were never verified. The ideas come from the Claude Code team's post, "How the
+Claude Code team thinks about verification".
+
+[Read more about verify setup](skills/verify-setup/)
 
 ## Contributing
 
