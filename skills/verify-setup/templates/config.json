@@ -1,0 +1,16 @@
+{
+  "mode": "observe",
+  "agentTrailer": "^Co-Authored-By:.*(Claude|Codex|Copilot|Cursor|Gemini)",
+  "fullToken": "full",
+  "provenTokens": ["full"],
+  "markerMaxAgeMinutes": 120,
+  "sessionMinutes": 120,
+  "skipPaths": ["**/*.md", "docs/**", "LICENSE"],
+  "checks": [
+    { "token": "lint", "command": "npm run lint", "paths": ["src/**"] },
+    { "token": "types", "command": "npm run typecheck", "paths": ["src/**"] },
+    { "token": "test", "command": "npm test", "paths": ["src/**", "test/**"] },
+    { "token": "full", "command": "npm run validate && node .verify/mark-pass.js", "paths": ["**"] },
+    { "token": "app", "manual": true, "description": "run the app and look at the changed screen or endpoint", "paths": ["src/**"] }
+  ]
+}
