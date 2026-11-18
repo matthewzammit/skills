@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v2.png">
-  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v3.png">
+  <img src="assets/banner-light-v3.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
