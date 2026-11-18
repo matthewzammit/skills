@@ -15,7 +15,10 @@ It looks for what a quick read misses:
 2. **Noisy guardrails.** A hook or check that fires when the work is already right. Each false alarm costs a turn.
 3. **Repeats.** A problem that came back after an earlier fix. It keeps a record of every retro, so a repeat gets
    fixed at its cause, not patched again.
-4. **Your corrections.** Every "no, I said" in the session is a rule the agent did not have.
+4. **Unproven work.** A commit with no test, build or lint since the last edit, a test re-run until it passes, the
+   same check failing more than 3 times in a row with nobody asked, or a sleep or retry added to a test. The fix is
+   a verify step, a stamp on each commit, or the flaky test's real cause.
+5. **Your corrections.** Every "no, I said" in the session is a rule the agent did not have.
 
 Every finding comes with its cost (how many times, about how many turns) and one line of proof.
 

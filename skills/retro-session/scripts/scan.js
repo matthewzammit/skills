@@ -19,6 +19,10 @@
  *   on correct work is a finding too.
  * - Repeats: the same command run 3 or more times.
  * - Heavy results: tool results over 30,000 characters, by tool.
+ * - Unproven work, four counts: a `git commit` with no test, build, lint or type check since the last file edit;
+ *   a check re-run with no edit between, failing then passing (a hidden flake); the same check failing 4 or more
+ *   times in a row with edits between, before the person was asked (a fix loop); a sleep or retry added to a test
+ *   file. Edits to .md and .txt files do not need a check.
  * - The person's messages, cut short, to find corrections.
  * A resumed or compacted session replays its history, so each tool call counts once (by its id). Subagent
  * records (isSidechain) are left out. Anything that looks like a secret is masked.
@@ -49,6 +53,34 @@ const DENIED = /Permission for this action was denied|doesn't want to proceed|wa
 const RETRO_COMMAND = /<command-name>\/?(retro|retro-session)[^<]*<\/command-name>/;
 const COMPACT = /<command-name>\/compact<\/command-name>|"subtype":"compact_boundary"/;
 const HEAVY = 30000;
+const LOOP_AT = 4; // the same check failing this many times in a row, with edits between, is a fix loop
+
+const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+const DOC_FILE = /\.(md|mdx|txt)$/i;
+const TEST_FILE = /(\.|[-_])(test|spec)\.[cm]?[jt]sx?$|(^|\/)(__tests__|tests?|spec|e2e)\/|(^|\/)test_[^/]*\.py$|_test\.(py|go|rb)$|Tests?\.(swift|kt|java)$|_spec\.rb$/;
+// What a test file must not gain: a pause, or a loop that runs the test until it passes.
+const WAIT_OR_RETRY = /\b(sleep|setTimeout|retryTimes|withRetry|retryable|retries)\b|\bretry\w*\s*\(|\b(Thread|time)\.sleep|\bretry[A-Z_]\w*/;
+const WRAPPER = /^(npx|bunx|pnpm exec|pnpm dlx|yarn|uv run|poetry run|bundle exec|python3? -m|time|(with-)?timeout \d+)\s+/;
+const CHECK =
+  /^(jest|vitest|pytest|mocha|rspec|tsc|eslint|biome|ruff|mypy|xcodebuild|node --test|(cargo|go|swift|dotnet|flutter|mvn|make|\.?\/?gradlew?) (test|check|clippy|vet|build|verify|lint)|(npm|pnpm|yarn|bun)( run)? (t|test|build|lint|typecheck|type-check|check|validate|verify|ci)|playwright test)\b/;
+const COMMIT = /^(?:\S+=\S+\s+)*git(?:\s+-[Cc]\s+\S+)*\s+commit\b/;
+const ASK_TOOLS = new Set(['AskUserQuestion']);
+
+/** The parts of a command that run one after another. Quoted text (a commit message) is not a command. */
+function segments(command) {
+  const bare = String(command ?? '').replace(/"(?:[^"\\]|\\[\s\S])*"|'[^']*'/g, '""');
+  return bare.split(/&&|\|\||;|\||\n/).map((x) => x.trim().replace(/^(\S+=\S+\s+)+/, '')).filter(Boolean);
+}
+const isCheck = (seg) => {
+  let s = seg;
+  for (let i = 0; i < 4; i += 1) {
+    if (CHECK.test(s)) return true;
+    const next = s.replace(WRAPPER, '');
+    if (next === s) break;
+    s = next;
+  }
+  return false;
+};
 
 function redact(s) {
   return String(s ?? '')
@@ -93,6 +125,14 @@ function newState(opts = {}) {
     commands: new Map(),
     heavy: new Map(),
     humans: [],
+    unchecked: new Map(),
+    reruns: new Map(),
+    loops: new Map(),
+    sleeps: new Map(),
+    dirty: false, // a file was edited and no check has run since
+    editSeq: 0,
+    lastCheck: new Map(), // check command -> { failed, edit }
+    streaks: new Map(), // check command -> { fails, lastEdit, loop }
     tools: new Map(),
     first: null,
     last: null,
@@ -109,6 +149,61 @@ const bump = (map, key, example, unflagged = false) => {
   if (example && e.examples.length < 3) e.examples.push(example);
   map.set(key, e);
 };
+
+/** The person was asked or spoke: a fix loop that came before is no longer unattended. */
+const askedPerson = (st) => st.streaks.clear();
+
+/** One tool call: track edits, commits and check runs in the order the agent made them. */
+function trackUse(st, b, input) {
+  if (EDIT_TOOLS.has(b.name)) {
+    const file = String(input.file_path ?? input.notebook_path ?? '');
+    if (!DOC_FILE.test(file)) {
+      st.editSeq += 1;
+      st.dirty = true;
+    }
+    if (TEST_FILE.test(file)) {
+      const edits = Array.isArray(input.edits) ? input.edits : [input];
+      for (const e of edits) {
+        const added = String(e.new_string ?? e.content ?? e.new_source ?? '');
+        const hit = added.match(WAIT_OR_RETRY);
+        if (hit && !WAIT_OR_RETRY.test(String(e.old_string ?? ''))) bump(st.sleeps, groupKey(file), `${short(file, 100)} adds ${hit[0]}`);
+      }
+    }
+    return null;
+  }
+  if (ASK_TOOLS.has(b.name)) askedPerson(st);
+  if (b.name !== 'Bash' || typeof input.command !== 'string') return null;
+  let check = null;
+  for (const seg of segments(input.command)) {
+    if (isCheck(seg)) {
+      st.dirty = false;
+      check = redact(input.command).replace(/\s+/g, ' ').trim();
+    } else if (COMMIT.test(seg) && st.dirty) {
+      bump(st.unchecked, 'git commit with no check since the last edit', short(input.command, 100));
+      st.dirty = false; // one commit counts once, not once per later commit
+    }
+  }
+  return check ? { key: check, edit: st.editSeq } : null;
+}
+
+/** A check command finished: a pass after a fail with no edit between is a re-run; failures with edits between are a loop. */
+function trackCheckResult(st, check, failed) {
+  const prev = st.lastCheck.get(check.key);
+  if (prev?.failed && !failed && prev.edit === check.edit) bump(st.reruns, groupKey(check.key), short(check.key, 100));
+  st.lastCheck.set(check.key, { failed, edit: check.edit });
+  if (!failed) return void st.streaks.delete(check.key);
+  const s = st.streaks.get(check.key) ?? { fails: 0, lastEdit: null, loop: null };
+  if (s.lastEdit !== check.edit) {
+    s.fails += 1;
+    s.lastEdit = check.edit;
+    if (s.fails === LOOP_AT) {
+      bump(st.loops, groupKey(check.key), null);
+      s.loop = st.loops.get(groupKey(check.key));
+    }
+    if (s.loop) s.loop.examples = [`${short(check.key, 100)} failed ${s.fails} times in a row`];
+  }
+  st.streaks.set(check.key, s);
+}
 
 /** Feed one parsed transcript record. */
 function addRecord(st, d) {
@@ -128,17 +223,24 @@ function addRecord(st, d) {
   }
   if (d.type === 'user' && typeof content === 'string' && !content.startsWith('<')) {
     if (/^Stop hook feedback:/.test(content)) bump(st.guardrails, groupKey(`stop hook: ${short(content.split('\n')[1] ?? '', 90)}`), ts);
-    else if (!NOT_TYPED.test(content)) st.humans.push({ at: ts, text: short(content, 240) });
+    else if (!NOT_TYPED.test(content)) {
+      st.humans.push({ at: ts, text: short(content, 240) });
+      askedPerson(st);
+    }
   }
   if (!Array.isArray(content)) return;
   for (const b of content) {
     if (b?.type === 'text' && d.type === 'user' && b.text && !b.text.startsWith('<')) {
       if (/^Stop hook feedback:/.test(b.text)) bump(st.guardrails, groupKey(`stop hook: ${short(b.text.split('\n')[1] ?? '', 90)}`), ts);
-      else if (!NOT_TYPED.test(b.text)) st.humans.push({ at: ts, text: short(b.text, 240) });
+      else if (!NOT_TYPED.test(b.text)) {
+        st.humans.push({ at: ts, text: short(b.text, 240) });
+        askedPerson(st);
+      }
     }
     if (b?.type === 'tool_use' && !st.uses.has(b.id)) {
       const input = b.input ?? {};
-      st.uses.set(b.id, { tool: b.name, input: input.command ?? JSON.stringify(input) });
+      const check = trackUse(st, b, input);
+      st.uses.set(b.id, { tool: b.name, input: input.command ?? JSON.stringify(input), check });
       st.tools.set(b.name, (st.tools.get(b.name) ?? 0) + 1);
       // The whole command is the key: many different commands share a long first line (a cd, a path).
       if (typeof input.command === 'string') bump(st.commands, redact(input.command).replace(/\s+/g, ' ').trim());
@@ -154,7 +256,10 @@ function addRecord(st, d) {
       // Only the start of a result is the harness speaking; later text can be a log that quotes a denial.
       if (DENIED.test(text.slice(0, 200))) bump(st.guardrails, groupKey(`permission denied: ${short(text, 90)}`), call);
       else if (HOOK.test(text.slice(0, 200))) bump(st.guardrails, groupKey(`hook: ${short(text, 110)}`), call);
-      else if (b.is_error) bump(st.flagged, `${tool}: ${short(text.split('\n').find((l) => l.trim() && !/^Exit code/.test(l)) ?? text, 110)}`, call);
+      else {
+        if (use?.check) trackCheckResult(st, use.check, Boolean(b.is_error));
+        if (b.is_error) bump(st.flagged, `${tool}: ${short(text.split('\n').find((l) => l.trim() && !/^Exit code/.test(l)) ?? text, 110)}`, call);
+      }
       for (const p of st.silent) {
         if (p.re.test(text)) bump(st.silentHits, p.name, `${call} -> ${short(text.match(new RegExp(`.{0,40}${p.re.source}.{0,60}`, 'im'))?.[0] ?? '', 120)}`, !b.is_error);
       }
@@ -172,6 +277,10 @@ function summary(st) {
     flaggedErrors: sorted(st.flagged).map(([k, v]) => ({ what: k, ...v })),
     guardrails: sorted(st.guardrails).map(([k, v]) => ({ what: k, ...v })),
     repeats: sorted(st.commands, 3).map(([k, v]) => ({ command: short(k, 160), count: v.count })),
+    uncheckedCommits: sorted(st.unchecked).map(([k, v]) => ({ what: k, ...v })),
+    rerunsUntilGreen: sorted(st.reruns).map(([k, v]) => ({ what: k, ...v })),
+    fixLoops: sorted(st.loops).map(([k, v]) => ({ what: k, ...v })),
+    testSleeps: sorted(st.sleeps).map(([k, v]) => ({ what: k, ...v })),
     heavyResults: sorted(st.heavy).map(([k, v]) => ({ tool: k, ...v })),
     humans: st.humans,
   };
@@ -188,6 +297,10 @@ function toText(s) {
   block('Hidden failures', s.silentFailures, (r) => `- ${r.count}x ${r.what} (${r.unflagged} not marked as errors)${ex(r)}`);
   block('Guardrails that fired', s.guardrails, (r) => `- ${r.count}x ${r.what}${ex(r)}`);
   block('Flagged errors', s.flaggedErrors, (r) => `- ${r.count}x ${r.what}${ex(r)}`);
+  block('Commits with no check since the last edit', s.uncheckedCommits, (r) => `- ${r.count}x${ex(r)}`);
+  block('Checks re-run with no edit, failing then passing (a hidden flake)', s.rerunsUntilGreen, (r) => `- ${r.count}x ${r.what}`);
+  block('Fix loops (the same check failing 4 or more times in a row, edits between, nobody asked)', s.fixLoops, (r) => `- ${r.count}x ${r.what}${ex(r)}`);
+  block('Sleep or retry added to a test file', s.testSleeps, (r) => `- ${r.count}x${ex(r)}`);
   block('Repeated commands (3 or more)', s.repeats, (r) => `- ${r.count}x ${r.command}`);
   block('Heavy results (over 30,000 characters)', s.heavyResults, (r) => `- ${r.count}x ${r.tool}${ex(r)}`);
   block("The person's messages", s.humans, (h) => `- ${h.at ?? ''} ${h.text}`);
