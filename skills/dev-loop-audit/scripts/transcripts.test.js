@@ -199,3 +199,10 @@ test('an --until wait that timed out or matched nothing is an until miss; the pa
   assert.ok(!t('npm run sim:ui', 'timed out').includes('until_miss'));
   assert.ok(t('npm run sim:ui -- --until Home --timeout 9', 'WAIT FAILED', { untilMissPattern: 'wait failed' }).includes('until_miss'));
 });
+
+test('the config\'s verify commands get the verify tag', () => {
+  const cfg = compileConfig({ verification: { commands: ['npm run verify'] } });
+  assert.ok(tagCall({ name: 'Bash', cmd: 'npm run verify -- --fast' }, cfg).includes('verify'));
+  assert.ok(!tagCall({ name: 'Bash', cmd: 'npm run build' }, cfg).includes('verify'));
+  assert.ok(!tagCall({ name: 'Bash', cmd: 'npm run verify' }, compileConfig({})).includes('verify'));
+});

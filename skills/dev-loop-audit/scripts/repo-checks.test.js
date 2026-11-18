@@ -189,3 +189,88 @@ test('fetch-depth 0 without filter is a full history checkout, with filter it is
   const r = checkWorkflow('.github/workflows/ci.yml', LATE);
   assert.deepStrictEqual(r.full_history_checkouts, [{ file: '.github/workflows/ci.yml', job: 'late' }]);
 });
+
+// ---- verification ----
+const { commitStamps, testWaits, verifyStep, verificationLines } = require('./repo-checks.js');
+const REC = (hash, msg, files = ['src/a.ts'], parents = 'p1') => `\x1e${hash}\x1f${parents}\x1f${msg}\x1d\n\n${files.join('\n')}\n`;
+
+test('commitStamps counts agent commits as verified, none or unstamped', () => {
+  const log = [
+    REC('a1', 'Fix a\n\nVerified: ran the app on the simulator\nCo-Authored-By: Claude <noreply@anthropic.com>'),
+    REC('a2', 'Fix b\n\nVerified: none\nCo-Authored-By: Claude <noreply@anthropic.com>'),
+    REC('a3', 'Fix c\n\nCo-Authored-By: Claude <noreply@anthropic.com>'),
+    REC('a4', 'Fix d\n\nVerified:\nCo-Authored-By: Codex <x@openai.com>'),
+    REC('h1', 'Human commit\n\nVerified: unit tests'),
+  ].join('');
+  const s = commitStamps(log);
+  assert.deepStrictEqual([s.commits, s.agent_commits, s.free, s.verified, s.none, s.unstamped, s.verified_share], [5, 4, 0, 1, 1, 2, 0.25]);
+  assert.strictEqual(s.unstamped_examples.length, 2);
+});
+
+test('commitStamps leaves docs-only commits and merges out as free', () => {
+  const agent = 'Co-Authored-By: Claude <noreply@anthropic.com>';
+  const log = [
+    REC('d1', `Docs\n\n${agent}`, ['README.md', 'docs/guide/a.png']),
+    REC('d2', `Docs\n\n${agent}`, ['packages/x/NOTES.md']),
+    REC('m1', `Merge branch\n\n${agent}`, [], 'p1 p2'),
+    REC('c1', `Code and docs\n\n${agent}`, ['README.md', 'src/a.ts']),
+    REC('c2', `Code\n\nVerified: ran it\n${agent}`),
+  ].join('');
+  const s = commitStamps(log);
+  assert.deepStrictEqual([s.agent_commits, s.free, s.unstamped, s.verified, s.verified_share], [5, 3, 1, 1, 0.5]);
+  // a repo adds its own globs: a version file is free too
+  const v = commitStamps(REC('r1', `Release\n\n${agent}`, ['app.json']), { freePaths: ['app.json'] });
+  assert.deepStrictEqual([v.free, v.unstamped, v.verified_share], [1, 0, null]);
+  assert.strictEqual(commitStamps(REC('r2', `Release\n\n${agent}`, ['app.json'])).unstamped, 1, 'not free by default');
+});
+
+test('commitStamps takes the trailer name and the agent pattern from the config', () => {
+  const log = REC('a1', 'Fix\n\nChecked-By: e2e run\nbot-made') + REC('a2', 'Fix\n\nbot-made');
+  const s = commitStamps(log, { trailer: 'Checked-By', agentPattern: 'bot-made' });
+  assert.deepStrictEqual([s.agent_commits, s.verified, s.unstamped], [2, 1, 1]);
+  assert.strictEqual(commitStamps('').verified_share, null);
+});
+
+test('testWaits counts sleeps and retries added to test files, not in code', () => {
+  const diff = [
+    '\x1eabc1234', '', 'diff --git a/src/a.test.ts b/src/a.test.ts', '--- a/src/a.test.ts', '+++ b/src/a.test.ts', '@@ -1,0 +2,3 @@',
+    '+  await new Promise((r) => setTimeout(r, 500));', '+  jest.retryTimes(3);', '+  expect(1).toBe(1);', '-  await sleep(100);',
+    'diff --git a/src/a.ts b/src/a.ts', '--- a/src/a.ts', '+++ b/src/a.ts', '@@ -1 +1 @@', '+setTimeout(go, 10);',
+    '\x1edef5678', '', 'diff --git a/tests/test_x.py b/tests/test_x.py', '--- a/tests/test_x.py', '+++ b/tests/test_x.py', '@@ -0,0 +1 @@',
+    '+    time.sleep(2)',
+  ].join('\n');
+  const w = testWaits(diff);
+  assert.deepStrictEqual([w.added, w.removed], [3, 1]);
+  assert.strictEqual(w.files[0].file, 'src/a.test.ts');
+  assert.strictEqual(w.examples[0].commit, 'abc1234');
+  assert.strictEqual(testWaits('').added, 0);
+});
+
+test('testWaits ignores a test of the app\'s own retry policy', () => {
+  const diff = ['\x1eabc1234', '', '--- a/src/net.test.ts', '+++ b/src/net.test.ts', '@@ -0,0 +1,2 @@',
+    "+  expect(retry(0, new Error('network'))).toBe(true);", '+  const r = await retry(fn, 3);'].join('\n');
+  assert.strictEqual(testWaits(diff).added, 0);
+  const real = ['\x1eabc1234', '', '--- a/a.test.js', '+++ b/a.test.js', '@@ -0,0 +1,4 @@',
+    '+  this.retries(2);', '+  retries: 2,', "+  await new Promise((r) => setTimeout(r, 50));", '+@pytest.mark.flaky(reruns=3)'].join('\n');
+  assert.strictEqual(testWaits(real).added, 4);
+});
+
+test('verifyStep finds a verify skill, script and make target by name', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dla-verify-'));
+  assert.deepStrictEqual(verifyStep(root), { skills: [], scripts: [], make: [] });
+  fs.mkdirSync(path.join(root, '.claude/skills/verify'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.claude/skills/verify/SKILL.md'), '# verify');
+  fs.mkdirSync(path.join(root, '.claude/skills/deploy'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.claude/skills/deploy/SKILL.md'), '# deploy');
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ scripts: { 'test:e2e': 'playwright test', lint: 'eslint .' } }));
+  fs.writeFileSync(path.join(root, 'Makefile'), 'smoke:\n\tcurl x\nbuild:\n\tmake\n');
+  const v = verifyStep(root);
+  assert.deepStrictEqual(v.skills, ['.claude/skills/verify']);
+  assert.deepStrictEqual(v.scripts, ['test:e2e: playwright test']);
+  assert.deepStrictEqual(v.make, ['smoke']);
+  const text = verificationLines({ trailer: 'Verified', stamps: null, test_waits: null, verify_step: v }).join('\n');
+  assert.match(text, /verify step candidates: skills \.claude\/skills\/verify/);
+});

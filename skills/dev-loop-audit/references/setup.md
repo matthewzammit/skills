@@ -12,6 +12,9 @@ Find out, without asking:
   (`node ${CLAUDE_SKILL_DIR}/scripts/ci-runs.js --days 7 --no-jobs --out $OUT/ci.json`). The ones that check code
   are CI; announce, release and deploy workflows are not.
 - **Hooks:** `node ${CLAUDE_SKILL_DIR}/scripts/repo-checks.js`.
+- **A verify step:** a skill, script or make target that checks a change end to end (`repo-checks.js` lists
+  candidates under "verify step candidates"), and whether the commits carry a stamp trailer (`Verified:`). Put the
+  verify command in the config's `verification.commands`.
 - **The gate commands** people and agents run before a push: `package.json` scripts such as `validate`, `check`,
   `verify`, `precommit`, a `Makefile` target, or what the pre-push hook runs.
 - **Transcripts:** `ls ~/.claude/projects | grep <repo folder name>`. Claude Code names each folder after the
@@ -62,6 +65,7 @@ request, like any change). Keys:
     { "pattern": "npm run (-s )?shot\\b", "tags": ["screenshot"] },
     { "pattern": "npm run (-s )?dev:up\\b", "tags": ["helper", "helper_start"] }
   ],
+  "verification": { "trailer": "Verified", "commands": ["npm run verify\\b"] },
   "tickets": { "tool": "github", "how": "gh issue create --label dev-loop-audit" },
   "routine": "weekly, Monday 09:00, this computer"
 }
@@ -78,6 +82,16 @@ request, like any change). Keys:
 - `pastFixes`: fixes already merged, with the time they landed. CI speed is split at each one inside the window, so
   the median does not mix runs from before and after a fix. `--since-fix <ISO time>` on `ci-runs.js` or `metrics.js`
   does the same for one run.
+- `verification` (optional; every key too): `trailer` is the commit trailer that says how a commit was checked
+  (default `Verified`; `Verified: none` counts as unchecked). `agentPattern` is a regex over a commit message that
+  marks an AI agent's commit (default: a Co-Authored-By or generated-with line that names a known agent).
+  `freePaths` are globs (`**` any depth, `*` one segment; default `["**/*.md", "docs/**"]`) for files that need no
+  proof: a commit whose every changed file matches, and every merge commit, is counted as free, apart from verified,
+  none and unstamped, and left out of the verified share. A repo adds its own globs (a release commit that only
+  touches version files: `app.json`). A glob matches whole files only, never "only the version line changed".
+  `commands` are regexes for the repo's end-to-end verify command, so its runs are tagged `verify` and timed
+  (`verify_median_s`). A config without the key works as before; the verification numbers that need no config still
+  appear. See [checks-verification.md](checks-verification.md).
 - `tags`: the repo's own helpers, as regexes over Bash commands, with the tags they add. The tags the metrics use:
   `screenshot` (takes a picture of the app), `screen_seen` (the agent sees the app), `input` (taps or clicks it),
   `helper` (a repo script for checking), `helper_start` (a helper that starts something: counts setup as cold when

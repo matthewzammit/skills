@@ -10,6 +10,7 @@ Measure where the development loop lost time last week, rank every problem by **
 ones, and ask which fixes to build. Three areas, one ranking: **CI** (GitHub Actions), the **gate** (git hooks and
 the checks people run before a push), and **agent time** (what Claude Code spent waiting, retrying and checking its
 work on a simulator or in a browser). Agent time is often the biggest cost and the one nobody measures.
+A fourth list asks where agent work is **not proven**: stamps on commits, checks re-run until green, a verify step.
 
 Talk to the person in short, plain sentences, with a recommendation. Every number comes from a script or a
 command; an estimate says "estimated". **Read-only until the person picks fixes**: the only files you write before
@@ -39,7 +40,7 @@ Done when: you can say the window in one line, and you have last week's row (or 
 node ${CLAUDE_SKILL_DIR}/scripts/ci-runs.js <window> --out $OUT/ci.json > $OUT/ci.txt
 node ${CLAUDE_SKILL_DIR}/scripts/repo-checks.js <window> --out $OUT/checks.json > $OUT/checks.txt
 node ${CLAUDE_SKILL_DIR}/scripts/transcripts.js <window> --out $OUT/calls.json
-node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --out $OUT/metrics.json > $OUT/metrics.txt
+node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --checks $OUT/checks.json --out $OUT/metrics.json > $OUT/metrics.txt
 ```
 
 `<window>` is the same options for each, one per argument (in zsh, an unquoted `$VAR` does not split: use an
@@ -61,11 +62,14 @@ Done when: all four outputs exist, and the cross-check holds or you know why it 
 
 Launch two agents at once (the Agent tool), each with [templates/loop-brief.md](templates/loop-brief.md) filled in:
 
-- **Reliability**: what failed, what reached the main branch unchecked, what wasted runs or time.
-- **Speed**: where the time went even when nothing failed, against the trend, and the biggest wins.
+- **Reliability**: what failed, what reached the main branch unchecked, what wasted runs or time, and where agent
+  work is not proven (the verification list owns most of this).
+- **Speed**: where the time went even when nothing failed, against the trend, and the biggest wins, including how
+  long the verify step takes.
 
 They read the outputs from step 3 and the check lists: [references/checks-ci.md](references/checks-ci.md),
 [references/checks-local.md](references/checks-local.md), [references/checks-agent-time.md](references/checks-agent-time.md),
+[references/checks-verification.md](references/checks-verification.md),
 plus [references/addon-mobile.md](references/addon-mobile.md) and [references/addon-web.md](references/addon-web.md)
 when the config turns those on. Each returns findings with evidence ids and minutes.
 
@@ -84,7 +88,7 @@ Done when: each of the five is "holds", "downgraded" (with the new number) or "d
 
 1. Write the report from [templates/report.md](templates/report.md) to `<records>/<YYYY-MM-DD>.md` (the run's date),
    following [references/report.md](references/report.md).
-2. Append the trend row: `node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --append-trend <records>/trend.csv`.
+2. Append the trend row: `node ${CLAUDE_SKILL_DIR}/scripts/metrics.js --calls $OUT/calls.json --ci $OUT/ci.json --checks $OUT/checks.json --append-trend <records>/trend.csv`.
 3. If the config files tickets: follow its `tickets.how` exactly (its naming, its commands, which fixes get a ticket).
    Where it is silent: one parent named "Dev loop audit, YYYY-MM-DD" and one ticket per proposed fix under it.
    Never reuse an earlier run's parent.

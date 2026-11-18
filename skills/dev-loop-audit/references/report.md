@@ -40,5 +40,9 @@ replaced, so a re-run does not double it. Empty means not measurable that week; 
 | `agent_wait_min` | Minutes the main thread waited for a background subagent to hand back. Added later, so a trend file from before has empty cells for older weeks |
 | `until_misses`, `until_miss_min` | Calls that waited with `--until` and whose output says the wait timed out or matched nothing; their minutes. Added later, like `agent_wait_min` |
 | `ci_stuck_queued` | CI runs still queued or in progress more than 6 hours after they were created, at audit time (ids in `ci.txt`). Added later, like `agent_wait_min` |
+| `agent_commits`, `verified_share` | Agent commits in the window; the share with a stamp that says how they were checked (not `none`, not unstamped), 0 to 1. Empty when the repo has no history for the window. Added later, like `agent_wait_min` |
+| `test_waits_added` | Sleeps and retries added to test files in the window (`checks.json`). Added later |
+| `rerun_green`, `fix_loops` | Checks that failed then passed with no edit between; checks that failed 4 or more times in a row before the person was asked. Added later |
+| `verify_median_s` | Median time of the verify commands in the config's `verification.commands`. Empty when none are named. Added later |
 
 Compare weeks per input, not in totals: the amount of testing moves a lot from week to week.

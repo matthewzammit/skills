@@ -12,6 +12,8 @@
  * the repo uses and whether it is installed, and which tools the hooks run that CI does not, and the other way.
  * Worktrees: each one runs its own branch's copy of a tracked hook folder and of `.claude/settings.json`, so an old
  * branch runs old hooks; the ones that differ from the main branch's worktree are listed.
+ * Verification (references/checks-verification.md): agent commits by their `Verified:` stamp, sleeps and retries added
+ * to test files, and any verify skill or script.
  * Also: late skips (a step decides to skip after checkout and setup), full-history checkouts, and test growth
  * (test files and lines now against the window's start).
  * The files are read as they are now. With a window (--to), the commits since its end that changed workflows or
@@ -20,7 +22,7 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseArgs, run, repoRoot, parseYaml, loadConfig, windowFrom, printElapsed } = require('./common.js');
+const { parseArgs, run, repoRoot, parseYaml, loadConfig, windowFrom, printElapsed, globToRegex } = require('./common.js');
 
 const HOOK_NAMES = ['pre-commit', 'commit-msg', 'pre-push', 'prepare-commit-msg', 'post-checkout', 'post-merge', 'pre-rebase'];
 
@@ -310,6 +312,129 @@ function hookDrift(entries, refPath) {
   })).filter((e) => e.git_differs || e.agent_differs);
 }
 
+// ---- Verification (references/checks-verification.md) ----
+
+/** A commit by an AI agent: a Co-Authored-By trailer or a generated-with line that names a known agent. */
+const DEFAULT_FREE_PATHS = ['**/*.md', 'docs/**'];
+const AGENT_COMMIT = /^co-authored-by:.*(claude|anthropic|codex|openai|copilot|cursor|gemini|aider|devin)|generated (with|by) .*(claude|codex|copilot|cursor|gemini|aider)/im;
+
+/**
+ * Count the commits in `logText` by how they were verified. A record starts with \x1e, then the hash, \x1f, the
+ * parent hashes, \x1f, the full message, \x1d, and the changed file names (`git log --name-only`). `trailer` is
+ * the stamp's key (default Verified); a value starting with "none" is the stamp that says nothing was checked.
+ * Only agent commits are counted: `agentPattern` (a regex over the message) replaces the default.
+ * A **free** commit needs no stamp: a merge commit, or one whose every changed file matches `freePaths` (globs;
+ * default markdown files and docs/). Free commits are counted apart and left out of the verified share.
+ */
+function commitStamps(logText, opts = {}) {
+  const trailer = (opts.trailer || 'Verified').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const stamp = new RegExp(`^${trailer}:[ \\t]*(.*)$`, 'im');
+  const agent = opts.agentPattern ? new RegExp(opts.agentPattern, 'im') : AGENT_COMMIT;
+  const free = (opts.freePaths || DEFAULT_FREE_PATHS).map(globToRegex);
+  const out = { commits: 0, agent_commits: 0, free: 0, verified: 0, none: 0, unstamped: 0, verified_share: null, unstamped_examples: [] };
+  for (const rec of logText.split('\x1e').filter(Boolean)) {
+    const [head, filesText = ''] = rec.split('\x1d');
+    const [hash, parents = '', ...rest] = head.split('\x1f');
+    const msg = rest.join('\x1f');
+    out.commits++;
+    if (!agent.test(msg)) continue;
+    out.agent_commits++;
+    const files = filesText.split('\n').map((f) => f.trim()).filter(Boolean);
+    if (parents.trim().split(/\s+/).filter(Boolean).length > 1 || (files.length && files.every((f) => free.some((re) => re.test(f))))) { out.free++; continue; }
+    const m = stamp.exec(msg);
+    if (!m || !m[1].trim()) { out.unstamped++; if (out.unstamped_examples.length < 5) out.unstamped_examples.push(`${hash.trim()} ${msg.split('\n')[0].slice(0, 70)}`); } else if (/^none\b/i.test(m[1].trim())) out.none++;
+    else out.verified++;
+  }
+  const needing = out.agent_commits - out.free;
+  if (needing) out.verified_share = Math.round((out.verified / needing) * 1000) / 1000;
+  return out;
+}
+
+/**
+ * What makes a test wait or run again, in the common test languages: sleeps and timers, retry options of a test
+ * runner, flaky and rerun marks. A bare `retry(` call is not here: a test of the app's own retry policy calls it.
+ */
+const TEST_WAIT = /\b(sleep|usleep|Thread\.sleep|time\.sleep)\s*\(|\b(setTimeout|setInterval)\s*\(|\bwaitForTimeout\s*\(|\bwait_for_timeout\s*\(|\bretryTimes\s*\(|\bretries\s*:|\bretry\s*:|\bthis\.retries\s*\(|--retries\b|@pytest\.mark\.flaky\b|\breruns\b/;
+
+/**
+ * Sleeps and retries added to (and removed from) test files, from `git log -p -U0` output whose records start with
+ * \x1e and the short hash. Every added line counts, even one a later commit removed: the agent still wrote it.
+ */
+function testWaits(diffText) {
+  const out = { added: 0, removed: 0, files: [], examples: [] };
+  const byFile = new Map();
+  for (const rec of diffText.split('\x1e').filter(Boolean)) {
+    const lines = rec.split('\n');
+    const commit = lines[0].trim();
+    let file = null;
+    for (const l of lines.slice(1)) {
+      if (l.startsWith('+++ ')) { file = l.startsWith('+++ b/') ? l.slice(6) : null; continue; }
+      if (l.startsWith('--- ')) continue;
+      if (!file || !isCountedTest(file) || (l[0] !== '+' && l[0] !== '-') || !TEST_WAIT.test(l.slice(1))) continue;
+      const e = byFile.get(file) || { file, added: 0, removed: 0 };
+      byFile.set(file, e);
+      if (l[0] === '+') {
+        out.added++; e.added++;
+        if (out.examples.length < 10) out.examples.push({ commit, file, line: l.slice(1).trim().slice(0, 100) });
+      } else { out.removed++; e.removed++; }
+    }
+  }
+  out.files = [...byFile.values()].sort((a, b) => b.added - a.added).slice(0, 10);
+  return out;
+}
+
+/** The repo's end-to-end check: agent skills, package.json scripts and Makefile targets named like one. */
+function verifyStep(root) {
+  const out = { skills: [], scripts: [], make: [] };
+  const NAME = /verif|e2e|smoke|qa\b/i;
+  for (const base of ['.claude/skills', '.agents/skills', 'skills']) {
+    const dir = path.join(root, base);
+    if (!fs.existsSync(dir)) continue;
+    for (const n of fs.readdirSync(dir)) if (NAME.test(n) && fs.existsSync(path.join(dir, n, 'SKILL.md'))) out.skills.push(`${base}/${n}`);
+  }
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    out.scripts = Object.entries(pkg.scripts || {}).filter(([k]) => NAME.test(k)).map(([k, v]) => `${k}: ${String(v).slice(0, 80)}`);
+  } catch { /* no package.json */ }
+  try {
+    out.make = [...fs.readFileSync(path.join(root, 'Makefile'), 'utf8').matchAll(/^([\w.-]*(?:verif|e2e|smoke)[\w.-]*):/gim)].map((m) => m[1]);
+  } catch { /* no Makefile */ }
+  return out;
+}
+
+/** The verification numbers on `ref` for the window [startIso, endIso). Each part is null when git cannot say. */
+function measureVerification(git, root, ref, startIso, endIso, cfg = {}) {
+  const out = { trailer: cfg.trailer || 'Verified', stamps: null, stamp_in_use: null, test_waits: null, verify_step: verifyStep(root) };
+  const range = [`--since=${startIso}`, `--until=${endIso}`, ref];
+  const noMerges = ['--no-merges'];
+  try {
+    out.stamps = commitStamps(git(['log', '--name-only', '--format=%x1e%h%x1f%P%x1f%B%x1d', ...range]), cfg);
+    out.stamp_in_use = Number(git(['rev-list', '--count', '-i', '-E', `--grep=^${out.trailer}:`, '-n', '500', ref]).trim()) > 0;
+  } catch { /* no history */ }
+  try { out.test_waits = testWaits(git(['log', '-p', '-U0', '--no-color', '--no-ext-diff', '--format=%x1e%h', ...noMerges, ...range])); } catch { /* no history */ }
+  return out;
+}
+
+function verificationLines(v) {
+  const L = ['', '# Verification'];
+  const s = v.stamps;
+  if (!s) L.push('commit stamps: not measured (no history for the window)');
+  else if (!s.agent_commits) L.push(`commit stamps: no agent commits in the window (${s.commits} commits)`);
+  else L.push(`commit stamps (${v.trailer}): ${s.agent_commits} agent commits of ${s.commits}; free ${s.free}, verified ${s.verified}, none ${s.none}, unstamped ${s.unstamped}; verified share ${s.verified_share == null ? '?' : pct(s.verified_share)}%${v.stamp_in_use === false ? ' (no commit in the last 500 carries the stamp: the repo has none)' : ''}`);
+  if (s && s.unstamped_examples.length) L.push(...s.unstamped_examples.map((e) => `  unstamped: ${e}`));
+  const w = v.test_waits;
+  if (!w) L.push('sleeps and retries in tests: not measured');
+  else {
+    L.push(`sleeps and retries in tests: ${w.added} added, ${w.removed} removed in the window`);
+    L.push(...w.files.map((f) => `  ${f.file}: +${f.added} -${f.removed}`), ...w.examples.map((e) => `  ${e.commit} ${e.file}: ${e.line}`));
+  }
+  const st = v.verify_step;
+  L.push(st.skills.length || st.scripts.length || st.make.length
+    ? `verify step candidates: skills ${st.skills.join(', ') || 'none'}; scripts ${st.scripts.join(' | ') || 'none'}; make ${st.make.join(', ') || 'none'}`
+    : 'verify step candidates: none (no skill, script or make target named verify, e2e or smoke)');
+  return L;
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const root = repoRoot();
@@ -365,10 +490,20 @@ function main() {
   let growth = null;
   try { growth = measureGrowth(git, `origin/${branch}`, windowFrom(args).startIso); } catch { /* no remote branch */ }
 
+  let verification = null;
+  try {
+    const win = windowFrom(args);
+    const cfg = loadConfig(args).verification || {};
+    let ref = `origin/${branch}`;
+    try { git(['rev-parse', '--verify', '-q', ref]); } catch { ref = branch; }
+    verification = measureVerification(git, root, ref, win.startIso, win.endIso, cfg);
+  } catch { /* no history to read */ }
+
   const out = {
     branch,
     read_at: head,
     test_growth: growth,
+    verification,
     late_skips: workflows.flatMap((w) => w.late_skips || []),
     full_history_checkouts: workflows.flatMap((w) => w.full_history_checkouts || []),
     changed_since_window_end: since,
@@ -400,6 +535,7 @@ function main() {
     if (w.error) lines.push(`  could not read: ${w.error}`);
   }
   lines.push('', '# Tests', growth ? growthLine(growth) : `test growth: not measured (origin/${branch} not found)`);
+  if (verification) lines.push(...verificationLines(verification));
   lines.push('', '# Hooks', `git runs hooks from ${out.hooks.hooks_dir}${hooks.core_hooks_path ? ` (core.hooksPath ${hooks.core_hooks_path})` : ''}`);
   for (const h of hooks.hooks) lines.push(`  ${h.name}${h.executable ? '' : ' (NOT executable: git skips it)'}${h.manager ? ` via ${h.manager}` : ''}: ${h.commands.join(' ') || 'no known tools'}`);
   if (!hooks.hooks.length) lines.push('  no active hooks');
@@ -421,4 +557,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn, isTestPath, isCodePath, lateSkips, fullHistoryCheckout, sizeOf, testGrowth, parseGrepCounts, measureTree, measureGrowth, growthLine };
+module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn, isTestPath, isCodePath, lateSkips, fullHistoryCheckout, sizeOf, testGrowth, parseGrepCounts, measureTree, measureGrowth, growthLine, commitStamps, testWaits, verifyStep, measureVerification, verificationLines };
