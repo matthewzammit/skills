@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../assets/verify-setup.png" alt="Verify setup: one change on the left, with its diff, the checks it needs and the running app, your agent in the middle, and on the right the commit with its Verified line and this week's count of stamped, unstamped and none commits." width="100%">
+</p>
+
 # Verify setup
 
 **Let your agents prove their own work, so you only look at the result.** It sets up your repo with a `verify`

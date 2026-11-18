@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v2.png">
-  <img src="assets/banner-light-v2.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v3.png">
+  <img src="assets/banner-light-v3.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -197,6 +197,10 @@ them a proper review. It also tells you which review skills to install for your 
 [Read more about the weekly audit](skills/weekly-audit/)
 
 #### #7: Let your agents prove their own work
+
+<p align="center">
+  <img src="assets/verify-setup.png" alt="Verify setup: one change on the left, with its diff, the checks it needs and the running app, your agent in the middle, and on the right the commit with its Verified line and this week's count of stamped, unstamped and none commits." width="100%">
+</p>
 
 [**verify-setup**](skills/verify-setup/) sets up your repo so every AI agent proves its work before it commits. The
 repo gets its own `verify` skill: the checks the change needs, cheapest first, then the real app, run and looked at.
