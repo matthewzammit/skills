@@ -198,6 +198,10 @@ them a proper review. It also tells you which review skills to install for your 
 
 #### #7: Let your agents prove their own work
 
+<p align="center">
+  <img src="assets/verify-setup.png" alt="Verify setup: one change on the left, with its diff, the checks it needs and the running app, your agent in the middle, and on the right the commit with its Verified line and this week's count of stamped, unstamped and none commits." width="100%">
+</p>
+
 [**verify-setup**](skills/verify-setup/) sets up your repo so every AI agent proves its work before it commits. The
 repo gets its own `verify` skill: the checks the change needs, cheapest first, then the real app, run and looked at.
 Each commit carries a stamp, `Verified: lint, test, app`, that says what ran. A hook counts the stamps. It starts
