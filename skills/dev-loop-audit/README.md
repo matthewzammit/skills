@@ -299,34 +299,4 @@ store or print a command, and the report quotes commands, not your conversations
 
 ## Credits
 
-Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
-details.
-
-Checks borrowed from other public skills, with thanks:
-
-- [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix): job time from successful runs
-  only, with p90 and queue wait; a flake is a run that went green on a later attempt.
-- [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit): hooks installed and running
-  the same tools as CI; checking the API rate limit first.
-- [edloidas/ci-audit](https://www.skills.sh/edloidas/skills/ci-audit): failures that cannot block, the longest job
-  chain, timeouts at twice the longest run, measured against estimated, "Already right" and "Not checked".
-- [enesgules/optimise-github-actions](https://www.skills.sh/enesgules/dotfiles/optimise-github-actions): billed
-  minutes apart from wall time, cancelled-run waste, path filters that match most runs, fetching runs one day at a
-  time.
-
-Thanks to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.com/pontusab)), whose
-[post on getting a frontend CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) and its replies
-gave the checks for tests scoped to the change (with what must still run everything), one slow test file holding
-the run, and more jobs against one on a per-minute plan. His
-[git hook manager timing](https://x.com/pontusab/status/2122466524493730107) gave the note that a faster hook
-manager is not worth a switch, and his formatter timing (`bun fmt`, Biome, dprint against Prettier) gave the
-formatter part of "A faster tool shipped".
-
-Thanks to [Vincent Koc](https://vincent.build), whose
-[write-up of making OpenClaw's CI faster and 95% cheaper](https://vincent.build/openclaw-ci-cost-reduction/) gave
-the checks for test suite growth (a test budget and a clean-up that keeps one strong test per behaviour), the two
-clocks (CI time beside pull request time, and each fix judged on both), skipping a job before it starts, repeated
-or oversized setup, automated review on every push, backtesting and shadow-running test selection, and trimming
-simulator background services.
-
-Built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.
+Thanks to [Simon Agius Muscat](https://github.com/simonamdev), [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191), [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/) and the skills [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix), [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit), [edloidas/ci-audit](https://www.skills.sh/edloidas/skills/ci-audit) and [enesgules/optimise-github-actions](https://www.skills.sh/enesgules/dotfiles/optimise-github-actions), built from the weekly audit we ran on the [Binderr](https://binderr.com) Wallet app.

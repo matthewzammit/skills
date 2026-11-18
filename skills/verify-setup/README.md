@@ -82,6 +82,4 @@ instructions.
 
 ## Credits
 
-The ideas come from the Claude Code team's public post, "How the Claude Code team thinks about verification":
-verify before you hand work over, end-to-end checks first, no retries for flaky tests, stop after 3 failed rounds,
-stamp commits with how they were verified, and a gate with off, observe and enforce modes.
+Based on the Claude Code team's post, [How the Claude Code team thinks about verification](https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/).
