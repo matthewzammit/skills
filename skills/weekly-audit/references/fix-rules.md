@@ -68,7 +68,7 @@ A fix to something a person sees or taps needs a check on a simulator, a device 
 
 ## Cap
 
-At most **5 fixes per run**. Take the highest severity first. The rest stay as findings, and the summary says how
+At most **5 fixes per run**. Take Important first, then Nits. Leave Pre-existing findings alone unless the person asked for them. The rest stay as findings, and the summary says how
 many were left and why.
 
 ## What the summary says
