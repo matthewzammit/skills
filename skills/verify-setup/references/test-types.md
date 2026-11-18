@@ -3,8 +3,7 @@
 For a repo with few checks. Add them in this order. Each one makes the next commit safer and each one is worth
 having alone.
 
-The order comes from the Claude Code team's public post, "How the Claude Code team thinks about verification". Read
-it for the reasons.
+The order comes from [the Claude Code team's post on verification](https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/).
 
 ## 1. End-to-end first
 

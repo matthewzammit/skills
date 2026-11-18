@@ -94,6 +94,5 @@ the steps are in [templates/weekly-routine.md](templates/weekly-routine.md).
 
 ## Credits
 
-The review rules belong to the authors of each review skill (listed in
-[references/review-skills.md](references/review-skills.md)). The routine comes from the weekly audit we ran on the
-[Binderr](https://binderr.com) Wallet app.
+- [Each review skill's authors](references/review-skills.md): the review rules.
+- Built from our weekly audit on the [Binderr](https://binderr.com) Wallet app.

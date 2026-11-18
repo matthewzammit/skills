@@ -146,12 +146,11 @@ The changelog lists every change, but nobody reads it. This is the short version
 It double-checks the biggest problems, keeps a trend week to week, and builds the fixes you pick. Most audits look
 only at CI.
 
-Thanks to [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit and helped with tips and
-details, and to [Pontus Abrahamsson](https://x.com/pontusab) ([GitHub](https://github.com/pontusab)), whose
-[post on a CI under 2 minutes](https://x.com/pontusab/status/2121982070193058191) gave its test-speed checks,
-and to [Vincent Koc](https://vincent.build), whose
-[write-up of OpenClaw's 95% cheaper CI](https://vincent.build/openclaw-ci-cost-reduction/) gave its test-growth,
-two-clock and setup checks.
+Thanks to:
+
+- [Simon Agius Muscat](https://github.com/simonamdev), who suggested this audit.
+- [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191), for the test-speed checks.
+- [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/), for the test-growth and setup checks.
 
 [Read more about the dev loop audit](skills/dev-loop-audit/)
 
@@ -208,8 +207,7 @@ Each commit carries a stamp, `Verified: lint, test, app`, that says what ran. A 
 in observe mode and never blocks, and you switch to enforce after a clean week.
 
 Reading every diff does not scale when agents write the code. This lets you say what "done" means and look at the
-proof. It also shows how many commits were never verified. The ideas come from the Claude Code team's post, "How the
-Claude Code team thinks about verification".
+proof. It also shows how many commits were never verified. Based on [the Claude Code team's post on verification](https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/).
 
 [Read more about verify setup](skills/verify-setup/)
 
