@@ -56,11 +56,17 @@ computer).
 
 **Updates:** run the same command again.
 
-**Or as a Claude Code plugin:**
+**Or as a Claude Code plugin**, in one command:
 
+```bash
+claude plugin install matthewzammit-skills --marketplace matthewzammit/skills
 ```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
+
+On Claude Code older than v2.1.292, add the marketplace first, then install:
+
+```bash
+claude plugin marketplace add matthewzammit/skills
+claude plugin install matthewzammit-skills@matthewzammit
 ```
 
 **Updates:** run `/plugin marketplace update matthewzammit`, or turn on auto-update for this marketplace in `/plugin`,

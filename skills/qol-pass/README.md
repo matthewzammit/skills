@@ -22,19 +22,8 @@ checks against it.
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill qol-pass
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick qol-pass when it asks which skills you want. It works in Claude Code,
+Cursor, Codex and other agents.
 
 ## Run it
 

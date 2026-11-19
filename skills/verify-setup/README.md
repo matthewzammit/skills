@@ -29,17 +29,8 @@ Without it you read every diff. With it you say what "done" means and look at th
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill verify-setup
-```
-
-It asks where to install: this project only, or global. Run it again to update. Or as a Claude Code plugin, which
-installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick verify-setup when it asks which skills you want. It works in Claude Code,
+Cursor, Codex and other agents.
 
 ## Run it
 

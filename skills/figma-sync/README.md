@@ -7,21 +7,8 @@ It finds where Figma is behind the code, asks what to update, redraws it, and re
 
 ## Install
 
-If you built the Figma file with [figma-from-code](../figma-from-code/), you likely have both already.
-
-```bash
-npx skills add matthewzammit/skills --skill figma-sync
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+If you built the Figma file with [figma-from-code](../figma-from-code/), you likely have both already. If not, follow
+[Install](../../README.md#install-30-seconds) in the main README, and pick figma-sync when it asks which skills you want.
 
 ## Three ways to run it
 

@@ -12,19 +12,8 @@ minute.
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill weekly-progress-note
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick weekly-progress-note when it asks which skills you want. It works in Claude Code,
+Cursor, Codex and other agents.
 
 ## Run it
 
@@ -55,12 +44,12 @@ This week (suggested)
 - Partial refunds from the invoice page
 ```
 
-With it: what it read (how many pull requests and releases), last week's plan against what happened, and anything
+With it: what it read (how many changes and releases), last week's plan against what happened, and anything
 it was not sure of.
 
 ## How it works
 
-- **It reads, never writes:** merged pull requests, release tags, the changelog and closed tickets, if you have
+- **It reads, never writes:** the main branch's git history, release tags, the changelog and closed tickets, if you have
   them. Only git is required.
 - **Every line is true:** each "last week" line comes from something merged, released or closed in the period.
 - **It checks last week's plan:** done, partly done, or not started. What did not start carries over.

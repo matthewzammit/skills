@@ -26,7 +26,7 @@ This week (suggested)
   runs and a cleaner release process").
 - **Plain words.** The person reading may not be an engineer. Explain or drop any term they would not know.
 - **No claims you cannot point to.** A line comes from a merged pull request or a commit to the main branch, a
-  release, a changelog entry or a closed ticket in the period; an "In progress" line from an open pull request.
+  release, a changelog entry or a closed ticket in the period; an "In progress" line from an open branch or the plans.
 
 ## A quiet week
 
