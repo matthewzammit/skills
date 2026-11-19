@@ -23,19 +23,8 @@ Most audits look only at CI. Time lost in one area often shows up in another, so
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill dev-loop-audit
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick dev-loop-audit when it asks which skills you want. It works in Claude Code,
+Cursor, Codex and other agents.
 
 ## Run it
 

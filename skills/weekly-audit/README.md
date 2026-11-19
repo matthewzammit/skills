@@ -13,19 +13,8 @@ run, findings that do not get lost, and a check that each one is real. This skil
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill weekly-audit
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick weekly-audit when it asks which skills you want. It works in Claude Code,
+Cursor, Codex and other agents.
 
 ## Then install the review skills
 

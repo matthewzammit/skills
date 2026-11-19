@@ -24,21 +24,8 @@ component, and every screen updates.
 
 ## Install
 
-Install both: figma-from-code builds the file, figma-sync keeps it updated.
-
-```bash
-npx skills add matthewzammit/skills --skill figma-from-code --skill figma-sync
-```
-
-It works in Claude Code, Cursor, Codex and other agents. It asks where to install: this project only, or global
-(every project on your computer). Run it again to update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Install both: figma-from-code builds the file, figma-sync keeps it updated. Follow [Install](../../README.md#install-30-seconds) in the main README, and pick both when
+it asks which skills you want.
 
 Or copy the two folders into `~/.claude/skills/` (for you) or `<your repo>/.claude/skills/` (for your team).
 

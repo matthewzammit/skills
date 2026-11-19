@@ -6,9 +6,9 @@ Once per repo.
 
 Find out, without asking:
 
-- **The main branch:** `gh repo view --json defaultBranchRef`, or `git symbolic-ref refs/remotes/origin/HEAD`.
+- **The main branch:** `git symbolic-ref refs/remotes/origin/HEAD`.
 - **How work reaches the main branch:** merge commits (`git log --first-parent --merges` finds them), squash
-  merges (it finds none; use `gh`), or direct commits with no pull requests.
+  merges (it finds none, and commit titles end in `(#123)`), or direct commits with no pull requests.
 - **Release tags:** `git tag --sort=-creatordate | head`. Note the pattern (`v1.2.3`, `release-*`).
 - **A changelog:** `CHANGELOG.md`, `changelog.json`, release notes in `docs/`.
 - **Plans or a roadmap:** a `plans/` or `roadmap` file the team keeps open work in.
@@ -17,7 +17,7 @@ Find out, without asking:
 - **An existing note or routine:** a file of past notes (`docs/*progress*`, `*weekly*`), or a scheduled task
   that already drafts one. Use its log and its shape rather than starting a second one.
 
-Say in two lines what you found ("Squash merges, tags `v*`, a CHANGELOG.md, GitHub Issues; no plans folder").
+Say in two lines what you found ("Squash merges, tags `v*`, a CHANGELOG.md, a Linear team; no plans folder").
 
 ## 2. Ask
 

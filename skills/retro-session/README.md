@@ -24,20 +24,8 @@ Every finding comes with its cost (how many times, about how many turns) and one
 
 ## Install
 
-```bash
-npx skills add matthewzammit/skills --skill retro-session
-```
-
-It works in agents that run skills. The scan reads Claude Code transcripts, so the full retro is Claude Code only for
-now. It asks where to install: this project only, or global (every project on your computer). Run it again to
-update.
-
-Or as a Claude Code plugin, which installs all the skills in this repo:
-
-```
-/plugin marketplace add matthewzammit/skills
-/plugin install matthewzammit-skills@matthewzammit
-```
+Follow [Install](../../README.md#install-30-seconds) in the main README, and pick retro-session when it asks which skills you want. The scan reads
+Claude Code transcripts, so the full retro is Claude Code only for now.
 
 ## Run it
 
