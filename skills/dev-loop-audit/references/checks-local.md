@@ -50,6 +50,10 @@ transcripts; say so under "Not checked".
 8. **A faster tool shipped:** when a check is a top step, look for a faster successor or major version (TypeScript 7,
    Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
    this repo, cold and warm, before proposing it: a warm incremental cache often already beats it.
+   Speed is half of it: run the old and the new tool side by side on the same tree and list what the new one misses
+   (a rule it does not have, a file it skips, an error it reports as a warning). A switch that misses things breaks
+   "never check less" (checks-ci "Rules a speed fix never breaks"). A tool only out as a canary is pinned to that
+   exact version, never `latest`.
    A formatter counts too: Prettier in a hook or a CI format check has faster successors (`bun fmt`, Biome,
    dprint). Time a check of the whole repo and of the staged files only: a hook that formats only staged files is
    often already fast. A new formatter can change the layout of many files, so the switch needs one formatting
@@ -78,7 +82,10 @@ transcripts; say so under "Not checked".
    - the main branch, the pre-release gate and CI on the main branch always run every test.
    Before trusting a selector, backtest it: take a past bug, check out the commit before its fix, feed that change to
    the selector, and check that it picks the test that fails. Run a new shortcut in shadow mode first (run every
-   test, record what the selector would have skipped, count the misses). Keep a switch that turns selection off
+   test, record what the selector would have skipped, count the misses). Then plant a miss on purpose: on a probe
+   branch, break a real line in a file the import graph links in an unusual way (a re-export, a mock, a config),
+   push, and check that the selected run fails. Revert it. A selector that lets the planted bug through is not
+   ready. Keep a switch that turns selection off
    (an environment variable such as `TEST_SCOPE=full`), and make the selection explain itself (why each test was
    picked: owner, importer, policy). A missing or unclear dependency widens the run; it never skips a test.
    Time it on a probe branch before proposing. Full runs still happen on every lockfile bump, so keep the full run
@@ -98,4 +105,17 @@ transcripts; say so under "Not checked".
      would make it fail, keep the strongest test for each behaviour, and delete tests that restate the code, repeat
      another test, or pass when the behaviour is broken. Break the code on purpose to prove the kept test still
      fails. Never delete the only test of a behaviour, and never sort by run time and delete the slowest.
+   - before the clean-up, collect evidence: for two weeks, log each test failure someone fixed as either a caught
+     regression (the code was wrong) or a change detector (the code was right, and the test only broke because the
+     code changed). Files that only ever show up as change detectors go first. Name the patterns behind them in the
+     agent docs (`AGENTS.md`) as patterns not to write again, such as a snapshot of a whole screen or a test that
+     checks which internal function was called.
+   Never delete tests for authorization, privacy, data migrations or concurrency, even when they never failed: they
+   guard the bugs that cost the most and happen the least.
    Report the trend, not a target: a share can fall because the code grew.
+12. **Test order and leaks:** tests that pass only in their usual order hide a leak (state left in a module, a mock
+   not reset, a timer still running). Run the suite once in random order (Jest `--randomize`, Vitest
+   `sequence.shuffle`, pytest-randomly, `go test -shuffle=on`) and print the seed, so a failure can be replayed.
+   A failure in random order is a real bug in a test, not a flake: fix it, do not retry it. Reset state after every
+   file (Jest `resetModules`, `restoreMocks`; Vitest the same names), and prefer isolating modules over separate
+   processes when the runner allows it: separate processes are slower and hide the leak instead of fixing it.

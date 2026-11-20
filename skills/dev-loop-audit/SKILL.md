@@ -103,7 +103,9 @@ Reply in the chat, short:
 - What broke, most minutes first. What got slower or faster, most minutes first. What is already right.
 - The proposed fixes, numbered, ranked by minutes saved a week, each marked Reliability or Speed and its area,
   with your pick. Each fix says what it does to both clocks: billed minutes and how long someone waits. A fix
-  that cuts one and raises the other says so ("parallel jobs: 2 min less wait, +3 billed min a run").
+  that cuts one and raises the other says so ("parallel jobs: 2 min less wait, +3 billed min a run"). Drop a speed
+  fix that hides a failure or checks less (references/checks-ci.md "Rules a speed fix never breaks"). Fixes that
+  need an account, a secret or a bigger bill come last, as one list with the monthly cost of each.
 
 Then ask: "Which should I build? Numbers, 'all' or 'none'." **Stop and wait.**
 
