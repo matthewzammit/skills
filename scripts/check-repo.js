@@ -22,6 +22,11 @@ for (const dir of fs.readdirSync(path.join(root, 'skills'))) {
   if (name !== dir) errors.push(`${file}: name "${name}" must match its folder "${dir}"`);
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name ?? '')) errors.push(`${file}: name must be lowercase with hyphens`);
   if (!desc) errors.push(`${file}: description is missing`);
+  // An unquoted value with ": " or " #" is not valid YAML, and the skills installer skips the whole skill.
+  for (const m of front?.[1].matchAll(/^([a-z-]+):[ \t]+(.+)$/gm) ?? []) {
+    const v = m[2].trim();
+    if (!/^["'\[{|>]/.test(v) && /: | #/.test(v)) errors.push(`${file}: quote the ${m[1]} value (it has ": " or " #")`);
+  }
   if (!fs.existsSync(path.join(root, `skills/${dir}/README.md`))) errors.push(`skills/${dir}/README.md is missing`);
 }
 
