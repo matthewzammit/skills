@@ -14,6 +14,11 @@ The person reads the summary; the rest is evidence for a later week.
   (no billing access, no transcripts for people's own pushes, the machine too busy to time the gate).
 - **Verified:** each of the top five says holds, downgraded or dropped (SKILL.md step 5).
 - **Past fixes:** for each fix built after an earlier report, say whether it holds this week, from the numbers.
+- **Both totals, before and after:** end the summary with total CI time and cost for the week against last week,
+  and against the week before the first fix, so the reader sees where all the fixes have got to.
+- **What needs the person:** fixes that need an account, a secret or a bigger bill (a paid runner, warm machines,
+  a runner image with the toolchain baked in) go in one list at the end, each with its expected monthly cost and the
+  minutes it saves. Everything else is proposed as normal.
 - **Plain words.** Short sentences. A recommendation with every choice.
 
 ## Trend columns

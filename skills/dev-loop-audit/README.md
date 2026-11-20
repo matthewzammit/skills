@@ -84,10 +84,12 @@ pre-commit took 1.4 to 3 s on 60 staged files
 
 ## Every check
 
-56 checks in four areas, and 18 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
+59 checks in four areas, and 18 more in the mobile and web add-ons. Each finding gives its minutes lost a week,
 says **measured** or **estimated**, and names its proof (a run id, a file line, a session). Time someone waited
 ranks above runner minutes, which only cost money. Each proposed fix says what it does to both: billed minutes
-and how long someone waits. The full rules are in [references/](references/).
+and how long someone waits. A speed fix that hides a failure (a retry, a longer timeout, a skipped test) or checks
+less (a lint rule dropped, a tool that misses errors) is never proposed, and the full suite still runs before code
+reaches `main`. Fixes that need an account or a bigger bill come last, as one list with the monthly cost of each. The full rules are in [references/](references/).
 
 ### CI (GitHub Actions)
 
@@ -131,7 +133,8 @@ Speed: how long does a run take, and what does it cost?
   slow files in the log. Split that file before you shard or pay for a bigger runner.
 - **More jobs, or one?**: parallel jobs cut wall time but repeat setup and round each job up to a minute. Worth it
   when people wait on CI; when CI runs after the merge, one job is cheaper. When you shard, fill shards by each
-  file's recorded time, not by file count.
+  file's recorded time, not by file count. A job of small checks runs all of them and lists every failure, so
+  they are fixed in one round.
 - **Tests scoped to the change on pull requests**: a pull request can run only the tests it reaches when the merge
   queue or `main` runs everything (the rules are under the gate's "Every test on every push").
 
@@ -145,6 +148,10 @@ Speed: how long does a run take, and what does it cost?
   and bills minutes while the author is still editing. Review the first push, later ones on request.
 - **Two clocks**: CI time next to pull request open-to-merge time. A cheaper CI that makes pull requests wait
   longer is not a win. OpenClaw's smaller runner cost 41.7% less for the same 240 test files and took 16.5% longer.
+- **Budgets that fail the job**: a time budget per stage (waiting, setup, lint, typecheck, each shard), and a step
+  that fails the job over budget, so the pull request that makes CI slow is the one that sees it.
+- **Shards prove they ran every file**: a last step checks that the shards together ran every test file once, so a
+  crashed shard or a missed folder cannot pass green. Each shard gets its own throwaway database.
 
 ### Git hooks and the gate
 
@@ -181,11 +188,13 @@ Speed: how long does a push take?
   formatter for Prettier (Pontus's timing: `bun fmt` 0.07 s, Biome 0.28 s, dprint 0.44 s, Prettier 7 s). Timed cold
   and warm on your repo first, because a warm cache often already wins, and a hook that formats only staged files is
   often fast already. A new formatter changes the layout of many files: one formatting commit, kept out of `git
-  blame`. Not a new hook manager: see above.
+  blame`. Before a switch, run old and new side by side and list what the new one misses. Not a new hook manager:
+  see above.
 - **Every test on every push**: a branch push can run only the tests its change reaches (Jest `--changedSince`,
   Vitest `--changed` or `related`, pytest-testmon, Nx `affected`, Turborepo filters; for Go, Rust and Swift, the
   changed packages). Before you trust the selection, replay a past bug through it, and run it in shadow mode
-  (run everything, record what it would have skipped). Safe only with four rules: a change the import graph cannot see (lockfile, configs, test
+  (run everything, record what it would have skipped), then plant a bug on purpose and check the selected run
+  fails. Safe only with four rules: a change the import graph cannot see (lockfile, configs, test
   helpers, mocks, a client generated at build time from a spec, a deleted or moved file) runs everything; a test that reads files from disk always
   runs; a per-file coverage bar checks the changed files only, so a new file with no test still fails; `main` and
   CI on `main` run everything. A lockfile bump still runs it all, so keep the full run fast as well: Pontus runs
@@ -197,7 +206,11 @@ Speed: how long does a push take?
 - **Test suite growth**: test files and lines now and a week ago, against the code. Agents add tests easily and
   rarely delete one: our app went from 119 test files to 563 in two months. When tests grow faster than code, the
   audit proposes a test budget and an area-by-area clean-up that keeps one strong test per behaviour. OpenClaw cut
-  417,906 net test lines this way.
+  417,906 net test lines this way. Before deleting, two weeks of evidence: each fixed test failure logged as a caught
+  regression or a change detector (a test that broke only because the code changed). Tests for authorization,
+  privacy, migrations and concurrency are never deleted.
+- **Test order and leaks**: one run in random order (Jest `--randomize`, Vitest `sequence.shuffle`,
+  pytest-randomly) with the seed printed. A test that fails only out of order has a leak; fix it, never retry it.
 
 ### Agent time (Claude Code)
 
@@ -289,7 +302,8 @@ store or print a command, and the report quotes commands, not your conversations
 ## Credits
 
 - [Simon Agius Muscat](https://github.com/simonamdev): suggested this audit and gave tips.
-- [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191): the test-speed and hook-timing checks.
+- [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191): the test-speed and hook-timing checks,
+  and his CI prompt: the rules a speed fix never breaks, budgets, shard proof, random order and the change-detector log.
 - [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/): the test-growth, two-clock and setup checks.
 - [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix): job times and flake counts.
 - [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit): hooks that match CI.

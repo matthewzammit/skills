@@ -4,6 +4,17 @@ Inputs: `ci.txt` / `ci.json` (ci-runs.js) and `checks.txt` (repo-checks.js). Eve
 file lines, says **measured** or **estimated**, and gives minutes lost per week. People-minutes (someone waited or
 re-ran) rank above runner-minutes (only money).
 
+## Rules a speed fix never breaks
+
+Check every proposed speed fix against these before it goes in the report. A fix that breaks one is dropped.
+
+- **It never hides a failure.** No retries, no longer timeouts, no skipped or quarantined tests to make a run
+  faster or greener. A check that needs a retry has a bug; the fix is to find it.
+- **It never checks less.** Lint rules, required checks and coverage bars stay or grow. A faster tool that misses
+  what the old one caught is not faster, it checks less.
+- **The full suite still runs before code reaches the main branch** (on the main branch, in a merge queue, or in
+  the gate). Selection only makes earlier feedback faster.
+
 ## Reliability
 
 1. **No CI at all:** `NO CI` in ci.txt (no workflow that checks code ran on the main branch), or a workflow file
@@ -78,7 +89,9 @@ re-ran) rank above runner-minutes (only money).
    people wait on CI (a required check on pull requests). When CI runs after the merge and nobody waits, keep one
    job, run the checks beside each other inside it or in the local gate, and save the minutes. When people do
    wait, fill shards by each file's recorded time (`--shard` in Jest and Vitest, `pytest-split` with its
-   durations file), not by file count.
+   durations file), not by file count. When the small checks (format, lint, typecheck, a docs check) share one job,
+   make it run all of them and list every failure at the end, not stop at the first: a person or an agent then
+   fixes all of them in one round instead of one per push.
 11. **Tests scoped to the change on pull requests:** the same rules as checks-local item 9 apply in CI. A pull
    request may run only the reached tests when the merge queue or the main branch runs everything.
 
@@ -108,6 +121,17 @@ re-ran) rank above runner-minutes (only money).
    slower (a smaller runner, fewer shards) is not a win; say which clock each fix moves. The PR clock includes
    draft time and review waits, so judge it as a trend, not as CI's fault. A repo that pushes straight to the main
    branch has no PR clock; say so.
+16. **Budgets that fail the job:** once a job is fast, nothing keeps it fast. Propose a time budget per stage from
+   this week's p90 plus a margin (waiting, setup, lint, typecheck, each test shard) and a step that fails the job
+   when a stage goes over it, naming the stage. A budget is a check like any other: it catches the change that made
+   things slow in the pull request that made it, not weeks later in this audit. Set it loose first (p90 plus 50%)
+   and tighten it as fixes land; a budget that fails on a normal run is a flake.
+17. **Shards prove they ran every file:** with sharded tests, list the test files each shard ran, and add a last
+   step that checks the shards together ran every file once. A shard that crashed early, a glob that missed a
+   folder, or a new file no shard picked up otherwise passes green. Shards that share a database or a port can
+   fail each other at random: give each shard its own throwaway database (a name with the shard number, created
+   and dropped by the job). Balance shards from file times the main branch records on each full run, not from a
+   guess.
 
 ## Already right
 
