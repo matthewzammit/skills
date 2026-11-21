@@ -1,6 +1,6 @@
 ---
 name: verify-setup
-description: Sets up a repo so AI agents prove their own work before each commit and you only look at the result - writes the repo's own verify skill, a plan script that picks the checks for each diff, and a commit stamp ("Verified: lint, test, app") that a hook counts, first in observe mode, then in enforce mode when you decide. Reports how many commits were verified, unstamped or unproven. Use when someone wants agents to verify their work, stop reading every diff, count unverified commits, or add a verify skill to a repo.
+description: "Sets up a repo so AI agents prove their own work before each commit and you only look at the result - writes the repo's own verify skill, a plan script that picks the checks for each diff, and a commit stamp (\"Verified: lint, test, app\") that a hook counts, first in observe mode, then in enforce mode when you decide. Reports how many commits were verified, unstamped or unproven. Use when someone wants agents to verify their work, stop reading every diff, count unverified commits, or add a verify skill to a repo."
 argument-hint: "[setup | report]"
 ---
 
