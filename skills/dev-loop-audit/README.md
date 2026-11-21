@@ -185,7 +185,10 @@ Speed: how long does a push take?
   the typechecker already enforces (`import/namespace`, `import/named`) can go.
 - **A faster tool shipped**: Oxlint or Biome for ESLint, TypeScript 7, Vitest without isolation (OpenClaw: 174 s to
   97 s on the lanes where it was safe), a native type checker (OpenClaw: tsgo 447 s to tsrs 64 s), a faster
-  formatter for Prettier (Pontus's timing: `bun fmt` 0.07 s, Biome 0.28 s, dprint 0.44 s, Prettier 7 s). Timed cold
+  formatter for Prettier (Pontus's timing: `bun fmt` 0.07 s, Biome 0.28 s, dprint 0.44 s, Prettier 7 s), Bun's test
+  runner for Jest or Vitest (Pontus's full CI went under 1 minute with `bun test`, shards filled by test time and
+  every check in parallel). Not for React Native or Expo: their tests need `jest-expo` and Babel plugins, so Jest
+  stays and gets a warm transform cache instead. Timed cold
   and warm on your repo first, because a warm cache often already wins, and a hook that formats only staged files is
   often fast already. A new formatter changes the layout of many files: one formatting commit, kept out of `git
   blame`. Before a switch, run old and new side by side and list what the new one misses. Not a new hook manager:

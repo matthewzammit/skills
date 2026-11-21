@@ -69,12 +69,20 @@ Check every proposed speed fix against these before it goes in the report. A fix
    runs it ran in: an install step guarded by a cache hit should run about as often as the lockfile changed. Far
    more means the cache misses. On pull requests GitHub reads only the branch's own caches and the default
    branch's, so a cache that is never saved on the default branch leaves every PR cold.
+   Two traps that keep a restored cache cold. A transform cache (Jest's `/tmp/jest_*`) must never be pruned by file
+   age: Jest writes a file only on a miss, so an old file is often still in use (a 7-day delete threw away 7,500 of
+   37,300 files in use, and the test step doubled). Cap its size and drop it whole instead. And ESLint hashes
+   `process.version` into every cache entry, so a new Node patch on the runner image re-lints everything (2 s to
+   64 s): pin Node to an exact version (`24.22.2` in `.nvmrc`, not `24`) and move it on purpose.
 7. **Setup against checks** (`setup_median_s` per job: checkout, toolchain, cache restore and save, install):
    setup is the part nobody reads, and agents retry past it. Over a third of a warm job's time is worth a look.
 8. **Workers against cores:** a test runner set to a share of the cores (Jest `maxWorkers: '50%'`) gets one worker
    on a 2-vCPU runner (GitHub's standard runner for a private repo), so every test file runs one after another. A
    setting chosen for a laptop shared with other work often ends up on CI this way. Time 1, 2 and 3 workers on the
-   real runner, each twice (a throwaway workflow on a branch, a matrix of settings): more workers than cores can win,
+   real runner, taking turns on ONE machine, each twice (a throwaway workflow on a branch that loops over the
+   settings). Never compare settings across jobs or runs: hosted runners differ by CPU model, and the same suite ran
+   62 s on one and 106 s on another. Print the CPU model in every job (`grep -m1 'model name' /proc/cpuinfo`) and
+   compare main runs per CPU model. More workers than cores can win,
    because a worker spends part of each file waiting on module loading and the transform cache. Set the CI value
    apart (Jest: `maxWorkers: process.env.CI ? N : '50%'`) so the laptop keeps its own. It is free: the job is the
    same, only shorter. Two things to time in the same matrix: coverage off (often costs less than expected) and a
