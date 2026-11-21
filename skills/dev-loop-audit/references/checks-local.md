@@ -48,8 +48,14 @@ transcripts; say so under "Not checked".
    One or two rules are often most of it. A rule the typechecker already enforces can go (in TypeScript:
    `import/namespace`, `import/named`, `import/default`); a rule that catches real bugs stays, however slow.
 8. **A faster tool shipped:** when a check is a top step, look for a faster successor or major version (TypeScript 7,
-   Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file). Time it on
-   this repo, cold and warm, before proposing it: a warm incremental cache often already beats it.
+   Oxlint or Biome for ESLint, Vitest with `isolate: false` for a suite that reloads the app per file, Bun's
+   runner `bun test` for Jest or Vitest). Time it on this repo, cold and warm, before proposing it: a warm
+   incremental cache often already beats it.
+   A test runner switch has limits. `bun test` runs TypeScript without a Babel step, so it suits plain TypeScript,
+   Node and web code. It cannot run a suite built on a framework preset with native mocks (React Native and Expo
+   need `jest-expo`) or on Babel plugins (Reanimated worklets): keep Jest there, and make it faster with a warm
+   transform cache, a split of the slowest file and the worker count timed on one machine (checks-ci). Count the
+   tests and the coverage bar before and after: a switch that runs fewer tests or drops coverage checks less.
    Speed is half of it: run the old and the new tool side by side on the same tree and list what the new one misses
    (a rule it does not have, a file it skips, an error it reports as a warning). A switch that misses things breaks
    "never check less" (checks-ci "Rules a speed fix never breaks"). A tool only out as a canary is pinned to that
