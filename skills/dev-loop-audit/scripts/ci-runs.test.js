@@ -1,7 +1,7 @@
 // Run with: node --test skills/dev-loop-audit/scripts/*.test.js
 const test = require('node:test');
 const assert = require('node:assert');
-const { stuckRuns, text, summarize, SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect, prCycle, fetchPrCycle, reviewBots } = require('./ci-runs.js');
+const { billedByWorkflow, stuckRuns, text, summarize, SETUP_STEP, utcDays, billedMinutes, criticalPath, findFlakes, pushFilters, fileTriggers, findHoles, pickCiWorkflows, summarizeJobs, collect, prCycle, fetchPrCycle, reviewBots } = require('./ci-runs.js');
 const { windowFrom } = require('./common.js');
 
 const at = (min) => new Date(Date.UTC(2026, 9, 20, 10, 0) + min * 60000).toISOString().replace('.000', '');
@@ -197,6 +197,22 @@ test('holes: a later green run covers only when it descends from the push; the f
   const none = Object.fromEntries(findHoles([c('a1'), c('b1')], runs, ['CI'], {}, pushes, (tip, sha) => sha === 'x9').map((g) => [g.tip, g]));
   assert.strictEqual(none.a1.covered_by, 'x9');
   assert.strictEqual(none.b1.hole, true); // x9 ran before b1 was pushed
+});
+
+test('billed minutes are split per workflow, with the failed or cancelled share', () => {
+  const runs = [
+    runOf(1, 'a', { name: 'CI', jobs: [job('t', 0, 2)] }),
+    runOf(2, 'b', { name: 'CI', conclusion: 'failure', jobs: [job('t', 0, 3, { conclusion: 'failure' })] }),
+    runOf(3, 'c', { name: 'Experiment', conclusion: 'cancelled', jobs: [job('t', 0, 1, { labels: ['macos-14'] })] }),
+    runOf(4, 'd', { name: 'Other' }), // jobs not fetched
+  ];
+  assert.deepStrictEqual(billedByWorkflow(runs), { CI: { billed: 5, wasted: 3 }, Experiment: { billed: 10, wasted: 10 } });
+  const win = windowFrom({ from: '2026-10-20', to: '2026-10-21' });
+  const s = summarize(runs.map((r) => ({ ...r, in_window: true })), win, ['CI'], [], []);
+  assert.deepStrictEqual(s.billed_by_workflow.CI, { billed: 5, wasted: 3 });
+  const out = { repo: 'o/r', branch: 'main', window: { from: 'a', to: 'b' }, rate_limit: {}, summary: { ...s, pushes_from: 'x' },
+    failures: [], cancelled: [], flakes: [], holes: [], stuck_runs: [], path_filter_use: {}, speed: {}, long_jobs: [] };
+  assert.match(text(out), /billed by workflow: \{"CI":\{"billed":5,"wasted":3\},"Experiment":\{"billed":10,"wasted":10\}\}/);
 });
 
 test('stuck runs: queued or in progress over 6 hours at audit time, listed in the text', () => {

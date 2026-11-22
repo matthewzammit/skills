@@ -32,6 +32,11 @@ From `$ARGUMENTS`: empty or "last week" is last Monday to this Monday (local tim
 two dates are `--from A --to B` (`--to` is the day after the last day). Run `date` first; never guess today.
 Read the record folder's `trend.csv` and the last report, so you know last week's numbers and past fixes.
 
+If the default window equals one whose row is already in `trend.csv` (a row's first column is its window's first
+Monday, so the run fires on a day that gives the same last Monday), say so and audit the current week so far instead:
+`--from <this Monday> --to <tomorrow>`. Mark every number in the report as partial, and do not append a trend row
+that would later be mistaken for a full week.
+
 Done when: you can say the window in one line, and you have last week's row (or know this is the first run).
 
 ## 3. Measure

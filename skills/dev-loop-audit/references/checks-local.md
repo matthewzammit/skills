@@ -27,6 +27,12 @@ transcripts; say so under "Not checked".
 6. **Hook refusals** (agent hooks in `.claude/settings.json`): from "hook refusals" in `metrics.txt`. Each is either
    the hook doing its job (an agent tried something it should not) or a false refusal (time lost, the agent worked
    around it). Read a few of each kind before saying which.
+7. **Sessions on a branch that lacks the main branch's tooling** (hooks, agent docs, helper scripts): a session that
+   worked for days on a branch far behind the main branch ran old hooks and read old agent docs. Find it: Sessions
+   in `metrics.txt` give each session's branch; compare with the `worktrees:` lines in `checks.txt`, which say how
+   many commits each worktree is behind `origin/<main>`. Name the session, its branch, how far behind it was and
+   which tooling commits it missed (`git log --oneline HEAD..origin/<main> -- <hooks, agent docs, scripts>`).
+   The usual fix is a session-start or pre-push warning that names the missing tooling commits.
 
 ## Speed
 
