@@ -191,6 +191,34 @@ test('python and node sleeps count as sleeps, and as sleep-only when that is the
   assert.ok(isSleepOnly('sleep 5') && !isSleepOnly('python3 -c "import time; time.sleep(5); print(1)"'));
 });
 
+test('JS sleeps count in milliseconds; shell and python sleeps stay seconds', () => {
+  assert.strictEqual(sleepSeconds('node -e "const sleep = (ms) => new Promise(r => setTimeout(r, ms)); await sleep(1000)"'), 1);
+  assert.strictEqual(sleepSeconds('node -e "async function f(){ await sleep(1000); sleep(500) }"'), 1.5);
+  assert.strictEqual(sleepSeconds('node -e "setTimeout(() => {}, 2000)"'), 2);
+  assert.strictEqual(sleepSeconds('sleep 30'), 30);
+  assert.strictEqual(sleepSeconds('python3 -c "import time; time.sleep(30)"'), 30);
+  assert.strictEqual(sleepSeconds("python3 -c 'from time import sleep; sleep(30)'"), 30);
+  assert.strictEqual(sleepSeconds('python3 -c "import asyncio; asyncio.run(asyncio.sleep(3))"'), 3);
+  // A python heredoc that writes a JS file: the sleep(1200) inside is JS, so 1.2 s.
+  assert.strictEqual(sleepSeconds("python3 - <<'EOF'\nopen('t.js','w').write('sleep(1200);tapLabel(1)')\nEOF"), 1.2);
+});
+
+test('a watchdog sleep in a backgrounded subshell is not a wait', () => {
+  assert.strictEqual(sleepSeconds('run.sh & P=$!; ( sleep 150; kill $P 2>/dev/null ) &'), 0);
+  assert.strictEqual(sleepSeconds('run.sh & P=$!; ( sleep 150; kill $P ) & sleep 5; wait $P'), 5);
+});
+
+test('the verify tag matches npm, yarn and pnpm verify scripts and the verify skill', () => {
+  const t = (cmd) => tagCall({ name: 'Bash', cmd }, compileConfig({}));
+  for (const c of ['npm run verify', 'npm run -s verify:plan', 'npm run --silent verify:plan -- --staged', 'npm run verify:all && git commit', 'yarn verify', 'yarn verify:plan', 'pnpm verify', 'pnpm run verify:x']) {
+    assert.ok(t(c).includes('verify'), c);
+  }
+  for (const c of ['npm run verify-setup', 'npm run lint', 'echo npm run verify', 'npm run unverified']) assert.ok(!t(c).includes('verify'), c);
+  const skill = (s) => tagCall({ name: 'Skill', input: JSON.stringify({ skill: s }) }, compileConfig({}));
+  assert.ok(skill('verify').includes('verify') && skill('my-plugin:verify').includes('verify'));
+  assert.ok(!skill('verify-setup').includes('verify'));
+});
+
 test('an --until wait that timed out or matched nothing is an until miss; the pattern can be set in the config', () => {
   const t = (cmd, res, config = {}) => tagCall({ name: 'Bash', cmd, res_head: res }, compileConfig(config));
   assert.ok(t('npm run sim:ui -- --until "Home" --timeout 90', 'timed out after 90 s waiting for "Home"').includes('until_miss'));
@@ -204,5 +232,6 @@ test('the config\'s verify commands get the verify tag', () => {
   const cfg = compileConfig({ verification: { commands: ['npm run verify'] } });
   assert.ok(tagCall({ name: 'Bash', cmd: 'npm run verify -- --fast' }, cfg).includes('verify'));
   assert.ok(!tagCall({ name: 'Bash', cmd: 'npm run build' }, cfg).includes('verify'));
-  assert.ok(!tagCall({ name: 'Bash', cmd: 'npm run verify' }, compileConfig({})).includes('verify'));
+  assert.ok(tagCall({ name: 'Bash', cmd: './scripts/check-all.sh' }, compileConfig({ verification: { commands: ['check-all'] } })).includes('verify'));
+  assert.ok(!tagCall({ name: 'Bash', cmd: './scripts/check-all.sh' }, compileConfig({})).includes('verify'));
 });

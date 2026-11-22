@@ -67,6 +67,17 @@ test('hookDrift lists worktrees whose hooks differ from the main branch\'s', () 
   assert.deepStrictEqual(d.map((x) => [x.branch, x.git_differs, x.agent_differs]), [['feat/old', true, true]]);
 });
 
+test('parseBehind reads a rev-list count; worktreeLine shows it with what differs', () => {
+  const { parseBehind, worktreeLine } = require('./repo-checks.js');
+  assert.strictEqual(parseBehind('145\n'), 145);
+  assert.strictEqual(parseBehind('0'), 0);
+  assert.strictEqual(parseBehind(''), null);
+  assert.strictEqual(parseBehind('fatal: bad revision'), null);
+  assert.strictEqual(worktreeLine({ path: '/r/old', branch: 'feat/old', behind: 145, git_differs: true, agent_differs: false }, 'main'),
+    '  /r/old (feat/old): 145 commits behind origin/main git hooks differ');
+  assert.strictEqual(worktreeLine({ path: '/r/x', branch: 'b', behind: null, git_differs: false, agent_differs: true }, 'main'), '  /r/x (b): agent hooks differ');
+});
+
 test('testScopeIn names the test runners a gate calls and whether they are scoped to the change', () => {
   const { testScopeIn } = require('./repo-checks.js');
   assert.deepStrictEqual(testScopeIn(['npm run lint\nnpx jest --coverage']), { runners: ['jest'], scoped: [] });

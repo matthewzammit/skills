@@ -162,6 +162,9 @@ Reliability: does the gate catch what CI would?
   word.
 - **Old hooks in old worktrees**: a worktree reads hooks from its own branch, so a branch cut weeks ago runs the
   hooks of weeks ago. The fix is a hook that calls the main branch's copy.
+- **Sessions on a branch that lacks the main branch's tooling**: a session that worked for days on a branch far
+  behind the main branch ran old hooks and read old agent docs. The audit shows how many commits each worktree is
+  behind. The fix is a session-start or pre-push warning that names the missing tooling commits.
 - **Hooks match CI**: a check only in CI lets a push go out that CI then fails; a check only in the hook is enforced
   nowhere on `main`. Either can be on purpose, and the audit says which.
 - **Failed pushes**: each one sorted into a real catch or waste (stale dependencies, two sessions on one branch, a
@@ -234,6 +237,10 @@ overnight).
 - **Model time after errors**: the thinking an error cost.
 - **QA, per input**: the agent checking its work on a simulator or in a browser, as seconds per tap or click. The one
   number that compares weeks with more or less testing. Ours: 23.7 s, then 12.7 s.
+- **Waiting on CI in the foreground**: `gh run watch` or a loop over `gh run list` holds the session for the whole
+  run. The fix is to run it in the background, or a hook refuses the foreground shape.
+- **Blocking tool calls over 60 s, grouped by tool name**: so an expert or search tool that blocks the session for
+  minutes shows up. The fix is the same: run it in the background, or a hook refuses the foreground shape.
 
 ### Proof of agent work (git, the repo's files, Claude Code)
 

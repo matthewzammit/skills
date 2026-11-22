@@ -312,6 +312,19 @@ function hookDrift(entries, refPath) {
   })).filter((e) => e.git_differs || e.agent_differs);
 }
 
+/** Commits behind: `git rev-list --count` output as a number, or null when it is not one. */
+function parseBehind(out) {
+  const t = String(out || '').trim();
+  const n = t === '' ? NaN : Number(t);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+/** The drift line for one worktree: its branch, the commits it is behind the main branch's tip, what differs. */
+function worktreeLine(d, branch) {
+  const behind = d.behind == null ? '' : ` ${d.behind} commits behind origin/${branch}`;
+  return `  ${d.path} (${d.branch}):${behind}${d.git_differs ? ' git hooks differ' : ''}${d.agent_differs ? ' agent hooks differ' : ''}`;
+}
+
 // ---- Verification (references/checks-verification.md) ----
 
 /** A commit by an AI agent: a Co-Authored-By trailer or a generated-with line that names a known agent. */
@@ -485,6 +498,11 @@ function main() {
   } catch { /* no worktrees */ }
   const tracked = hooks.core_hooks_path && !path.isAbsolute(hooks.core_hooks_path) ? hooks.core_hooks_path : null;
   const refPath = (worktrees.find((w) => w.branch === branch) || { path: root }).path;
+  // How far each worktree's branch is behind the main branch's remote tip; a worktree that errors is skipped silently.
+  for (const w of worktrees) {
+    try { w.behind = parseBehind(run('git', ['rev-list', '--count', `HEAD..origin/${branch}`], { cwd: w.path })); } catch { w.behind = null; }
+  }
+  const behindAll = worktrees.filter((w) => w.behind != null).map((w) => ({ path: w.path, branch: w.branch, behind: w.behind }));
   const drift = worktrees.length > 1 ? hookDrift(worktrees.map((w) => ({ ...w, ...hookPrint(w.path, tracked) })), refPath) : [];
 
   let growth = null;
@@ -508,6 +526,7 @@ function main() {
     full_history_checkouts: workflows.flatMap((w) => w.full_history_checkouts || []),
     changed_since_window_end: since,
     hook_drift: drift,
+    worktrees_behind: behindAll,
     not_on_remote: notPushed,
     removed_locally: removedLocally,
     workflows,
@@ -546,7 +565,9 @@ function main() {
   if (hooks.tracked_but_not_used.length) lines.push(`  hook folders git does not use: ${hooks.tracked_but_not_used.join(', ')}`);
   if (worktrees.length > 1) {
     lines.push(`worktrees: ${worktrees.length}; with hooks that differ from ${branch}'s (each runs its own branch's copy): ${drift.length}`);
-    for (const d of drift) lines.push(`  ${d.path} (${d.branch}):${d.git_differs ? ' git hooks' : ''}${d.agent_differs ? ' agent hooks' : ''}`);
+    for (const d of drift) lines.push(worktreeLine(d, branch));
+    const behindOnly = behindAll.filter((w) => w.behind > 0 && !drift.some((d) => d.path === w.path));
+    if (behindOnly.length) lines.push(`worktrees behind origin/${branch} (a branch that lacks its newer hooks, agent docs and scripts):`, ...behindOnly.map((w) => worktreeLine(w, branch)));
   }
   lines.push('', '# CI against hooks', `CI runs: ${out.compare.ci.join(' ') || 'nothing known'}`, `hooks run: ${out.compare.hooks.join(' ') || 'nothing known'}`,
     `in CI only: ${out.compare.in_ci_not_hooks.join(' ') || 'none'}`, `in hooks only: ${out.compare.in_hooks_not_ci.join(' ') || 'none'}`);
@@ -557,4 +578,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn, isTestPath, isCodePath, lateSkips, fullHistoryCheckout, sizeOf, testGrowth, parseGrepCounts, measureTree, measureGrowth, growthLine, commitStamps, testWaits, verifyStep, measureVerification, verificationLines };
+module.exports = { parseBehind, worktreeLine, hookDrift, checkWorkflow, commandsIn, expand, managerIn, testScopeIn, isTestPath, isCodePath, lateSkips, fullHistoryCheckout, sizeOf, testGrowth, parseGrepCounts, measureTree, measureGrowth, growthLine, commitStamps, testWaits, verifyStep, measureVerification, verificationLines };

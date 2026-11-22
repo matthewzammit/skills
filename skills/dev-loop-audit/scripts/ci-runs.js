@@ -281,6 +281,18 @@ function pickCiWorkflows(runs, branch, given) {
   return names.filter((n) => !NOT_CI.test(n));
 }
 
+/** Billed and wasted (failed or cancelled) minutes per workflow name, for runs whose jobs were fetched. */
+function billedByWorkflow(runs) {
+  const out = {};
+  for (const r of runs.filter((x) => x.jobs)) {
+    const w = out[r.name] || (out[r.name] = { billed: 0, wasted: 0 });
+    const m = sum(r.jobs.map(billedMinutes));
+    w.billed += m;
+    if (r.conclusion === 'cancelled' || FAILED.has(r.conclusion)) w.wasted += m;
+  }
+  return out;
+}
+
 function summarize(runs, win, ciNames, holes, flakes, fixes = [], now = Date.now()) {
   const inWin = runs.filter((r) => r.in_window);
   const ci = inWin.filter((r) => ciNames.includes(r.name));
@@ -312,6 +324,7 @@ function summarize(runs, win, ciNames, holes, flakes, fixes = [], now = Date.now
     queue_median_s: median(queues),
     billed_min: billed,
     billed_wasted_min: wasted,
+    billed_by_workflow: billedByWorkflow(withJobs),
     jobs_fetched: withJobs.length,
   };
 }
@@ -495,6 +508,7 @@ function text(out) {
     ...(s.fix_splits || []).map((f) => `  around fix ${f.name} (${f.at}): before median ${f.before.median_s} s, p90 ${f.before.p90_s} s (${f.before.n} runs); after median ${f.after.median_s} s, p90 ${f.after.p90_s} s (${f.after.n} runs)`),
     `stuck (queued or in progress over 6 h): ${s.stuck_queued}${(out.stuck_runs || []).length ? `, runs ${out.stuck_runs.map((r) => r.run).join(', ')}` : ''}`,
     `billed minutes (estimate) ${s.billed_min}, of which failed or cancelled ${s.billed_wasted_min}; jobs fetched for ${s.jobs_fetched} runs`,
+    `billed by workflow: ${JSON.stringify(s.billed_by_workflow || {})}`,
     `rate limit ${out.rate_limit.before} -> ${out.rate_limit.after}`,
     ...(out.pr_cycle_error ? [`PR cycle: not checked (${out.pr_cycle_error})`]
       : out.pr_cycle ? [`PR cycle (open to merge): ${out.pr_cycle.merged} merged, median ${out.pr_cycle.median_min} min, p90 ${out.pr_cycle.p90_min} min (draft time included)`]
@@ -535,4 +549,4 @@ if (require.main === module) {
   try { main(); printElapsed(); } catch (e) { console.error(e.message); printElapsed(); process.exit(1); }
 }
 
-module.exports = { stuckRuns, text, SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect, prCycle, fetchPrCycle, reviewBots };
+module.exports = { billedByWorkflow, stuckRuns, text, SETUP_STEP, fetchPushes, utcDays, rateFor, billedMinutes, runWall, criticalPath, summarizeJobs, findFlakes, pushFilters, fileTriggers, statusOf, findHoles, pickCiWorkflows, summarize, collect, prCycle, fetchPrCycle, reviewBots };

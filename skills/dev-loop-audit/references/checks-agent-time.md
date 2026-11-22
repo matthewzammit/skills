@@ -53,6 +53,13 @@ when a script changed: a new rule moves the numbers a few percent.
 7. **QA, per input** (`qa.per_input_s` = (QA wall + QA model) / inputs; a call that chains several taps counts each, and `axe touch` is a tap): the one number that compares weeks with
    different amounts of testing. Then: setup warm and cold, the check step median, the batched share, screenshots
    per input, and consecutive screens with no input between (looking twice at the same screen).
+8. **Waiting on CI in the foreground:** `gh run watch`, or a loop over `gh run list` or `gh run view`, holds the
+   session for the whole run. Sum the minutes of those calls. Fix: run it in the background, or a hook refuses the
+   foreground shape.
+9. **Blocking tool calls over 60 s, grouped by tool name:** from `calls.json`, take MCP and other tool calls whose
+   tool time is over 60 s and group them by tool name (an expert or search tool that blocks the session for minutes
+   is the usual one). Report calls and minutes per tool. Fix: run it in the background, or a hook refuses the
+   foreground shape.
 
 ## Speed
 
