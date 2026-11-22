@@ -174,15 +174,18 @@ const SLEEP_ONLY = [
 ];
 const SLEEP_ANY = [
   { re: /(?<![\w/.-])sleep\s+(\d+(?:\.\d+)?)/g, per: 1 },
-  // Python's time.sleep and a bare sleep() in python code are seconds; a bare sleep() elsewhere is a JS helper in ms.
-  { re: /(?<![\w])time\.sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1 },
+  // Python's time.sleep and asyncio.sleep are seconds; a bare sleep() is a JS helper in ms.
+  { re: /(?<![\w])(?:time|asyncio)\.sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1 },
   { re: /(?<![\w.])sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1, jsMs: true },
   { re: /\bsetTimeout\([^;]*?,\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1000 },
 ];
 /** Nominal seconds of every sleep in a command. */
 const sleepSeconds = (c) => {
-  const py = /\bpython3?\b/.test(c);
-  return SLEEP_ANY.reduce((tot, { re, per, jsMs }) => tot + [...c.matchAll(re)].reduce((a, m) => a + (Number(m[1]) || 0) / (jsMs && !py ? 1000 : per), 0), 0);
+  // A watchdog `( sleep 150; kill $P ) &` caps a command; the session does not wait for it.
+  const body = c.replace(/\([^()]*\)\s*&(?!&)/g, ' ');
+  // Bare sleep() is ms, unless the code imported Python's own sleep (time.sleep and asyncio.sleep are always seconds).
+  const pySleep = /\bfrom\s+(?:time|asyncio)\s+import\s+[^\n;]*\bsleep\b/.test(body);
+  return SLEEP_ANY.reduce((tot, { re, per, jsMs }) => tot + [...body.matchAll(re)].reduce((a, m) => a + (Number(m[1]) || 0) / (jsMs && !pySleep ? 1000 : per), 0), 0);
 };
 const isSleepOnly = (c) => SLEEP_ONLY.some((re) => re.test(c));
 const BOUND = /\$SECONDS|-lt\s+\d|-ge\s+\d|-gt\s+\d|-le\s+\d|\(\(|date \+%s|seq \d|\{1\.\.\d|for \w+ in \d/;

@@ -198,6 +198,14 @@ test('JS sleeps count in milliseconds; shell and python sleeps stay seconds', ()
   assert.strictEqual(sleepSeconds('sleep 30'), 30);
   assert.strictEqual(sleepSeconds('python3 -c "import time; time.sleep(30)"'), 30);
   assert.strictEqual(sleepSeconds("python3 -c 'from time import sleep; sleep(30)'"), 30);
+  assert.strictEqual(sleepSeconds('python3 -c "import asyncio; asyncio.run(asyncio.sleep(3))"'), 3);
+  // A python heredoc that writes a JS file: the sleep(1200) inside is JS, so 1.2 s.
+  assert.strictEqual(sleepSeconds("python3 - <<'EOF'\nopen('t.js','w').write('sleep(1200);tapLabel(1)')\nEOF"), 1.2);
+});
+
+test('a watchdog sleep in a backgrounded subshell is not a wait', () => {
+  assert.strictEqual(sleepSeconds('run.sh & P=$!; ( sleep 150; kill $P 2>/dev/null ) &'), 0);
+  assert.strictEqual(sleepSeconds('run.sh & P=$!; ( sleep 150; kill $P ) & sleep 5; wait $P'), 5);
 });
 
 test('the verify tag matches npm, yarn and pnpm verify scripts and the verify skill', () => {
