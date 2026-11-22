@@ -239,7 +239,7 @@ overnight).
   number that compares weeks with more or less testing. Ours: 23.7 s, then 12.7 s.
 - **Waiting on CI in the foreground**: `gh run watch` or a loop over `gh run list` holds the session for the whole
   run. The fix is to run it in the background, or a hook refuses the foreground shape.
-- **Blocking tool calls over 60 s**: grouped by tool name, so an expert or search tool that blocks the session for
+- **Blocking tool calls over 60 s, grouped by tool name**: so an expert or search tool that blocks the session for
   minutes shows up. The fix is the same: run it in the background, or a hook refuses the foreground shape.
 
 ### Proof of agent work (git, the repo's files, Claude Code)
