@@ -174,11 +174,16 @@ const SLEEP_ONLY = [
 ];
 const SLEEP_ANY = [
   { re: /(?<![\w/.-])sleep\s+(\d+(?:\.\d+)?)/g, per: 1 },
-  { re: /(?<![\w])(?:time\.)?sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1 },
+  // Python's time.sleep and a bare sleep() in python code are seconds; a bare sleep() elsewhere is a JS helper in ms.
+  { re: /(?<![\w])time\.sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1 },
+  { re: /(?<![\w.])sleep\(\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1, jsMs: true },
   { re: /\bsetTimeout\([^;]*?,\s*(\d+(?:\.\d+)?)\s*\)/g, per: 1000 },
 ];
 /** Nominal seconds of every sleep in a command. */
-const sleepSeconds = (c) => SLEEP_ANY.reduce((tot, { re, per }) => tot + [...c.matchAll(re)].reduce((a, m) => a + (Number(m[1]) || 0) / per, 0), 0);
+const sleepSeconds = (c) => {
+  const py = /\bpython3?\b/.test(c);
+  return SLEEP_ANY.reduce((tot, { re, per, jsMs }) => tot + [...c.matchAll(re)].reduce((a, m) => a + (Number(m[1]) || 0) / (jsMs && !py ? 1000 : per), 0), 0);
+};
 const isSleepOnly = (c) => SLEEP_ONLY.some((re) => re.test(c));
 const BOUND = /\$SECONDS|-lt\s+\d|-ge\s+\d|-gt\s+\d|-le\s+\d|\(\(|date \+%s|seq \d|\{1\.\.\d|for \w+ in \d/;
 // A shell loop keyword, not a flag (`--until` is a helper's own wait, bounded by its `--timeout N`).
@@ -188,6 +193,9 @@ const OWN_TIMEOUT = /--timeout(?:=|\s+)\d/;
 const UNTIL_MISS = /timed out|no match|not seen|gave up/i;
 const INPUT_ACTIONS = new Set(['tap', 'swipe', 'text', 'button', 'press_key', 'touch_path', 'touch2_path', 'long_press', 'type', 'key',
   'left_click', 'right_click', 'double_click', 'triple_click', 'left_click_drag', 'scroll', 'click', 'hover', 'fill', 'select', 'drag', 'press']);
+
+// A repo's verify script by its usual name: `npm run verify`, `npm run -s verify:plan`, `yarn verify`, `pnpm run verify:all`.
+const VERIFY_CMD = /(?:^|[;&|\n]\s*)(?:npm\s+run(?:\s+(?:-s|--silent))*|yarn(?:\s+run)?|pnpm(?:\s+run)?)\s+(?:(?:-s|--silent)\s+)*verify(?::[\w:-]+)?(?=\s|$|[;&|])/;
 
 /** Compile the config's own tags: [{ pattern, tags: [..] }] for Bash commands, and the screen-read pattern. */
 function compileConfig(config = {}) {
@@ -203,6 +211,11 @@ function compileConfig(config = {}) {
     pushFail: config.gate && config.gate.pushFailPattern ? new RegExp(config.gate.pushFailPattern) : null,
     untilMiss: config.untilMissPattern ? new RegExp(config.untilMissPattern, 'i') : UNTIL_MISS,
   };
+}
+
+/** The skill a Skill tool call names; its input is kept as a short JSON string in `rec.input`. */
+function skillOf(rec) {
+  try { return String((JSON.parse(rec.input || '{}').skill) || '').split(':').pop(); } catch { return ''; }
 }
 
 /** Tag one call. `rec` has the use and its result already merged in. */
@@ -233,6 +246,7 @@ function tagCall(rec, cfg) {
     if (/^(browser_)?(read_page|get_page_text|snapshot|find)$/.test(a) || /read_page|get_page_text|snapshot/.test(name)) add('page_read', 'screen_seen');
     if (/navigate/.test(a) || /navigate|preview_start/.test(name)) add('relaunch');
   }
+  if (name === 'Skill' && skillOf(rec) === 'verify') add('verify');
   if (name === 'Read' && rec.path && (mobile || web) && cfg.screenRead.test(rec.path)) add('screen_read', 'screen_seen');
 
   const c = rec.cmd;
@@ -241,7 +255,7 @@ function tagCall(rec, cfg) {
     if (!readonly) {
       for (const t of cfg.custom) if (t.re.test(c)) add(...t.tags);
       if (cfg.gate.some((re) => re.test(c))) add('gate');
-      if (cfg.verify.some((re) => re.test(c))) add('verify');
+      if (cfg.verify.some((re) => re.test(c)) || VERIFY_CMD.test(c)) add('verify');
     }
     if (mobile && !readonly) {
       if (/xcrun simctl|\bsimctl\b/.test(c)) {
