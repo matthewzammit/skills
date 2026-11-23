@@ -31,7 +31,9 @@ const TREND_COLUMNS = [
   'gate_median_s', 'qa_inputs', 'qa_wall_min', 'qa_model_min', 'qa_per_input_s', 'check_step_median_s', 'batched_step_share',
   'agent_wait_min', 'until_misses', 'until_miss_min', 'ci_stuck_queued',
   'agent_commits', 'verified_share', 'test_waits_added', 'rerun_green', 'fix_loops', 'verify_median_s',
+  'gate_then_push', 'gate_then_push_min',
 ];
+const GATE_THEN_PUSH_S = 1800;
 const READY = /ready in (\d+(?:\.\d+)?)\s*s/i;
 
 const has = (r, t) => r.tags.includes(t);
@@ -153,6 +155,20 @@ function fixLoops(rs, humanTimes = []) {
   }
   reset();
   return out;
+}
+
+/**
+ * Does the pre-push hook run checks? Read from checks.json (repo-checks.js): 'runs' when a pre-push hook exists,
+ * 'none' when hooks were read and there is none, 'unknown' when checks.json is missing or a hook manager hides its hooks.
+ */
+function prePushHook(checks) {
+  const h = checks && checks.hooks;
+  if (!h) return 'unknown';
+  const managers = h.managers || [];
+  if ((h.hooks || []).some((x) => x.name === 'pre-push') || managers.some((m) => (m.hooks || []).includes('pre-push'))) return 'runs';
+  // lefthook, pre-commit and simple-git-hooks list no hook names: their config may hold a pre-push step.
+  if (managers.some((m) => !m.hooks)) return 'unknown';
+  return 'none';
 }
 
 function compute(data, ci, fixes = null, checks = null) {
@@ -327,6 +343,24 @@ function compute(data, ci, fixes = null, checks = null) {
   }
   gate.push_failed_n = gate.push_failed.length;
 
+  // A full gate run by hand, then a push in the same session soon after: the pre-push hook runs the same checks again.
+  // Uses the calls already tagged (gate, git_push); a gate run counts once, however many pushes follow it.
+  gate.pre_push_hook = prePushHook(checks);
+  const dupes = [];
+  if (gate.pre_push_hook !== 'none') {
+    for (const g of gateRuns) {
+      if (ran.some((p) => p.session === g.session && p.t0 >= g.t1 && p.t0 - g.t1 <= GATE_THEN_PUSH_S * 1000)) dupes.push(g);
+    }
+  }
+  gate.gate_then_push = dupes.length;
+  gate.gate_then_push_min = round(sum(dupes.map((r) => r.tool_s)) / 60, 1);
+  gate.gate_then_push_note = gate.pre_push_hook === 'unknown' ? 'hook unknown: counted anyway' : null;
+  const dupeBy = countBy(dupes, (r) => r.session.slice(0, 8));
+  gate.gate_then_push_sessions = Object.entries(dupeBy).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([session, n]) => ({ session, n, min: round(sum(dupes.filter((r) => r.session.startsWith(session)).map((r) => r.tool_s)) / 60, 1) }));
+  const vs = checks && checks.verification && checks.verification.verify_step;
+  gate.scoped_verify_step = Boolean(vs && [vs.skills, vs.scripts, vs.make].some((x) => x && x.length));
+
   // QA: driving and watching a device or browser (mobile and web add-ons, and the config's helpers).
   const qaCalls = calls.filter((r) => has(r, 'qa'));
   const inputs = calls.filter((r) => has(r, 'input'));
@@ -494,6 +528,7 @@ function trendRow(M) {
     until_misses: M.agent.until_misses, until_miss_min: M.agent.until_miss_min, ci_stuck_queued: ci.stuck_queued,
     agent_commits: vs && vs.agent_commits, verified_share: vs && vs.verified_share, test_waits_added: vw && vw.added,
     rerun_green: M.agent.rerun_green, fix_loops: M.agent.fix_loops, verify_median_s: M.agent.verify_median_s,
+    gate_then_push: M.gate.gate_then_push, gate_then_push_min: M.gate.gate_then_push_min,
   };
   return TREND_COLUMNS.map((c) => (v[c] === null || v[c] === undefined ? '' : v[c])).join(',');
 }

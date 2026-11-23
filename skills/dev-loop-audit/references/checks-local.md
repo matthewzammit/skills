@@ -131,3 +131,17 @@ transcripts; say so under "Not checked".
    A failure in random order is a real bug in a test, not a flake: fix it, do not retry it. Reset state after every
    file (Jest `resetModules`, `restoreMocks`; Vitest the same names), and prefer isolating modules over separate
    processes when the runner allows it: separate processes are slower and hide the leak instead of fixing it.
+13. **Full gate by hand, then a push** (`gate_then_push`, `gate_then_push_min`, `gate_then_push_sessions` in the Gate
+   section of `metrics.txt`): a foreground gate command run by hand, then a `git push` in the same session within 30
+   minutes, so the pre-push hook runs the same checks a second time. `pre_push_hook` says whether checks.json found
+   a pre-push hook (`runs`), none (`none`, nothing is counted) or could not tell (`unknown`, counted anyway: say
+   "hook unknown"). Report the count and minutes, rank it by minutes with the other findings, and name the sessions
+   with the most runs: a routine or a prompt that orders the full gate before every push shows up as one session
+   with many. The count does not see whether the tree changed between the two runs, so read a few examples in
+   `calls.json` before reporting. Fix shapes:
+   - **Route agents to the scoped verify step:** when the repo has one (`scoped_verify_step` is true, or the
+     candidates under `verify_step` in checks.json: a script that lists only the checks the diff needs), change the
+     prompt, agent doc or skill that orders the full gate so it orders that step instead, and leave the full gate to
+     the push.
+   - **A hook that refuses an unasked full gate run:** an agent hook on the gate command that refuses it and says why
+     (the push runs it), with an escape variable for when a person asked for it (for example `ALLOW_FULL_GATE=1`).
