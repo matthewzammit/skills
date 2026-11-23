@@ -294,6 +294,8 @@ test('a gate run with no push after it, a background gate run, and a push 2 h la
   assert.strictEqual(late.gate.gate_then_push, 0);
   const other = compute(data([gateRun(0, 60), pushRun(300, 360, { session: 'sess-0002' })]));
   assert.strictEqual(other.gate.gate_then_push, 0, 'another session');
+  const failed = compute(data([gateRun(0, 60, { is_error: true }), pushRun(300, 360)]));
+  assert.strictEqual(failed.gate.gate_then_push, 0, 'a failed gate run is fixed, not repeated, by the push');
 });
 
 test('gate then push follows what checks.json says about the pre-push hook', () => {

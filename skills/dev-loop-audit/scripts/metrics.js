@@ -344,11 +344,14 @@ function compute(data, ci, fixes = null, checks = null) {
   gate.push_failed_n = gate.push_failed.length;
 
   // A full gate run by hand, then a push in the same session soon after: the pre-push hook runs the same checks again.
-  // Uses the calls already tagged (gate, git_push); a gate run counts once, however many pushes follow it.
+  // Uses the calls already tagged (gate, git_push); a gate run counts once, however many pushes follow it, and a
+  // failed one does not count.
   gate.pre_push_hook = prePushHook(checks);
   const dupes = [];
   if (gate.pre_push_hook !== 'none') {
     for (const g of gateRuns) {
+      // A failed gate run is not repeated by the push: the push runs on the fixed tree.
+      if (g.is_error || /exit code [1-9]/i.test(g.res_head || '')) continue;
       if (ran.some((p) => p.session === g.session && p.t0 >= g.t1 && p.t0 - g.t1 <= GATE_THEN_PUSH_S * 1000)) dupes.push(g);
     }
   }
