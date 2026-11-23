@@ -35,6 +35,7 @@ anything and check their own work. They work in Claude Code, Cursor, Codex and [
 
 <table>
 <tr><th width="200" align="left">Skill</th><th align="left">What it does</th><th width="200" align="left">When you run it</th></tr>
+<tr><td><a href="skills/code-quality-review/">code-quality-review</a></td><td>Reviews your whole codebase with a team of agents and turns what they find into small pull requests, each reviewed and checked in the running app. Finds implicit state machines too.</td><td>Once per quarter, or before a big release</td></tr>
 <tr><td><a href="skills/dev-loop-audit/">dev-loop-audit</a></td><td>Finds what slows down your CI, git hooks and agents, ranked by minutes lost, with the fixes.</td><td>Every Monday, or any time</td></tr>
 <tr><td><a href="skills/retro-session/">retro-session</a></td><td>Finds what went wrong in an agent session, including failures a quick read misses, and fixes them with checks, hooks and scripts. Keeps a record, so a problem that comes back is fixed at its cause.</td><td>After a long session</td></tr>
 <tr><td><a href="skills/verify-setup/">verify-setup</a></td><td>Sets up your repo so agents prove their work before each commit: a verify skill, the right checks for each change, and a stamp on every commit that says what ran. You look at the result.</td><td>Once per repo, then after a week</td></tr>
@@ -216,6 +217,19 @@ Reading every diff does not scale when agents write the code. This lets you say 
 proof. It also shows how many commits were never verified. Based on [the Claude Code team's post on verification](https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/).
 
 [Read more about verify setup](skills/verify-setup/)
+
+#### #8: Review your whole codebase and land the fixes
+
+[**code-quality-review**](skills/code-quality-review/) reviews your whole codebase with a team of agents. A lead agent
+splits the code into sections and sends a read-only survey agent to each, with lenses for bugs, security, failure
+modes, speed, tests, structure and implicit state machines. You pick what to fix. Cheaper helper agents build each fix
+on its own branch, every diff gets a review, and each fix is checked in the running app before its pull request
+opens. It merges them in the right order when you say yes.
+
+A review of one diff never sees the bug that spans two folders. This reads the whole app, and keeps you in control:
+four questions up front, nothing built before you pick, decisions asked in one batch.
+
+[Read more about the code quality review](skills/code-quality-review/)
 
 ## Contributing
 
