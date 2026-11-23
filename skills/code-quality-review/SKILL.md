@@ -1,6 +1,6 @@
 ---
 name: code-quality-review
-description: Code quality review of a whole codebase, run by a lead agent with helper agents - agrees the rules with the person, splits the code into sections with one read-only survey agent each (plus security, failure modes, performance, tests, structure and implicit state machine lenses), triages findings into small fixes and big items, builds each picked fix on its own branch with a cheaper model, reviews every diff, checks each fix in the running app, and merges many small pull requests in order. Use when someone asks for a code quality review, audit or pass over a whole app or repo, wants its implicit state machines found, or wants a codebase cleaned up through many small reviewed pull requests.
+description: "Code quality review of a whole codebase, run by a lead agent with helper agents - agrees the rules with the person, splits the code into sections with one read-only survey agent each (plus security, failure modes, performance, tests, structure and implicit state machine lenses), triages findings into small fixes and big items, builds each picked fix on its own branch with a cheaper model, reviews every diff, checks each fix in the running app, and merges many small pull requests in order. Use when someone asks for a code quality review, audit or pass over a whole app or repo, wants its implicit state machines found, or wants a codebase cleaned up through many small reviewed pull requests."
 argument-hint: "[setup | lens: improvements, state machines, both | resume]"
 ---
 
