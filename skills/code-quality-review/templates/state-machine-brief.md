@@ -1,6 +1,6 @@
 # State machine survey brief (one flow area)
 
-<!-- The lead fills every {{placeholder}}, adds the stack's "hides in" list from references/stacks.md, and names one
+<!-- The lead fills every {{key}} from the config and the rest from the run, adds the stack's "hides in" list from references/stacks.md, and names one
 or two explicit machines already in the repo as the model of good. Delete this comment. -->
 
 You are surveying ONE area of {{repo}} ({{stack}}) for its implicit state machines. Read-only: never edit code,
@@ -36,7 +36,7 @@ For each state, ask what happens on each event. An event with no defined handlin
 - Time: an answer that comes late (after a deadline, after the person left, after unmount), a timeout, a hang.
 - The session: sign-out, a refused token refresh, an account or profile switch, an environment switch, demo mode
   entry or exit.
-- The app: backgrounded, foregrounded, killed and relaunched (what comes back from storage?), the lock shown on top,
+- The app: backgrounded, foregrounded, killed and relaunched (what comes back from storage?), an app lock screen shown on top,
   a link or push arriving mid-flow.
 - The network: offline, a dropped connection mid-request, an error reply, an empty reply.
 - The device: a permission denied or revoked, reduced motion, the largest text size if it changes layout states.
@@ -44,7 +44,7 @@ For each state, ask what happens on each event. An event with no defined handlin
 
 ## Before you report a hole
 
-- Grep {{decisionRecords}} for the file and function names. A behaviour the person chose is not a hole: list it
+- Grep {{plans.decisions}} for the file and function names. A behaviour the person chose is not a hole: list it
   under "Decided" with the record.
 - If an open plan already covers the hole, say "covered by <plan>".
 - Prove it from the code: a file:line for each step. If you can only suspect it, mark it "suspected" and say what

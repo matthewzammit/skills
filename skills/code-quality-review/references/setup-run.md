@@ -53,7 +53,7 @@ blockers are common; build on the main branch with small, local diffs so the slo
 
 ## Earlier runs
 
-Read every earlier run's tracker and findings. A new run never reports or fixes the same bug twice, and two lenses
+Read `<records>/run-log.md` and every earlier run's tracker and findings. A new run never reports or fixes the same bug twice, and two lenses
 over the same code share one memory.
 
 Done when: the tracker names the worktree, device and spare, epic, baseline and earlier runs read.

@@ -25,6 +25,14 @@ app. Before starting each heavy job:
 - shut down devices nobody needs.
 
 A gate script takes the number of OTHER heavy jobs running, not the maximum. Write the exact command in every brief.
+With no `loadGate.command`, use this inline check (macOS; on Linux read `nproc` and `/proc/loadavg`), and count the
+heavy jobs yourself:
+
+```bash
+cores=$(sysctl -n hw.ncpu); load=$(sysctl -n vm.loadavg | awk '{print $2}')
+awk -v l="$load" -v c="$cores" 'BEGIN { if (l < 0.75 * c) print "yes"; else print "no: load " l " on " c " cores" }'
+memory_pressure | tail -1   # "free percentage" should be 25% or more
+```
 Read-only reviews are light and can run beside heavy jobs. Each builder runs its checks once, at the end, in the
 foreground.
 

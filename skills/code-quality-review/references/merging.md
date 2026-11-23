@@ -66,8 +66,13 @@ plans the branch finished or added, never one a docs PR only annotated.
 - **Clean-up offer**: delete this run's merged remote branches (only the run's prefix), remove the helper worktrees,
   shut down the run's device and dev servers. Ask first; never delete anything else.
 - **Bugs found in passing**: each already has a ticket; offer to fix them next.
-- **The run log**: one row per run (date, wall clock, surveys, findings, fix PRs, held, big items, app checks, agents
-  by model, merge time, what cost time), so the next run can be compared.
+- **The run log**: `<records>/run-log.md`, one row per run, so the next run can be compared. Create it on the first
+  run with this header:
+
+  ```
+  | Run | Date | Lens | Wall clock | Surveys | Findings | Fix PRs | Held | Big items | App checks | Agents by model | Merge time | What cost time |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  ```
 - **Carry over**: every open unit, held item, big item and owed check goes into the next pass's tracker.
 
 Done when: every unit has a final state, and the run log row is written.
