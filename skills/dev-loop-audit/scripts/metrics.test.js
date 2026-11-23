@@ -269,3 +269,51 @@ test('compute reports the verification numbers and the trend row carries them', 
   // no checks.json: those cells stay empty
   assert.strictEqual(trendRow(compute(data(calls))).split(',')[TREND_COLUMNS.indexOf('agent_commits')], '');
 });
+
+const gateRun = (a, b, extra = {}) => call(a, b, { cmd: 'npm run validate', tags: ['gate'], ...extra });
+const pushRun = (a, b, extra = {}) => call(a, b, { cmd: 'git push', tags: ['git_push'], ...extra });
+
+test('a full gate run by hand, then a push in the same session within 30 minutes, is counted', () => {
+  const M = compute(data([gateRun(0, 120), pushRun(420, 480)]));
+  assert.strictEqual(M.gate.gate_then_push, 1);
+  assert.strictEqual(M.gate.gate_then_push_min, 2);
+  assert.deepStrictEqual(M.gate.gate_then_push_sessions, [{ session: 'sess-000', n: 1, min: 2 }]);
+  assert.strictEqual(M.gate.gate_then_push_note, 'hook unknown: counted anyway');
+  const row = trendRow(M).split(',');
+  assert.strictEqual(row[TREND_COLUMNS.indexOf('gate_then_push')], '1');
+  assert.strictEqual(row[TREND_COLUMNS.indexOf('gate_then_push_min')], '2');
+  assert.strictEqual(TREND_COLUMNS.at(-1), 'gate_then_push_min');
+});
+
+test('a gate run with no push after it, a background gate run, and a push 2 h later are not counted', () => {
+  const none = compute(data([gateRun(0, 60), pushRun(-600, -560)])); // the push came before
+  assert.strictEqual(none.gate.gate_then_push, 0);
+  const bg = compute(data([gateRun(0, 60, { bg: true }), pushRun(300, 360)]));
+  assert.strictEqual(bg.gate.gate_then_push, 0);
+  const late = compute(data([gateRun(0, 60), pushRun(7260, 7320)]));
+  assert.strictEqual(late.gate.gate_then_push, 0);
+  const other = compute(data([gateRun(0, 60), pushRun(300, 360, { session: 'sess-0002' })]));
+  assert.strictEqual(other.gate.gate_then_push, 0, 'another session');
+  const failed = compute(data([gateRun(0, 60, { is_error: true }), pushRun(300, 360)]));
+  assert.strictEqual(failed.gate.gate_then_push, 0, 'a failed gate run is fixed, not repeated, by the push');
+});
+
+test('gate then push follows what checks.json says about the pre-push hook', () => {
+  const calls = [gateRun(0, 60), pushRun(300, 360)];
+  const has = (hooks, managers = []) => ({ hooks: { hooks, managers } });
+  const yes = compute(data(calls), null, null, has([{ name: 'pre-push' }]));
+  assert.strictEqual(yes.gate.gate_then_push, 1);
+  assert.strictEqual(yes.gate.gate_then_push_note, null);
+  const no = compute(data(calls), null, null, has([{ name: 'pre-commit' }]));
+  assert.strictEqual(no.gate.gate_then_push, 0, 'no pre-push hook: the push does not repeat the gate');
+  const husky = compute(data(calls), null, null, has([], [{ name: 'husky', hooks: ['pre-push'] }]));
+  assert.strictEqual(husky.gate.gate_then_push, 1);
+  const lefthook = compute(data(calls), null, null, has([], [{ name: 'lefthook' }]));
+  assert.strictEqual(lefthook.gate.gate_then_push, 1);
+  assert.strictEqual(lefthook.gate.gate_then_push_note, 'hook unknown: counted anyway');
+});
+
+test('a push the hook refused does not count as the one that repeats the gate', () => {
+  const M = compute(data([gateRun(0, 60), pushRun(300, 301, { tags: ['git_push', 'hook_refused'] })]));
+  assert.strictEqual(M.gate.gate_then_push, 0);
+});

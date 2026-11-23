@@ -40,6 +40,7 @@ replaced, so a re-run does not double it. Empty means not measurable that week; 
 | `retries`, `hook_refusals` | Same failed command run again; calls a hook refused |
 | `push_median_s`, `push_p90_s`, `push_failed` | Agent `git push` times (the hook runs inside) and failures |
 | `gate_median_s` | The config's gate commands run by hand |
+| `gate_then_push`, `gate_then_push_min` | Gate commands run by hand in the foreground and followed by a push in the same session within 30 minutes; their minutes. Added later, so a trend file from before has empty cells for older weeks |
 | `qa_inputs`, `qa_wall_min`, `qa_model_min`, `qa_per_input_s` | Taps and clicks; QA time; QA time per input |
 | `check_step_median_s`, `batched_step_share` | Input to screen seen; share of inputs whose look shared the message |
 | `agent_wait_min` | Minutes the main thread waited for a background subagent to hand back. Added later, so a trend file from before has empty cells for older weeks |

@@ -178,6 +178,8 @@ Speed: how long does a push take?
 - **Push time**: median, p90 and max of every push, because the hook runs inside the push. Ours went from 14.6 s to
   33.8 s in one week, and the audit traced it to one commit (a cold lint cache, a trade we kept).
 - **Gate commands**: the same for typecheck, lint, tests and the full gate run by hand.
+- **Full gate by hand, then a push**: a full gate run by hand, then a push in the same session within 30 minutes, so the
+  pre-push hook runs the same checks again. Counted and ranked by minutes, with the sessions that did it most.
 - **Contention**: pushes that ran while a native build, a dev server or another session's gate ran, with and
   without that overlap.
 - **The slowest step**: from the hook's own step times. A hook that prints none gets a fix that makes it print them.
