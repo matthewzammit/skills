@@ -9,6 +9,20 @@ The source of truth if the lead's context is summarised. Update it as things hap
 - **Baseline:** tests {{testTime}} ({{testCount}}), type-check {{typecheckTime}}, build {{buildTime}}, bundle {{bundleSize}}
 - **Earlier runs read:** {{earlierRuns}}
 
+## Phases
+
+`resume` starts at the first unticked phase. Tick each one when its "Done when" line in SKILL.md is true.
+
+- [ ] 1. Agree the run
+- [ ] 2. Set up the run
+- [ ] 3. Plan the sections
+- [ ] 4. Survey
+- [ ] 5. Triage and pick
+- [ ] 6. Build and review
+- [ ] 7. Check in the running app
+- [ ] 8. Pull requests and merging
+- [ ] 9. Close out
+
 ## Agreed
 
 1. Can a fix change what a person sees:

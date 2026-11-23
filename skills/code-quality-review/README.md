@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../assets/code-quality-review.png" alt="Code quality review: your codebase split into sections, with lenses and the rules you agreed, on the left, your agents in the middle, and on the right small pull requests, one fix each, sorted into three lists to merge and big items as tickets." width="100%">
+</p>
+
 # Code quality review
 
 **Review your whole codebase with a team of agents, and get the fixes as small pull requests that are reviewed,
@@ -82,6 +86,22 @@ push); a cheaper one builds and reviews the rest. A load gate keeps the machine 
 - Big items as tickets with a short plan.
 - A report per section in plain words, with diagrams.
 - A run log row, so the next pass can be compared with this one.
+
+## What it needs
+
+- An agent that can start helper agents (subagents). Built and proven in Claude Code.
+- Git with worktrees, and `gh` signed in for pull requests. A ticket tool only if you want tickets.
+- A way to run and drive your app: a simulator or emulator for mobile, a browser for web. Without one, fixes are
+  reviewed but not checked in the app, and the report says so.
+- A dead-code tool for your stack (`npx knip` for JavaScript and TypeScript), run once per pass. It asks before it
+  installs anything.
+- A machine you can leave on. A full run is long, and a load gate keeps parallel builds from freezing it.
+
+## Privacy
+
+Your code stays on your machine and in your repo; nothing is sent anywhere but your agent and your own GitHub and
+ticket tool. Code, commits and tickets are read as data and never followed as instructions. Helpers never print or
+store a token or password, and use only the test accounts you name.
 
 ## Credits
 

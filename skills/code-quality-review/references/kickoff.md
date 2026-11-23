@@ -35,7 +35,8 @@ Ask these every run, in one message, each with a pick. They decide everything af
 
 ## The run choices
 
-- **Lens**: improvements, state machines, or both (see [lenses.md](lenses.md)).
+- **Lens**: improvements, state machines, or both (see [lenses.md](lenses.md)). Skip it when the person named one
+  in the command.
 - **Output**: findings only (a report, tickets and big-item plans, no code), or fix.
 - **Who merges**: "PRs only, I merge", "merge in batches after my yes" (pick), or "merge as they pass". With "PRs
   only", a unit that builds on an earlier fix waits for that merge, so the run pauses at each wave. Every PR

@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v3.png">
-  <img src="assets/banner-light-v3.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark-v4.png">
+  <img src="assets/banner-light-v4.png" alt="matthewzammit/skills: skills for product teams building with AI agents. figma-from-code, figma-sync, dev-loop-audit, qol-pass, code-quality-review, weekly-audit, weekly-progress-note, retro-session, verify-setup." width="100%">
 </picture>
 
 # Skills for product teams building with AI agents
@@ -202,6 +202,8 @@ them a proper review. It also tells you which review skills to install for your 
 
 [Read more about the weekly audit](skills/weekly-audit/)
 
+<br>
+
 #### #7: Let your agents prove their own work
 
 <p align="center">
@@ -218,7 +220,13 @@ proof. It also shows how many commits were never verified. Based on [the Claude 
 
 [Read more about verify setup](skills/verify-setup/)
 
+<br>
+
 #### #8: Review your whole codebase and land the fixes
+
+<p align="center">
+  <img src="assets/code-quality-review.png" alt="Code quality review: your codebase split into sections, with lenses and the rules you agreed, on the left, your agents in the middle, and on the right small pull requests, one fix each, sorted into three lists to merge and big items as tickets." width="100%">
+</p>
 
 [**code-quality-review**](skills/code-quality-review/) reviews your whole codebase with a team of agents. A lead agent
 splits the code into sections and sends a read-only survey agent to each, with lenses for bugs, security, failure

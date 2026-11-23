@@ -24,7 +24,7 @@ rules file, which every brief opens with.
 
 The config is `~/.claude/code-quality-review/<repo>/config.json` (`<repo>` is the repo's name on GitHub). If there is
 none, or `$ARGUMENTS` is `setup`, follow [references/setup.md](references/setup.md). Stop there if the argument was
-`setup`. With `resume`, read the newest run's tracker and go to the first phase not marked done.
+`setup`. With `resume`, read the newest run's tracker and go to the first phase not ticked in its "Phases" list.
 
 The config says how this team ships (tickets, branches, plans, checks, models, the device lock, merging). Follow it
 over every default in this skill.
@@ -37,6 +37,8 @@ Follow [references/kickoff.md](references/kickoff.md): say what the run checks, 
 it never does without a yes, then ask the **four questions** and the run choices (lens, findings only or fix, how
 fixes land, who merges) in one message, each with a pick. Write the answers to the tracker.
 
+If `$ARGUMENTS` names a lens (`improvements`, `state machines` or `both`), use it and leave that question out.
+
 Done when: the person has answered, and the tracker's "Agreed" block holds every answer.
 
 ## 2. Set up the run
@@ -48,8 +50,8 @@ baseline numbers (test time, build time, bundle size). Read earlier runs' tracke
 device access approved and a spare device agreed while the person is still here. Detail:
 [references/setup-run.md](references/setup-run.md).
 
-Done when: the tracker names the worktree, device, epic and baseline, and the hot-file list and dead-code output are
-saved in the run folder.
+Done when: the tracker names the worktree, device and spare, epic, baseline and earlier runs read, and the hot-file
+list and dead-code output are saved in the run folder.
 
 ## 3. Plan the sections
 
@@ -87,7 +89,7 @@ Follow [references/build.md](references/build.md). Each unit gets one helper on 
 worktree and branch cut from the main branch, and [templates/builder-brief.md](templates/builder-brief.md). Start a
 heavy job only while the machine has room (the **load gate**). Reproduce a "suspected" finding on the main branch
 before its builder starts. Every built unit gets an independent review; the config's strong model reviews only
-**risky diffs** (auth, session, tokens, stored data, the app lock, deep links, push, observability). A review finding
+**risky diffs** (auth, session, tokens, stored data, an app lock screen, deep links, push, observability). A review finding
 is fixed with a new commit on the same branch.
 
 Done when: every picked unit is built and reviewed, or held with a written reason in the tracker.
@@ -113,7 +115,7 @@ Done when: every PR is merged, closed or listed as waiting, with the reason in t
 ## 9. Close out
 
 Offer the clean-up (this run's merged branches, helper worktrees, the run's device), refresh docs and big-item plans
-the merges made stale, add a row to the run log, and carry every open item to the next pass. See
+the merges made stale, add a row to the run log (`<records>/run-log.md`), and carry every open item to the next pass. See
 [references/merging.md](references/merging.md) "Close out".
 
 Done when: the tracker's unit table has no unit without a final state, and the run log row is written.
