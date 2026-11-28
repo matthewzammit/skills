@@ -140,6 +140,15 @@ Check every proposed speed fix against these before it goes in the report. A fix
    fail each other at random: give each shard its own throwaway database (a name with the shard number, created
    and dropped by the job). Balance shards from file times the main branch records on each full run, not from a
    guess.
+18. **One plugin holds the build:** when a build or transform step is a top step, read the tool's own timing
+   report once (Vite: the plugin timings it prints after a build; TypeScript: `tsc
+   --extendedDiagnostics`; webpack: `--profile`; Babel in Jest: a cold run against a warm one). One plugin hook is
+   often most of the step, because it does slow work (a full parse) on every file to find something few files
+   have. A cheap text check before the slow work fixes it: get-based skipped the parse for files without the word
+   `meta`, and its build step went from 3m25s to 53s
+   ([get-based#1744](https://github.com/elkimek/get-based/pull/1744)). The check must never skip a file the slow
+   path would change: prove it with a test for the odd case and a build compared file by file against the old one
+   (only build ids may differ). Time it against a control run on the same day.
 
 ## Already right
 

@@ -188,6 +188,8 @@ Speed: how long does a push take?
   long as its slowest step (57 s to 27 s cold above).
 - **What lint spends its time on**: `TIMING=20 npx eslint` once. One or two rules are often most of it, and a rule
   the typechecker already enforces (`import/namespace`, `import/named`) can go.
+- **What a build spends its time on**: the build tool's own timing report once. One plugin that parses every
+  file is often most of it, and a cheap text check first fixes it (get-based: 3m25s to 53s).
 - **A faster tool shipped**: Oxlint or Biome for ESLint, TypeScript 7, Vitest without isolation (OpenClaw: 174 s to
   97 s on the lanes where it was safe), a native type checker (OpenClaw: tsgo 447 s to tsrs 64 s), a faster
   formatter for Prettier (Pontus's timing: `bun fmt` 0.07 s, Biome 0.28 s, dprint 0.44 s, Prettier 7 s), Bun's test
@@ -317,6 +319,7 @@ store or print a command, and the report quotes commands, not your conversations
 - [Pontus Abrahamsson](https://x.com/pontusab/status/2121982070193058191): the test-speed and hook-timing checks,
   and his CI prompt: the rules a speed fix never breaks, budgets, shard proof, random order and the change-detector log.
 - [Vincent Koc](https://vincent.build/openclaw-ci-cost-reduction/): the test-growth, two-clock and setup checks.
+- [get-based#1744](https://github.com/elkimek/get-based/pull/1744): the slow-plugin check and its proof.
 - [smorinlabs/ci-fix](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-fix): job times and flake counts.
 - [smorinlabs/ci-audit](https://www.skills.sh/smorinlabs/smorinlabs-skills/ci-audit): hooks that match CI.
 - [edloidas/ci-audit](https://www.skills.sh/edloidas/skills/ci-audit): the longest job chain and timeouts.
